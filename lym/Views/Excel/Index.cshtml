@@ -1,0 +1,75 @@
+﻿@{
+    ViewBag.Title = "Excel";
+}
+<script>
+    function fileChange(a) {
+        var x = a.files.length;
+        var title = "";
+        document.getElementById('tip').innerHTML = title;
+    }
+    function checkSubmit(a) {
+        if (document.getElementById('f').files.length != 0) {
+            a.disabled = true;
+            var s = function () {
+                a.disabled = false;
+            }
+            setTimeout(s, 2000);
+            document.getElementById('form1').submit();
+        } else {
+            alert("先选择文件！");
+        }
+    }
+
+</script>
+<script src="~/Scripts/useful.js"></script>
+<style>
+    textarea {
+        height: 100px;
+        width: 300px;
+    }
+</style>
+<center id="sdsm">
+    welcome
+</center>
+<form action="~/excel/upload" method="post" id="form1" enctype="multipart/form-data" style="display:none">
+    <center>
+        <input type="file" name="t" id="f" onchange="fileChange(this)" accept="text/plain" />
+        <br />
+        <label>代理商</label>
+        <textarea name="jxs" class="area"></textarea>
+        <br />
+        <br />
+        <label>大客户</label>
+        <textarea name="dkh" class="area"></textarea>
+        <div id="tip" style="font-size:20px;"></div>
+        <br />
+        <br />
+        <br />
+        <br />
+        <label style="color:#35ca48">补充名称（经销商）</label>
+        <textarea name="renj" class="area">
+            @foreach (var item in ViewBag.JxsList)
+            {
+                @item
+            }
+        </textarea>
+        <label style="color:#cc26c4">补充名称（大客户）</label>
+        <textarea name="rend" class="area">
+            @foreach (var item in ViewBag.DhkList)
+            {
+                @item
+            }
+        </textarea>
+        <br />
+        <br />
+        <label style="color:#d53636">作废票号（删特殊）</label>
+        <textarea name="del" class="area"></textarea>
+        <br />
+        <br />
+        <label style="color:#d53636">红票号（去条数）</label>
+        <textarea name="del2" class="area"></textarea>
+        <br />
+        <br />
+        <input type="button" onclick="checkSubmit(this)" value="提交" />
+    </center>
+</form>

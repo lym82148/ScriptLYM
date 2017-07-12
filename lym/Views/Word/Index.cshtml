@@ -1,0 +1,57 @@
+﻿@{
+    ViewBag.Title = "Word";
+}
+<script>
+    function fileChange(a) {
+        var x = a.files.length;
+        var title = "";
+        if (x == 1) {
+            title = "分割" + x + "个文件";
+            if (/pdf$/.test(a.files[0].name) || /PDF$/.test(a.files[0].name)) {
+                document.getElementById('msg').style.display = "block";
+                document.getElementById('type').style.display = "none";
+            } else {
+                document.getElementById('type').style.display = "block";
+                document.getElementById('msg').style.display = "none";
+            }
+        } else {
+            title = "合并" + x + "个文件";
+            document.getElementById('type').style.display = "none";
+            document.getElementById('msg').style.display = "none";
+        }
+        document.getElementById('tip').innerHTML = title;
+    }
+    function checkSubmit(a) {
+        if (document.getElementById('f').files.length != 0) {
+            a.disabled = true;
+            var s = function () {
+                a.disabled = false;
+            }
+            setTimeout(s, 2000);
+            document.getElementById('form1').submit();
+        } else {
+            alert("先选择文件！");
+        }
+    }
+
+</script>
+<script src="~/Scripts/useful.js"></script>
+<center id="sdsm">
+    welcome
+</center>
+<form action="~/word/upload" method="post" id="form1" enctype="multipart/form-data" style="display:none">
+    <center>
+        <input type="file" name="t" id="f" multiple onchange="fileChange(this)" />
+        <br />
+        <div id="tip" style="font-size:20px;"></div>
+        <br />
+        <div id="type" style="display:none">
+            <label style="font-size:20px;border:1px dotted #dcdcdc"><input name="type" type="radio" value="0" checked />&nbsp;doc&nbsp;</label>
+            &nbsp;&nbsp;&nbsp;
+            <label style="font-size:20px;border:1px dotted #dcdcdc"><input name="type" type="radio" value="1" />&nbsp;pdf（略慢）&nbsp;</label>
+        </div>
+        <div id="msg" style="display:none;font-size:20px;">pdf只能分割为pdf</div>
+        <br />
+        <input type="button" onclick="checkSubmit(this)" value="提交" />
+    </center>
+</form>
