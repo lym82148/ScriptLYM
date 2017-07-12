@@ -262,6 +262,7 @@
     <None Include="Properties\PublishProfiles\lym - FTP.pubxml" />
     <None Include="Properties\PublishProfiles\lym - Web Deploy.pubxml" />
     <None Include="Scripts\jquery-1.10.2.intellisense.js" />
+    <Content Include="Scripts\myScriptOps.js" />
     <Content Include="Scripts\myScriptCxy.js" />
     <Content Include="Scripts\myScript.js" />
     <Content Include="Scripts\useful.js" />
