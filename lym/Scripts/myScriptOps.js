@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         OpsAutoEmail
 // @namespace    http://tampermonkey.net/
-// @version      0.2
+// @version      0.3
 // @description  try to take over the world!
 // @author       You
 // @match        https://omcops.bmw.com.cn/Operation/Release/ReleasePlanDetails/*
@@ -37,6 +37,9 @@
             model = model.replace('{{' + a + '}}', data[a]);
         }
         cFun(model);
+        var x = $(this).hide(1000);
+        function st() { x.show(); }
+        setTimeout(st, 2000);
     };
     var serviceName = $("input#Service").val() || '';
     var releaseEnv = $("input#ReleaseEnv").val() || '';
@@ -70,7 +73,7 @@ background:#9BC2E6;padding:0cm 5.4pt 0cm 5.4pt;height:15.0pt">\
 </td>\
 <td width="831" nowrap="" valign="bottom" style="width:623.25pt;border:solid windowtext 1.0pt;\
 border-left:none;padding:0cm 5.4pt 0cm 5.4pt;height:15.0pt">\
-<p class="MsoNormal"><span lang="EN-US"><a href="{{url}}"><span style="font-size: 10.5pt; font-family: Helvetica, sans-serif; color: rgb(66, 139, 202); background-image: initial; background-position: initial; background-size: initial; background-repeat: initial; background-attachment: initial; background-origin: initial; background-clip: initial;">DriveViolationService</span></a><o:p></o:p></span></p>\
+<p class="MsoNormal"><span lang="EN-US"><a href="{{url}}"><span style="font-size: 10.5pt; font-family: Helvetica, sans-serif; color: rgb(66, 139, 202); background-image: initial; background-position: initial; background-size: initial; background-repeat: initial; background-attachment: initial; background-origin: initial; background-clip: initial;">{{serviceName}}</span></a><o:p></o:p></span></p>\
 </td>\
 </tr>\
 <tr style="mso-yfti-irow:1;height:15.0pt">\
