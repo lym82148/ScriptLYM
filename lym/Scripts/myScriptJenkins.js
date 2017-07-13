@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Jenkins
 // @namespace    http://tampermonkey.net/
-// @version      0.2
+// @version      0.3
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0006.w10:8080/
@@ -9,6 +9,7 @@
 // ==/UserScript==
 
 (function () {
+    console.log('输入 c 切换筛选');
     var trs = document.getElementById('projectstatus').getElementsByTagName('tr');
     var res = [];
     for (var i = 0; i < trs.length; i++) {
@@ -22,6 +23,7 @@
     var div = document.createElement('div');
     div.style.color = 'red';
     div.style.fontSize = '32px';
+    div.innerHTML = 'Filter: ';
     document.getElementById('systemmessage').append(div);
     var filterFun = function () {
         div.innerHTML = 'Filter: ' + str;
@@ -34,6 +36,7 @@
         }
     };
     onkeydown = function (e) {
+        if (!auto) { return; }
         if (specialKey.indexOf(e.key) >= 0 || e.key.length > 1) {
             if (e.key == 'Backspace') {
                 str = str.substr(0, str.length - 1);
@@ -53,7 +56,29 @@
     };
 
     document.onpaste = (e) => {
+        if (!auto) { return; }
         str = e.clipboardData.getData('Text').toLowerCase();
         filterFun();
     };
+    var auto = true;
+    var saveStr = '';
+    Object.defineProperty(window, "c", {
+        Configurable: true,
+        get: function () {
+            auto = !auto;
+            var res;
+            if (auto) {
+                div.style.display = '';
+                str = saveStr;
+                res = ("已开启筛选");
+            } else {
+                div.style.display = 'none';
+                saveStr = str;
+                str = '';
+                res = ("已关闭筛选");
+            }
+            filterFun();
+            return res;
+        }
+    });
 })();
