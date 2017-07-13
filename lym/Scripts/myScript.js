@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         CheckConfig
 // @namespace    http://tampermonkey.net/
-// @version      0.7
+// @version      1.6
 // @description  try to take over the world!
 // @author       You
 // @match        https://portal.azure.cn/*
@@ -19,10 +19,37 @@
             get: function () { ds(); }
         });
         if (omc.length) {
-            setTimeout('console.log("输入 r 检测配置")', 500);
-
+            var auto = true;
+            setTimeout('console.log("输入 r 检测配置\\r\\n输入 c 关闭自动补充");', 500);
+            var keyupFun = function () {
+                var appsetting = 'appsetting_';
+                if (auto) {
+                    if (this.value.indexOf(appsetting) != 0) {
+                        this.value = appsetting + this.value;
+                    }
+                } else {
+                    if (this.value.indexOf(appsetting) == 0) {
+                        this.value = this.value.replace(appsetting, '');
+                    }
+                }
+            };
+            $('input.param-name').keyup(keyupFun);
+            Object.defineProperty(window, "c", {
+                Configurable: true,
+                get: function () {
+                    auto = !auto;
+                    var res;
+                    $('input.param-name').keyup();
+                    if (auto) {
+                        res = ("已开启自动补充");
+                    } else {
+                        res = ("已关闭自动补充");
+                    }
+                    return res;
+                }
+            });
         } else {
-            setTimeout('console.log("输入 r 更新配置")', 5000);
+            setTimeout('console.log("输入 r 更新配置");', 5000);
         }
         return;
     }
