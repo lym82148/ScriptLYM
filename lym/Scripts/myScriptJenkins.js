@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Jenkins
 // @namespace    http://tampermonkey.net/
-// @version      0.3
+// @version      0.4
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0006.w10:8080/
@@ -19,17 +19,42 @@
         }
     }
     var str = '';
-    var specialKey = [' '];
+    var ignoreKey = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
     var div = document.createElement('div');
     div.style.color = 'red';
     div.style.fontSize = '32px';
     div.innerHTML = 'Filter: ';
     document.getElementById('systemmessage').append(div);
+    var curList = [];
+    var lineColor = 'lightgrey';
+    var moveFun = function (a) {
+        if (curList.length == 0) { return; }
+        var nextIndex = curList.curIndex + a;
+        if (nextIndex < 0) {
+            nextIndex = curList.length - 1;
+        } else if (nextIndex >= curList.length) {
+            nextIndex = 0;
+        }
+        curList[curList.curIndex].style.backgroundColor = '';
+        curList[nextIndex].style.backgroundColor = lineColor;
+        curList.curIndex = nextIndex;
+    };
+
     var filterFun = function () {
         div.innerHTML = 'Filter: ' + str;
+        var first = true;
+        curList = [];
         for (var i = 0; i < res.length; i++) {
             if (res[i].lid.indexOf(str) >= 0) {
+                if (first) {
+                    res[i].style.backgroundColor = lineColor;
+                    first = false;
+                    curList.curIndex = 0;
+                } else {
+                    res[i].style.backgroundColor = '';
+                }
                 res[i].style.display = '';
+                curList.push(res[i]);
             } else {
                 res[i].style.display = 'none';
             }
@@ -37,11 +62,23 @@
     };
     onkeydown = function (e) {
         if (!auto) { return; }
-        if (specialKey.indexOf(e.key) >= 0 || e.key.length > 1) {
+        var arrow;
+        if (e.key.length > 1) {
             if (e.key == 'Backspace') {
                 str = str.substr(0, str.length - 1);
-            } else if (e.key == 'Shift') {
-
+            } else if ((arrow = ignoreKey.indexOf(e.key)) >= 0) {
+                if (arrow == 0 || arrow == 2) {
+                    moveFun(-1);
+                } else if (arrow == 1 || arrow == 3) {
+                    moveFun(1);
+                }
+                return false;
+            }
+            else if (e.key == 'Enter') {
+                if (curList.length) {
+                    curList[curList.curIndex].getElementsByTagName('a')[1].click();
+                }
+                return;
             }
             else {
                 str = '';
@@ -50,7 +87,11 @@
             if (e.key == 'v' && e.ctrlKey) {
                 return;
             }
-            str += e.key.toLowerCase();
+            else if (e.key == ' ') {
+                return false;
+            } else {
+                str += e.key.toLowerCase();
+            }
         }
         filterFun();
     };

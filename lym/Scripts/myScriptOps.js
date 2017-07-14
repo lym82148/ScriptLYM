@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         OpsAutoEmail
 // @namespace    http://tampermonkey.net/
-// @version      0.3
+// @version      0.4
 // @description  try to take over the world!
 // @author       You
 // @match        https://omcops.bmw.com.cn/Operation/Release/ReleasePlanDetails/*
@@ -9,6 +9,7 @@
 // ==/UserScript==
 
 (function () {
+
     $('body').append('<style>.hideForCopy{display:none;}</style>');
     var cFun = function (tmp) {
         if (div === undefined) {
@@ -125,7 +126,9 @@ border-top:none;background:#9BC2E6;padding:0cm 5.4pt 0cm 5.4pt;height:7.1pt">\
 </td>\
 <td width="831" valign="bottom" style="width:623.25pt;border-top:none;border-left:\
 none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;\
-padding:0cm 5.4pt 0cm 5.4pt;height:7.1pt"></td>\
+padding:0cm 5.4pt 0cm 5.4pt;height:7.1pt">\
+<p class="MsoNormal"><span style="font-family:宋体;color:#1F497D">无</span><span lang="EN-US"><o:p></o:p></span></p>\
+</td>\
 </tr>\
 <tr style="mso-yfti-irow:6;height:17.9pt">\
 <td width="192" nowrap="" style="width:144.0pt;border:solid windowtext 1.0pt;\
