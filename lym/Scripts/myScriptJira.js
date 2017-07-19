@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         JiraModule
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      0.4
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0002.w10:8080/browse/*
@@ -9,17 +9,27 @@
 // ==/UserScript==
 
 (function () {
+    var setModule = function m() {
+        if ($('#summary').length) {
+            $('#summary').val('[Server]');
+            $('#customfield_10300').val('13773');
+            $('#customfield_11200').val('11305');
+            $('#timetracking_originalestimate').val('1d');
+            $('#timetracking_remainingestimate').val('1d');
+            $('#qf-create-another').prop('checked', true);
+        } else {
+            setTimeout(m, 100);
+        }
+    };
     onkeydown = function (e) {
-        if (e.key == 'b' && e.target.tagName == 'BODY') {
+        if (e.key == 'b' && (e.target.tagName == 'BODY' || e.target.tagName == 'A')) {
             if (!$('#summary').length) {
-                $('#create-subtask').click();
-            } else {
-                $('#summary').val('[Server]');
-                $('#customfield_10300').val('13773');
-                $('#customfield_11200').val('11304');
-                $('#timetracking_originalestimate').val('1d');
-                $('#timetracking_remainingestimate').val('1d');
-                $('#qf-create-another').prop('checked', true);
+                if ($('#create-subtask').length) {
+                    $('#create-subtask').click();
+                    setTimeout(setModule, 100);
+                } else {
+                    alert("无法创建子任务");
+                }
             }
         }
     };
