@@ -263,6 +263,7 @@
     <None Include="Properties\PublishProfiles\lym - Web Deploy.pubxml" />
     <None Include="Scripts\jquery-1.10.2.intellisense.js" />
     <Content Include="Scripts\myScriptJenkins.js" />
+    <Content Include="Scripts\myScriptBitbucket.js" />
     <Content Include="Scripts\myScriptJira.js" />
     <Content Include="Scripts\myScriptOps.js" />
     <Content Include="Scripts\myScriptCxy.js" />
