@@ -1,15 +1,18 @@
 ﻿// ==UserScript==
 // @name         BitbucketReviewer
 // @namespace    http://tampermonkey.net/
-// @version      0.2
+// @version      0.3
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0003.w10:7990/projects/cnb/repos/*
 // @match        http://suus0003.w10:7990/projects/CNB/repos/*
+// @match        http://suus0003.w10:7990//projects/CNB/repos/*
+// @match        http://suus0003.w10:7990//projects/cnb/repos/*
 // @grant        none
 // ==/UserScript==
 
 (function () {
+
     var search = jQuery('#s2id_autogen1');
     var input = jQuery('#reviewers');
     var curUserName = jQuery('#current-user').data('username');
