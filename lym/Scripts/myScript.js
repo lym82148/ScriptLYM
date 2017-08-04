@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         CheckConfig
 // @namespace    http://tampermonkey.net/
-// @version      1.7
+// @version      1.8
 // @description  try to take over the world!
 // @author       You
 // @match        https://portal.azure.cn/*
@@ -48,6 +48,12 @@
                     return res;
                 }
             });
+            var btn = document.createElement('input');
+            btn.type = 'button';
+            btn.value = 'Add Config';
+            btn.style.color = 'red';
+            btn.onclick = function () { var x = r; };
+            $('h1').append(btn);
         } else {
             setTimeout('console.log("输入 r 更新配置");', 5000);
         }
