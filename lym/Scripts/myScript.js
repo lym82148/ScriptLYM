@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         CheckConfig
 // @namespace    http://tampermonkey.net/
-// @version      1.6
+// @version      1.7
 // @description  try to take over the world!
 // @author       You
 // @match        https://portal.azure.cn/*
@@ -20,7 +20,7 @@
         });
         if (omc.length) {
             var auto = true;
-            setTimeout('console.log("输入 r 检测配置\\r\\n输入 c 关闭自动补充");', 500);
+            setTimeout('console.log("输入 r 检测配置\\r\\n输入 v 切换自动补充");', 500);
             var keyupFun = function () {
                 var appsetting = 'appsetting_';
                 if (auto) {
@@ -34,7 +34,7 @@
                 }
             };
             $('input.param-name').keyup(keyupFun);
-            Object.defineProperty(window, "c", {
+            Object.defineProperty(window, "v", {
                 Configurable: true,
                 get: function () {
                     auto = !auto;
@@ -65,19 +65,20 @@
     var rep = /=\s*"/;
 
     if (omc.length && keyArr.length % 2 == 0) {
-        var keyArr = keyArr.filter(function (a, b) { return b % 2 == 0; }).map(function (a) { return a.replace(rep, ''); });
+        var keyArr2 = keyArr.filter(function (a, b) { return b % 2 == 0; }).map(function (a) { return a.replace(rep, ''); });
         var diff = function (a, b) {
             return a.filter(function (i) { return b.indexOf(i) < 0; });
         };
-        var cj1 = diff(omc, keyArr);
-        var cj2 = diff(keyArr, omc);
-        var cj2str = cj2.join('"\r\n');
-        var cj1str = cj1.join('"\r\n');
+
+        var cj1 = diff(omc, keyArr2);
+        var cj2 = diff(keyArr2, omc);
+        var cj2str = cj2.join('"\r\n"');
+        var cj1str = cj1.join('"\r\n"');
         if (cj2str == '') {
             console.log("没有需要增加的配置。\r\n ");
         } else {
             cj2str = '"' + cj2str + '"';
-            console.warn("还需增加的配置：");
+            console.warn("增加的配置：");
             console.log(cj2str);
         }
         if (cj1str == '') {
@@ -87,6 +88,16 @@
             console.warn("多余的配置：");
             console.log(cj1str);
         }
+        for (var i = 0; i < keyArr.length; i += 2) {
+            var key = keyArr[i].replace(rep, '');
+            if (omc.indexOf(key) < 0) {
+                $('input.param-name').val('appsetting_' + key);
+                $('input.param-value').val(keyArr[i + 1].replace(rep, ''));
+                $('.btn-add-queue').click();
+            }
+        }
+        var h = $(document).height() - $(window).height();
+        $(document).scrollTop(h);
         return;
     }
 

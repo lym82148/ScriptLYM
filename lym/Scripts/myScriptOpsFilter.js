@@ -1,10 +1,10 @@
 ﻿// ==UserScript==
 // @name         OpsFilter
 // @namespace    http://tampermonkey.net/
-// @version      0.2
+// @version      0.4
 // @description  try to take over the world!
 // @author       You
-// @match        https://omcops.bmw.com.cn/Configuration/DeployConfiguration/NewChange
+// @match        https://omcops.bmw.com.cn/Configuration/DeployConfiguration/NewChange*
 // @match        https://omcops.bmw.com.cn/Operation/Release/ReleasePlanIndex/*
 // @match        https://omcops.bmw.com.cn/Operation/Release/ReleaseJobIndex/*
 // @grant        none
@@ -112,6 +112,9 @@
         }
     };
     onkeydown = function (e) {
+        if (e.target.tagName == 'INPUT') {
+            return;
+        }
         if (dropdown.attr('aria-expanded') != 'true') {
             dropdown[0].click();
             dropdown.blur();
@@ -134,6 +137,9 @@
             else if (e.key == 'Enter') {
                 if (curList.length) {
                     curList[curList.curIndex].getElementsByTagName('a')[0].click();
+                    if ($('.btn-search').length) {
+                        $('.btn-search').click();
+                    }
                 }
                 return;
             }
