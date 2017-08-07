@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         CheckConfig
 // @namespace    http://tampermonkey.net/
-// @version      1.8
+// @version      2.1
 // @description  try to take over the world!
 // @author       You
 // @match        https://portal.azure.cn/*
@@ -34,6 +34,13 @@
                 }
             };
             $('input.param-name').keyup(keyupFun);
+            $('div.queue-list').on('click', 'ul li', function () {
+                var key = $(this).find('.list-group-item-heading').text();
+                var val = $(this).find('.list-group-item-text').text();
+                $('input.param-name').val(key);
+                $('input.param-value').val(val).select();
+                $(document).scrollTop($('input.param-name').offset().top - 300);
+            });
             Object.defineProperty(window, "v", {
                 Configurable: true,
                 get: function () {
