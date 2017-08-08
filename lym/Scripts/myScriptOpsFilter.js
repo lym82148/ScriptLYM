@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         OpsFilter
 // @namespace    http://tampermonkey.net/
-// @version      0.6
+// @version      0.7
 // @description  try to take over the world!
 // @author       You
 // @match        https://omcops.bmw.com.cn/Configuration/DeployConfiguration/NewChange*
@@ -115,6 +115,9 @@
         if (e.target.tagName == 'INPUT') {
             return;
         }
+        if (e.ctrlKey) {
+            return;
+        }
         if (dropdown.attr('aria-expanded') != 'true') {
             dropdown[0].click();
             dropdown.blur();
@@ -168,6 +171,10 @@
     document.onpaste = (e) => {
         if (!auto) { return; }
         str = e.clipboardData.getData('Text').toLowerCase();
+        if (dropdown.attr('aria-expanded') != 'true') {
+            dropdown[0].click();
+            dropdown.blur();
+        }
         filterFun();
     };
     var auto = true;
