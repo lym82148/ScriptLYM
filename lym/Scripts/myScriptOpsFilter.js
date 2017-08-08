@@ -5,12 +5,13 @@
 // @description  try to take over the world!
 // @author       You
 // @match        https://omcops.bmw.com.cn/Configuration/DeployConfiguration/NewChange*
-// @match        https://omcops.bmw.com.cn/Operation/Release/ReleasePlanIndex/*
-// @match        https://omcops.bmw.com.cn/Operation/Release/ReleaseJobIndex/*
+// @match        https://omcops.bmw.com.cn/Operation/Release/ReleasePlanIndex*
+// @match        https://omcops.bmw.com.cn/Operation/Release/ReleaseJobIndex*
 // @grant        none
 // ==/UserScript==
 
 (function () {
+
     'use strict';
     console.log('输入 c 切换筛选');
     var div = document.createElement('div');
