@@ -1,15 +1,20 @@
 ﻿// ==UserScript==
 // @name         OpsAutoEmail
 // @namespace    http://tampermonkey.net/
-// @version      0.4
+// @version      0.5
 // @description  try to take over the world!
 // @author       You
 // @match        https://omcops.bmw.com.cn/Operation/Release/ReleasePlanDetails/*
+// @match        https://omcops.bmw.com.cn/Operation/Release/ReleasePlanPromote/*
 // @grant        none
 // ==/UserScript==
 
 (function () {
-
+    if ($('select#Priority').length) {
+        $('select#Priority').val(1);
+        $('#Comments').val($('#GitRepoTag').val());
+        return;
+    }
     $('body').append('<style>.hideForCopy{display:none;}</style>');
     var cFun = function (tmp) {
         if (div === undefined) {
