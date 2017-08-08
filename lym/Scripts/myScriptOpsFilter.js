@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         OpsFilter
 // @namespace    http://tampermonkey.net/
-// @version      0.7
+// @version      0.8
 // @description  try to take over the world!
 // @author       You
 // @match        https://omcops.bmw.com.cn/Configuration/DeployConfiguration/NewChange*
@@ -11,7 +11,6 @@
 // ==/UserScript==
 
 (function () {
-
     'use strict';
     console.log('输入 c 切换筛选');
     var div = document.createElement('div');
