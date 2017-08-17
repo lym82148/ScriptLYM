@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         OpsFilter
 // @namespace    http://tampermonkey.net/
-// @version      0.8
+// @version      0.9
 // @description  try to take over the world!
 // @author       You
 // @match        https://omcops.bmw.com.cn/Configuration/DeployConfiguration/NewChange*
@@ -174,6 +174,7 @@
         if (dropdown.attr('aria-expanded') != 'true') {
             dropdown[0].click();
             dropdown.blur();
+            e.target.focus();
         }
         filterFun();
     };
