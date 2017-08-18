@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Jenkins
 // @namespace    http://tampermonkey.net/
-// @version      0.5
+// @version      0.6
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0006.w10:8080/
@@ -25,6 +25,55 @@
         if (res != null && father != null) {
             console.log('输入 c 切换筛选');
             father.prepend(div);
+            var curA = document.getElementsBySelector('li.item .model-link.inside');
+            if (curA.length > 1) {
+                var curText = curA[1].text || '';
+                curText = curText.replace(/^China-/, '').replace(/-.*/, '');
+
+                var divLinkConfig = document.createElement('div');
+                divLinkConfig.style.height = '50px';
+                var divs = ['Build', 'Dev', 'Int', 'Prod '];
+                for (var di = 0; di < divs.length; di++) {
+                    var divTmp = document.createElement('a');
+                    divTmp.style.color = 'blue';
+                    divTmp.style.fontSize = '26px';
+                    divTmp.innerHTML = 'Conf';
+                    divTmp.target = '_blank';
+                    divTmp.href = 'https://omcops.bmw.com.cn/Configuration/DeployConfiguration/NewChange?param=' + curText + '-' + divs[di];
+                    divTmp.style.marginLeft = '0px';
+                    divTmp.style.marginRight = '36px';
+                    divTmp.style.textDecoration = 'underline';
+                    if (di == 0) {
+                        divTmp.href = 'javascript:void(0);';
+                        divTmp.style.color = 'grey';
+                    }
+                    else if (di == 3) {
+                        divTmp.style.color = 'red';
+                    }
+                    divLinkConfig.append(divTmp);
+                }
+                father.prepend(divLinkConfig);
+
+                var divLink = document.createElement('div');
+                divLink.style.height = '50px';
+                for (var di = 0; di < divs.length; di++) {
+                    var divTmp = document.createElement('a');
+                    divTmp.style.color = 'blue';
+                    divTmp.style.fontSize = '32px';
+                    divTmp.innerHTML = divs[di];
+                    divTmp.target = '_blank';
+                    divTmp.href = 'https://omcops.bmw.com.cn/Operation/Release/ReleasePlanIndex/' + divs[di] + '-' + curText;
+                    divTmp.style.marginLeft = '0px';
+                    divTmp.style.marginRight = '32px';
+                    divTmp.style.textDecoration = 'underline';
+                    if (di == 3) {
+                        divTmp.style.color = 'red';
+                    }
+                    divLink.append(divTmp);
+                }
+                father.prepend(divLink);
+            }
+
             var listDiv = document.createElement('div');
             listDiv.id = 'listDivFilterRes';
             for (var i = 0; i < res.length; i++) {
