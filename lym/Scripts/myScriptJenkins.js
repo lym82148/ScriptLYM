@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Jenkins
 // @namespace    http://tampermonkey.net/
-// @version      0.6
+// @version      0.7
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0006.w10:8080/
@@ -28,7 +28,7 @@
             var curA = document.getElementsBySelector('li.item .model-link.inside');
             if (curA.length > 1) {
                 var curText = curA[1].text || '';
-                curText = curText.replace(/^China-/, '').replace(/-.*/, '');
+                curText = curText.replace(/^China-/, '').replace(/-.*/, '').replace(/-h5$/i, '');
 
                 var divLinkConfig = document.createElement('div');
                 divLinkConfig.style.height = '50px';
@@ -162,6 +162,7 @@
                     res[i].style.display = 'none';
                 }
             }
+            document.body.scrollTop = 0;
         };
     }
     var str = '';
