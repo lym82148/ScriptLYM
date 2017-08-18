@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         CheckConfig
 // @namespace    http://tampermonkey.net/
-// @version      2.1
+// @version      2.2
 // @description  try to take over the world!
 // @author       You
 // @match        https://portal.azure.cn/*
@@ -88,6 +88,7 @@
         var cj2str = cj2.join('"\r\n"');
         var cj1str = cj1.join('"\r\n"');
         if (cj2str == '') {
+            alert("没有需要增加的配置。");
             console.log("没有需要增加的配置。\r\n ");
         } else {
             cj2str = '"' + cj2str + '"';
