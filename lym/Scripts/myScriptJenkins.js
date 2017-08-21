@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Jenkins
 // @namespace    http://tampermonkey.net/
-// @version      0.7
+// @version      0.8
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0006.w10:8080/
@@ -132,6 +132,23 @@
                 divOther.innerHTML = '';
             }
         };
+        var deployArr = document.getElementsBySelector('#buildHistory tr .icon-blue');
+        if (deployArr.length > 0) {
+            var cli = function (obj) {
+                window.open('https://omcops.bmw.com.cn/Operation/Release/ReleasePlanIndex/Build-' + curText + "#" + obj.num);
+            };
+            for (var dei = 0 ; dei < deployArr.length; dei++) {
+                var id = document.getElementsBySelector('#buildHistory tr .icon-blue')[dei].parentElement.parentElement.next().text.replace('#', '').replace(' ', '');
+                var ele = document.createElement('a');
+                ele.innerHTML = 'Deploy';
+                ele.num = id;
+                ele.onclick = function (a) { return function () { cli(a); }; }(ele);
+                ele.href = 'javascript:void(0);';
+                deployArr[dei].parentElement.parentElement.parentElement.next(1).firstElementChild.prepend(ele);
+                // console.log(1)
+            }
+        }
+
     } else {
         console.log('输入 c 切换筛选');
         var trs = document.getElementById('projectstatus').getElementsByTagName('tr');
