@@ -136,6 +136,7 @@
         if (deployArr.length > 0) {
             var cli = function (obj) {
                 window.open('https://omcops.bmw.com.cn/Operation/Release/ReleasePlanIndex/Build-' + curText + "#" + obj.num);
+                obj.blur();
             };
             for (var dei = 0 ; dei < deployArr.length; dei++) {
                 var id = document.getElementsBySelector('#buildHistory tr .icon-blue')[dei].parentElement.parentElement.next().text.replace('#', '').replace(' ', '');
