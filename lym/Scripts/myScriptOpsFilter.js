@@ -1,12 +1,13 @@
 ﻿// ==UserScript==
 // @name         OpsFilter
 // @namespace    http://tampermonkey.net/
-// @version      0.9
+// @version      1.0
 // @description  try to take over the world!
 // @author       You
 // @match        https://omcops.bmw.com.cn/Configuration/DeployConfiguration/NewChange*
 // @match        https://omcops.bmw.com.cn/Operation/Release/ReleasePlanIndex*
 // @match        https://omcops.bmw.com.cn/Operation/Release/ReleaseJobIndex*
+// @match        https://omcops.bmw.com.cn/Operation/Release/ReleaseManagement/Build-All
 // @grant        none
 // ==/UserScript==
 
@@ -17,7 +18,10 @@
     div.style.color = 'red';
     div.style.fontSize = '32px';
     div.innerHTML = 'Filter: ';
-    $('h1').append(div);
+    var isAll = location.href.toLowerCase() == 'https://omcops.bmw.com.cn/Operation/Release/ReleaseManagement/Build-All'.toLowerCase();
+    if (!isAll) {
+        $('h1').append(div);
+    }
     var services = $('.input-group-addon:eq(0)').next();
     var res = services.find('li');
     var dropdown = services.find('button[data-toggle=dropdown]');
@@ -112,6 +116,9 @@
         }
     };
     onkeydown = function (e) {
+        if (isAll) {
+            return;
+        }
         if (e.target.tagName == 'INPUT') {
             return;
         }
@@ -199,5 +206,29 @@
             return res;
         }
     });
-    // Your code here...
+    var reg = /^https:\/\/omcops.bmw.com.cn\/Operation\/Release\/ReleasePlanIndex\/BuilD-.*/i;
+
+    if (reg.test(location.href)) {
+        if (location.hash != '') {
+            var id = location.hash.replace('#', '');
+            var find = function () {
+                var idLinks = $('#tbList>tbody>tr>td>a[href*="/job/"]');
+                if (idLinks.length) {
+                    for (var i = 0; i < idLinks.length; i++) {
+                        if (idLinks[i].text == id) {
+                            var tr = $(idLinks[i]).closest('tr');
+                            if (tr.length) {
+                                tr.css('backgroundColor', 'rgba(0, 55, 255, 0.18)');
+                                tr.css('backgroundColor', 'rgba(0, 55, 255, 0.18)');
+                            }
+                        }
+                    }
+                } else {
+                    setTimeout(find, 100);
+                }
+            };
+            setTimeout(find, 100);
+        }
+
+    }
 })();
