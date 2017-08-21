@@ -139,7 +139,7 @@
                 obj.blur();
             };
             for (var dei = 0 ; dei < deployArr.length; dei++) {
-                var id = document.getElementsBySelector('#buildHistory tr .icon-blue')[dei].parentElement.parentElement.next().text.replace('#', '').replace(' ', '');
+                var id = document.getElementsBySelector('#buildHistory tr .icon-blue')[dei].parentElement.parentElement.next().text.replace('#', '').replace('​', '');
                 var ele = document.createElement('a');
                 ele.innerHTML = 'Deploy';
                 ele.num = id;
