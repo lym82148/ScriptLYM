@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         OpsFilter
 // @namespace    http://tampermonkey.net/
-// @version      1.1
+// @version      1.2
 // @description  try to take over the world!
 // @author       You
 // @match        https://omcops.bmw.com.cn/Configuration/DeployConfiguration/NewChange*
@@ -21,9 +21,9 @@
     if (!isAll) {
         $('h1').append(div);
     }
-    var isDeloy = location.href.toLowerCase() == 'https://omcops.bmw.com.cn/Operation/Release/ReleasePlanIndex/Dev-All'.toLowerCase()
-    || location.href.toLowerCase() == 'https://omcops.bmw.com.cn/Operation/Release/ReleasePlanIndex/Int-All'.toLowerCase()
-    || location.href.toLowerCase() == 'https://omcops.bmw.com.cn/Operation/Release/ReleasePlanIndex/Prod-All'.toLowerCase();
+    var isDeloy = location.href.toLowerCase().startsWith('https://omcops.bmw.com.cn/Operation/Release/ReleasePlanIndex/Dev-'.toLowerCase())
+    || location.href.toLowerCase().startsWith('https://omcops.bmw.com.cn/Operation/Release/ReleasePlanIndex/Int-'.toLowerCase())
+    || location.href.toLowerCase().startsWith('https://omcops.bmw.com.cn/Operation/Release/ReleasePlanIndex/Prod-'.toLowerCase());
     var services = $('.input-group-addon:eq(0)').next();
     var res = services.find('li');
     var dropdown = services.find('button[data-toggle=dropdown]');
