@@ -1,13 +1,12 @@
 ﻿// ==UserScript==
 // @name         OpsFilter
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.1
 // @description  try to take over the world!
 // @author       You
 // @match        https://omcops.bmw.com.cn/Configuration/DeployConfiguration/NewChange*
 // @match        https://omcops.bmw.com.cn/Operation/Release/ReleasePlanIndex*
 // @match        https://omcops.bmw.com.cn/Operation/Release/ReleaseJobIndex*
-// @match        https://omcops.bmw.com.cn/Operation/Release/ReleaseManagement/Build-All
 // @grant        none
 // ==/UserScript==
 
@@ -18,10 +17,13 @@
     div.style.color = 'red';
     div.style.fontSize = '32px';
     div.innerHTML = 'Filter: ';
-    var isAll = location.href.toLowerCase() == 'https://omcops.bmw.com.cn/Operation/Release/ReleaseManagement/Build-All'.toLowerCase();
+    var isAll = location.href.toLowerCase().startsWith('https://omcops.bmw.com.cn/Operation/Release/ReleaseManagement/'.toLowerCase()) && location.href.toLowerCase().endsWith('-all');
     if (!isAll) {
         $('h1').append(div);
     }
+    var isDeloy = location.href.toLowerCase() == 'https://omcops.bmw.com.cn/Operation/Release/ReleasePlanIndex/Dev-All'.toLowerCase()
+    || location.href.toLowerCase() == 'https://omcops.bmw.com.cn/Operation/Release/ReleasePlanIndex/Int-All'.toLowerCase()
+    || location.href.toLowerCase() == 'https://omcops.bmw.com.cn/Operation/Release/ReleasePlanIndex/Prod-All'.toLowerCase();
     var services = $('.input-group-addon:eq(0)').next();
     var res = services.find('li');
     var dropdown = services.find('button[data-toggle=dropdown]');
@@ -207,7 +209,6 @@
         }
     });
     var reg = /^https:\/\/omcops.bmw.com.cn\/Operation\/Release\/ReleasePlanIndex\/BuilD-.*/i;
-
     if (reg.test(location.href)) {
         if (location.hash != '') {
             var id = location.hash.replace('#', '');
@@ -229,6 +230,28 @@
             };
             setTimeout(find, 100);
         }
-
+    }
+    if (isDeloy) {
+        var autoRefresh = document.createElement('input');
+        autoRefresh.type = 'checkbox';
+        autoRefresh.style.margin = '5px';
+        var interval;
+        autoRefresh.onchange = function () {
+            if (autoRefresh.checked) {
+                $('#tbList').dataTable().fnDraw();
+                interval = setInterval("$('#tbList').dataTable().fnDraw();", 60000);
+            } else {
+                clearInterval(interval);
+            }
+        };
+        var autoRefreshLabel = document.createElement('label');
+        autoRefreshLabel.innerHTML = 'AutoRefresh';
+        autoRefreshLabel.style.border = '1px solid';
+        autoRefreshLabel.style.padding = '5px';
+        autoRefreshLabel.style.backgroundColor = 'rgba(0, 55, 255, 0.18)';
+        autoRefreshLabel.prepend(autoRefresh);
+        $('h1').prepend(autoRefreshLabel);
+        autoRefresh.checked = true;
+        $(autoRefresh).change();
     }
 })();
