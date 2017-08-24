@@ -1,13 +1,14 @@
 ﻿// ==UserScript==
 // @name         BitbucketReviewer
 // @namespace    http://tampermonkey.net/
-// @version      0.4
+// @version      0.5
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0003.w10:7990/projects/cnb/repos/*
 // @match        http://suus0003.w10:7990/projects/CNB/repos/*
 // @match        http://suus0003.w10:7990//projects/CNB/repos/*
 // @match        http://suus0003.w10:7990//projects/cnb/repos/*
+// @match        http://suus0003.w10:7990/dashboard
 // @grant        none
 // ==/UserScript==
 
@@ -76,5 +77,13 @@ class="select2-search-choice-close" tabindex="-1"></a></li>';
         }
         title.append(btn);
     }
-
+    if (location.href == 'http://suus0003.w10:7990/dashboard') {
+        var arr = jQuery('a').filter(function (a, b) { return b.innerHTML == 'Create pull request'; });
+        for (var i = 0; i < arr.length; i++) {
+            arr[i].href = arr[i].href.replace(/targetBranch=/i, 'targetBranch=dev&targetBranchOld=');
+            if (arr[i].href.indexOf('targetBranch=') < 0) {
+                arr[i].href += '&targetBranch=dev';
+            }
+        }
+    }
 })();
