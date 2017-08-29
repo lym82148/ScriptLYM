@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         OpsFilter
 // @namespace    http://tampermonkey.net/
-// @version      1.3
+// @version      1.4
 // @description  try to take over the world!
 // @author       You
 // @match        https://omcops.bmw.com.cn/Configuration/DeployConfiguration/NewChange*
@@ -235,6 +235,9 @@
             if (idLinks.length) {
                 var deployNow, promoteNow;
                 for (var i = 0; i < $('td>a.btn[href*=ReleasePlanSchedule]').length; i++) {
+                    if ($('td>a.btn[href*=ReleasePlanSchedule]').eq(i).next('a').length) {
+                        continue;
+                    }
                     deployNow = document.createElement('a');
                     deployNow.className = 'btn btn-info';
                     deployNow.innerHTML = 'DNow';
@@ -251,6 +254,9 @@
                     $(deployNow).addClass('btn-sm').prev().addClass('btn-sm');
                 }
                 for (var i = 0; i < $('td>a.btn[href*=ReleasePlanPromote]').length; i++) {
+                    if ($('td>a.btn[href*=ReleasePlanPromote]').eq(i).next('a').length) {
+                        continue;
+                    }
                     promoteNow = document.createElement('a');
                     promoteNow.className = 'btn btn-info';
                     promoteNow.innerHTML = 'Now';
@@ -265,12 +271,12 @@
                     $('td>a.btn[href*=ReleasePlanPromote]')[i].after(promoteNow);
                     $(promoteNow).addClass('btn-sm').prev().addClass('btn-sm');
                 }
-
-            } else {
-                setTimeout(waitTable, 100);
             }
+            // else {
+            //     setTimeout(waitTable, 100);
+            // }
         };
-        setTimeout(waitTable, 100);
+        setInterval(waitTable, 300);
 
     }
     var regMain = /^https:\/\/omcops.bmw.com.cn\/Operation\/Release\/ReleaseManagement\/.*-All/i;
@@ -314,7 +320,7 @@
         setInterval(function () {
             var promoteNow;
             for (var i = 0; i < $('td>a.btn[href*=ReleasePlanPromote]').length; i++) {
-                if ($('td>a.btn[href*=ReleasePlanPromote]').next('a').length) {
+                if ($('td>a.btn[href*=ReleasePlanPromote]').eq(i).next('a').length) {
                     continue;
                 }
                 promoteNow = document.createElement('a');
