@@ -1,13 +1,13 @@
 ﻿// ==UserScript==
 // @name         OpsFilter
 // @namespace    http://tampermonkey.net/
-// @version      1.4
+// @version      1.5
 // @description  try to take over the world!
 // @author       You
 // @match        https://omcops.bmw.com.cn/Configuration/DeployConfiguration/NewChange*
 // @match        https://omcops.bmw.com.cn/Operation/Release/ReleasePlanIndex*
 // @match        https://omcops.bmw.com.cn/Operation/Release/ReleaseJobIndex*
-// @match        https://omcops.bmw.com.cn/Operation/Release/ReleaseManagement/*-All
+// @match        https://omcops.bmw.com.cn/Operation/Release/ReleaseManagement*
 // @grant        none
 // ==/UserScript==
 
@@ -208,7 +208,7 @@
             return res;
         }
     });
-    var reg = /^https:\/\/omcops.bmw.com.cn\/Operation\/Release\/ReleasePlanIndex\/.*-.*/i;
+    var reg = /^https:\/\/omcops.bmw.com.cn\/Operation\/Release\/ReleasePlanIndex.*/i;
     if (reg.test(location.href)) {
         if (location.hash != '') {
             var id = location.hash.replace('#', '');
@@ -279,7 +279,7 @@
         setInterval(waitTable, 300);
 
     }
-    var regMain = /^https:\/\/omcops.bmw.com.cn\/Operation\/Release\/ReleaseManagement\/.*-All/i;
+    var regMain = /^https:\/\/omcops.bmw.com.cn\/Operation\/Release\/ReleaseManagement.*/i;
     var pageLengthFlag = false;
     if (regMain.test(location.href)) {
         var waitMain = function () {
