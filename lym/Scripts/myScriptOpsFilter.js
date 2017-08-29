@@ -7,6 +7,7 @@
 // @match        https://omcops.bmw.com.cn/Configuration/DeployConfiguration/NewChange*
 // @match        https://omcops.bmw.com.cn/Operation/Release/ReleasePlanIndex*
 // @match        https://omcops.bmw.com.cn/Operation/Release/ReleaseJobIndex*
+// @match        https://omcops.bmw.com.cn/Operation/Release/ReleaseManagement/*-All
 // @grant        none
 // ==/UserScript==
 
@@ -208,7 +209,7 @@
             return res;
         }
     });
-    var reg = /^https:\/\/omcops.bmw.com.cn\/Operation\/Release\/ReleasePlanIndex\/BuilD-.*/i;
+    var reg = /^https:\/\/omcops.bmw.com.cn\/Operation\/Release\/ReleasePlanIndex\/.*-.*/i;
     if (reg.test(location.href)) {
         if (location.hash != '') {
             var id = location.hash.replace('#', '');
@@ -220,7 +221,7 @@
                             var tr = $(idLinks[i]).closest('tr');
                             if (tr.length) {
                                 tr.css('backgroundColor', 'rgba(0, 55, 255, 0.18)');
-                                tr.css('backgroundColor', 'rgba(0, 55, 255, 0.18)');
+                                tr.find('a:lt(4)').css({ 'color': 'red', 'font-weight': 'bolder' });
                             }
                         }
                     }
@@ -230,28 +231,131 @@
             };
             setTimeout(find, 100);
         }
-    }
-    if (isDeloy) {
-        var autoRefresh = document.createElement('input');
-        autoRefresh.type = 'checkbox';
-        autoRefresh.style.margin = '5px';
-        var interval;
-        autoRefresh.onchange = function () {
-            if (autoRefresh.checked) {
-                $('#tbList').dataTable().fnDraw();
-                interval = setInterval("$('#tbList').dataTable().fnDraw();", 60000);
+        var waitTable = function () {
+            var idLinks = $('#tbList>tbody>tr>td>a[href*="/job/"]');
+            if (idLinks.length) {
+                var deployNow, promoteNow;
+                for (var i = 0; i < $('td>a.btn[href*=ReleasePlanSchedule]').length; i++) {
+                    deployNow = document.createElement('a');
+                    deployNow.className = 'btn btn-info';
+                    deployNow.innerHTML = 'DNow';
+                    deployNow.style.marginLeft = '10px';
+                    $(deployNow).click(function () {
+                        var id = $(this).closest('tr').find('td>a[href*="/job/"]').text();
+                        var href = $(this).prev()[0].href;
+                        sessionStorage.setItem('OpsDeployId', href.split('/').pop());
+                        $(this).prev()[0].click();
+                        $(this).addClass('disabled');
+                        $(this).prev().addClass('disabled');
+                    });
+                    $('td>a.btn[href*=ReleasePlanSchedule]')[i].after(deployNow);
+                    $(deployNow).addClass('btn-sm').prev().addClass('btn-sm');
+                }
+                for (var i = 0; i < $('td>a.btn[href*=ReleasePlanPromote]').length; i++) {
+                    promoteNow = document.createElement('a');
+                    promoteNow.className = 'btn btn-info';
+                    promoteNow.innerHTML = 'Now';
+                    promoteNow.style.marginLeft = '10px';
+                    promoteNow.target = '_blank';
+                    $(promoteNow).click(function () {
+                        var id = $(this).closest('tr').find('td>a[href*="/job/"]').text();
+                        var href = $(this).prev()[0].href;
+                        $(this).attr('href', href + '#ap');
+                        $(this)[0].click();
+                    });
+                    $('td>a.btn[href*=ReleasePlanPromote]')[i].after(promoteNow);
+                    $(promoteNow).addClass('btn-sm').prev().addClass('btn-sm');
+                }
+
             } else {
-                clearInterval(interval);
+                setTimeout(waitTable, 100);
             }
         };
-        var autoRefreshLabel = document.createElement('label');
-        autoRefreshLabel.innerHTML = 'AutoRefresh';
-        autoRefreshLabel.style.border = '1px solid';
-        autoRefreshLabel.style.padding = '5px';
-        autoRefreshLabel.style.backgroundColor = 'rgba(0, 55, 255, 0.18)';
-        autoRefreshLabel.prepend(autoRefresh);
-        $('h1').prepend(autoRefreshLabel);
-        autoRefresh.checked = true;
-        $(autoRefresh).change();
+        setTimeout(waitTable, 100);
+
+    }
+    var regMain = /^https:\/\/omcops.bmw.com.cn\/Operation\/Release\/ReleaseManagement\/.*-All/i;
+    var pageLengthFlag = false;
+    if (regMain.test(location.href)) {
+        var waitMain = function () {
+            if ($('#tbPlanList tr').length > 1) {
+                var trs = $('#tbPlanList>tbody>tr');
+                var id = sessionStorage.getItem('OpsDeployId');
+                if (!id) {
+                    return;
+                }
+                for (var i = 0; i < trs.length; i++) {
+                    if (trs[i].getAttribute('planid') == id) {
+                        pageLengthFlag = true;
+                        var schedule = $(trs[i]).find('.btn.btn-primary');
+                        var waitAlert = function () {
+                            var alertId = $('#mdPlanId').val();
+                            if (alertId == id) {
+                                $('#createJobModal button.btn-primary')[0].click();
+                                sessionStorage.removeItem('OpsDeployId');
+                            } else {
+                                setTimeout(waitAlert, 100);
+                            }
+                        };
+                        setTimeout(waitAlert, 100);
+                        schedule[0].click();
+                    }
+                }
+                if (!pageLengthFlag) {
+                    pageLengthFlag = true;
+                    $('[name=tbPlanList_length]').val(100).change();
+                    setTimeout(waitMain, 100);
+                }
+            }
+            else {
+                setTimeout(waitMain, 100);
+            }
+        };
+        setTimeout(waitMain, 100);
+        setInterval(function () {
+            var promoteNow;
+            for (var i = 0; i < $('td>a.btn[href*=ReleasePlanPromote]').length; i++) {
+                if ($('td>a.btn[href*=ReleasePlanPromote]').next('a').length) {
+                    continue;
+                }
+                promoteNow = document.createElement('a');
+                promoteNow.className = 'btn btn-info';
+                promoteNow.innerHTML = 'Now';
+                promoteNow.style.marginLeft = '10px';
+                promoteNow.target = '_blank';
+                $(promoteNow).click(function () {
+                    var id = $(this).closest('tr').find('td>a[href*="/job/"]').text();
+                    var href = $(this).prev()[0].href;
+                    $(this).attr('href', href + '#ap');
+                    $(this)[0].click();
+                });
+                $('td>a.btn[href*=ReleasePlanPromote]')[i].after(promoteNow);
+                $(promoteNow).addClass('btn-sm').prev().addClass('btn-sm');
+            }
+        }, 300);
+
+    }
+    if (isDeloy) {
+        // var autoRefresh = document.createElement('input');
+        // autoRefresh.type = 'checkbox';
+        // autoRefresh.style.margin = '5px';
+        // var interval;
+        // autoRefresh.onchange = function () {
+        //     if (autoRefresh.checked) {
+        //         $('#tbList').dataTable().fnDraw();
+        //         interval = setInterval("$('#tbList').dataTable().fnDraw();", 60000);
+        //     } else {
+        //         clearInterval(interval);
+        //     }
+        // };
+        // var autoRefreshLabel = document.createElement('label');
+        // autoRefreshLabel.innerHTML = 'AutoRefresh';
+        // autoRefreshLabel.style.border = '1px solid';
+        // autoRefreshLabel.style.padding = '5px';
+        // autoRefreshLabel.style.backgroundColor = 'rgba(0, 55, 255, 0.18)';
+        // autoRefreshLabel.prepend(autoRefresh);
+        // $('h1').prepend(autoRefreshLabel);
+        // autoRefresh.checked = true;
+        // $(autoRefresh).change();
     }
 })();
