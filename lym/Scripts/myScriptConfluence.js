@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Confluence
 // @namespace    http://tampermonkey.net/
-// @version      0.3
+// @version      0.2
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0001.w10:8090/*
@@ -48,7 +48,9 @@
     hr.style.borderColor = 'pink';
     filterDiv.append(hr);
     filterDiv.append(apiDiv);
-
+    hr = document.createElement('hr');
+    hr.style.borderColor = 'pink';
+    filterDiv.append(hr);
     var ajax1 = $.ajax('http://suus0001.w10:8090/display/UC/API').then(function (data) {
         getTree(data, apiDiv);
     });
@@ -87,9 +89,6 @@
     var filterFun = function () {
         div.innerHTML = 'Filter: ' + str;
         curList = [];
-        if (sideDiv[0].scrollTop != 0) {
-
-        }
         if ('start' in filterFun) {
             if (str.length > 0 && str.replace(/c/g, '') != '') {
                 if (filterFun.start == 0) {
@@ -98,12 +97,6 @@
                 }
                 filterFun.start++;
             }
-            else {
-                filterFun.start = 0;
-                if (sideDiv[0].scrollTop == 0) {
-                    sideDiv[0].scrollTop = filterFun.top;
-                }
-            }
         } else {
             filterFun.start = 0;
         }
@@ -111,7 +104,14 @@
         $(filterDiv).find('li').css("display", 'none');
         filterAction(dbDiv);
         filterAction(apiDiv);
-
+        if ('start' in filterFun) {
+            if (str.length == 0) {
+                filterFun.start = 0;
+                if (sideDiv[0].scrollTop == 0) {
+                    sideDiv[0].scrollTop = filterFun.top;
+                }
+            }
+        }
 
     };
     $.when(ajax1, ajax2).then(filterFun);
