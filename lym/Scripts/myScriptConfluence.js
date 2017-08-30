@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Confluence
 // @namespace    http://tampermonkey.net/
-// @version      0.2
+// @version      0.3
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0001.w10:8090/*
@@ -36,9 +36,11 @@
     div.innerHTML = 'Filter: ';
     div.style.marginButtom = '9px';
     var dbDiv = document.createElement('div');
+    dbDiv.style.minHeight = '20px';
     dbDiv.innerHTML = 'loading';
     var apiDiv = document.createElement('div');
     apiDiv.innerHTML = 'loading';
+    apiDiv.style.minHeight = '20px';
 
     filterDiv.append(div);
     filterDiv.append(dbDiv);
@@ -58,7 +60,7 @@
         var res = $(div).find('a');
         var maxCount = curList.length + 10;
         for (var i = 0; i < res.length; i++) {
-            if (res[i].lid.indexOf(str) >= 0) {
+            if (res[i].lid.indexOf(str) >= 0 && str.length > 0) {
                 if (curList.length == 0) {
                     res[i].style.backgroundColor = lineColor;
                     curList.curIndex = 0;
@@ -85,12 +87,32 @@
     var filterFun = function () {
         div.innerHTML = 'Filter: ' + str;
         curList = [];
+        if (sideDiv[0].scrollTop != 0) {
+
+        }
+        if ('start' in filterFun) {
+            if (str.length > 0 && str.replace(/c/g, '') != '') {
+                if (filterFun.start == 0) {
+                    filterFun.top = sideDiv[0].scrollTop;
+                    sideDiv[0].scrollTop = 0;
+                }
+                filterFun.start++;
+            }
+            else {
+                filterFun.start = 0;
+                if (sideDiv[0].scrollTop == 0) {
+                    sideDiv[0].scrollTop = filterFun.top;
+                }
+            }
+        } else {
+            filterFun.start = 0;
+        }
         $(filterDiv).find('a').css("display", 'none');
         $(filterDiv).find('li').css("display", 'none');
         filterAction(dbDiv);
         filterAction(apiDiv);
-        document.body.scrollTop = 0;
-        sideDiv[0].scrollTop = 0;
+
+
     };
     $.when(ajax1, ajax2).then(filterFun);
     sideDiv.prepend(filterDiv);
@@ -197,6 +219,6 @@
             return res;
         }
     });
-
+    $('.favourite-space-icon>button').css({ top: 'unset', "margin-top": '-18px' });
 
 })();
