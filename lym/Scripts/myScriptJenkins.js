@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Jenkins
 // @namespace    http://tampermonkey.net/
-// @version      1.1
+// @version      1.2
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0006.w10:8080/
@@ -39,7 +39,7 @@
                     divTmp.style.fontSize = '26px';
                     divTmp.innerHTML = 'Conf';
                     divTmp.target = '_blank';
-                    divTmp.href = 'https://omcops.bmw.com.cn/Configuration/DeployConfiguration/NewChange?param=' + curText + '-' + divs[di];
+                    divTmp.href = 'https://omcops.bmw.com.cn/Configuration/DeployConfiguration/NewChange#' + curText + '-' + divs[di];
                     divTmp.style.marginLeft = '0px';
                     divTmp.style.marginRight = '36px';
                     divTmp.style.textDecoration = 'underline';
