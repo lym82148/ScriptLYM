@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         OpsFilter
 // @namespace    http://tampermonkey.net/
-// @version      1.6
+// @version      1.7
 // @description  try to take over the world!
 // @author       You
 // @match        https://omcops.bmw.com.cn/Configuration/DeployConfiguration/NewChange*
@@ -233,7 +233,7 @@
         var waitTable = function () {
             var idLinks = $('#tbList>tbody>tr>td>a[href*="/job/"]');
             if (idLinks.length) {
-                var deployNow, promoteNow;
+                var deployNow, promoteNow, config;
                 for (var i = 0; i < $('td>a.btn[href*=ReleasePlanSchedule]').length; i++) {
                     if ($('td>a.btn[href*=ReleasePlanSchedule]').eq(i).next('a').length) {
                         continue;
@@ -261,7 +261,6 @@
                     promoteNow.className = 'btn btn-info';
                     promoteNow.innerHTML = 'Now';
                     promoteNow.style.marginLeft = '10px';
-                    promoteNow.target = '_blank';
                     $(promoteNow).click(function () {
                         var id = $(this).closest('tr').find('td>a[href*="/job/"]').text();
                         var href = $(this).prev()[0].href;
@@ -270,6 +269,20 @@
                     });
                     $('td>a.btn[href*=ReleasePlanPromote]')[i].after(promoteNow);
                     $(promoteNow).addClass('btn-sm').prev().addClass('btn-sm');
+                }
+                for (var i = 0; i < $('td>a[href*=ReleasePlanEdit]').length; i++) {
+                    if ($('td>a[href*=ReleasePlanEdit]').eq(i).next('a').length) {
+                        continue;
+                    }
+                    config = document.createElement('a');
+                    config.className = 'pull-right';
+                    config.style.fontWeight = 'bolder';
+                    config.innerHTML = 'Config';
+                    config.style.marginLeft = '10px';
+                    config.target = '_blank';
+                    var name = $('td>a[href*=ReleasePlanEdit]:eq(' + i + ')').closest('tr').find('td>a[href*="ReleasePlanDetails"]').text();
+                    config.href = 'https://omcops.bmw.com.cn/Configuration/DeployConfiguration/NewChange' + '#' + name + '-' + $('ul.nav>li.active').text();
+                    $('td>a[href*=ReleasePlanEdit]')[i].after(config);
                 }
             }
             // else {
@@ -282,6 +295,12 @@
     var regMain = /^https:\/\/omcops.bmw.com.cn\/Operation\/Release\/ReleaseManagement.*/i;
     var pageLengthFlag = false;
     if (regMain.test(location.href)) {
+        window.alertOld = window.alert;
+        window.alert = function (a) {
+            if (!a.startsWith('Success')) {
+                window.alertOld(a);
+            }
+        };
         var waitMain = function () {
             if ($('#tbPlanList tr').length > 1) {
                 var trs = $('#tbPlanList>tbody>tr');
@@ -327,7 +346,6 @@
                 promoteNow.className = 'btn btn-info';
                 promoteNow.innerHTML = 'Now';
                 promoteNow.style.marginLeft = '10px';
-                promoteNow.target = '_blank';
                 $(promoteNow).click(function () {
                     var id = $(this).closest('tr').find('td>a[href*="/job/"]').text();
                     var href = $(this).prev()[0].href;

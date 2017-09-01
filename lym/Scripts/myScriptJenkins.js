@@ -224,8 +224,18 @@
             else if (e.key == 'Enter') {
                 if (curList.length) {
                     if (curList[curList.curIndex].tagName == 'A') {
+                        if (e.ctrlKey) {
+                            curList[curList.curIndex].target = '_blank';
+                        } else {
+                            curList[curList.curIndex].target = '';
+                        }
                         curList[curList.curIndex].click();
                     } else {
+                        if (e.ctrlKey) {
+                            curList[curList.curIndex].getElementsByTagName('a')[1].target = '_blank';
+                        } else {
+                            curList[curList.curIndex].getElementsByTagName('a')[1].target = '';
+                        }
                         curList[curList.curIndex].getElementsByTagName('a')[1].click();
                     }
                 }
