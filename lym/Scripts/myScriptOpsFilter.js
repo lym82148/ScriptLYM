@@ -1,10 +1,10 @@
 ﻿// ==UserScript==
 // @name         OpsFilter
 // @namespace    http://tampermonkey.net/
-// @version      1.7
+// @version      1.8
 // @description  try to take over the world!
 // @author       You
-// @match        https://omcops.bmw.com.cn/Configuration/DeployConfiguration/NewChange*
+// @match        xxxhttps://omcops.bmw.com.cn/Configuration/DeployConfiguration/NewChange*
 // @match        https://omcops.bmw.com.cn/Operation/Release/ReleasePlanIndex*
 // @match        https://omcops.bmw.com.cn/Operation/Release/ReleaseJobIndex*
 // @match        https://omcops.bmw.com.cn/Operation/Release/ReleaseManagement*
@@ -264,8 +264,8 @@
                     $(promoteNow).click(function () {
                         var id = $(this).closest('tr').find('td>a[href*="/job/"]').text();
                         var href = $(this).prev()[0].href;
-                        $(this).attr('href', href + '#ap');
-                        $(this)[0].click();
+                        location.href = href + '#ap';
+                        // $(this)[0].click();
                     });
                     $('td>a.btn[href*=ReleasePlanPromote]')[i].after(promoteNow);
                     $(promoteNow).addClass('btn-sm').prev().addClass('btn-sm');
@@ -277,6 +277,7 @@
                     config = document.createElement('a');
                     config.className = 'pull-right';
                     config.style.fontWeight = 'bolder';
+                    config.style.fontSize = '18px';
                     config.innerHTML = 'Config';
                     config.style.marginLeft = '10px';
                     config.target = '_blank';
@@ -349,8 +350,8 @@
                 $(promoteNow).click(function () {
                     var id = $(this).closest('tr').find('td>a[href*="/job/"]').text();
                     var href = $(this).prev()[0].href;
-                    $(this).attr('href', href + '#ap');
-                    $(this)[0].click();
+                    location.href = href + '#ap';
+                    //$(this)[0].click();
                 });
                 $('td>a.btn[href*=ReleasePlanPromote]')[i].after(promoteNow);
                 $(promoteNow).addClass('btn-sm').prev().addClass('btn-sm');
