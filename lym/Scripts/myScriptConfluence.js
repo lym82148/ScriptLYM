@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Confluence
 // @namespace    http://tampermonkey.net/
-// @version      0.4
+// @version      0.5
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0001.w10:8090/*
@@ -139,7 +139,7 @@
         if (e.target.tagName == 'INPUT') {
             return;
         }
-        if (e.ctrlKey) {
+        if (e.ctrlKey && e.key != 'Enter') {
             return;
         }
         var arrow;

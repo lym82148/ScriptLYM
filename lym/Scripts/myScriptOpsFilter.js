@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         OpsFilter
 // @namespace    http://tampermonkey.net/
-// @version      1.5
+// @version      1.6
 // @description  try to take over the world!
 // @author       You
 // @match        https://omcops.bmw.com.cn/Configuration/DeployConfiguration/NewChange*
@@ -17,7 +17,7 @@
     div.style.color = 'red';
     div.style.fontSize = '32px';
     div.innerHTML = 'Filter: ';
-    var isAll = location.href.toLowerCase().startsWith('https://omcops.bmw.com.cn/Operation/Release/ReleaseManagement/'.toLowerCase()) && location.href.toLowerCase().endsWith('-all');
+    var isAll = location.href.toLowerCase().startsWith('https://omcops.bmw.com.cn/Operation/Release/ReleaseManagement'.toLowerCase());
     if (!isAll) {
         $('h1').append(div);
     }
