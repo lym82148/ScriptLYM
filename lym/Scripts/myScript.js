@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         CheckConfig
 // @namespace    http://tampermonkey.net/
-// @version      2.3
+// @version      2.4
 // @description  try to take over the world!
 // @author       You
 // @match        https://portal.azure.cn/*
@@ -13,7 +13,7 @@
     //narr
     var time = 150;
     //var omc = $('pre').find('[class=str]').map(function (a, b) { if (b.innerHTML.indexOf('"appsetting_') == 0) return b.innerHTML.replace('"appsetting_', '').replace('"', ''); }).toArray();
-    var omc = $.config.omcArr||[];
+    var omc = [];
     var omcNew = $('#service-list');
     if (!("r" in window)) {
         Object.defineProperty(window, "r", {
@@ -21,6 +21,7 @@
             get: function () { ds(); }
         });
         if(omcNew.length){
+            omc = $.config.omcArr||[];
             $.config.ini_dataOld = $.config.ini_data;
             $.config.ini_data = function(data){
                 try{
