@@ -84,7 +84,7 @@
         $.ajax('https://omcops.bmw.com.cn/Configuration/DeployConfiguration/Index/' + releaseEnv + '-All').then(function (data) {
             $(that).css('color', 'red');
             $(that).html(' Click Here To Email ');
-            var arr = $(data).find('table tr').map(function (a, b) { if (b.firstElementChild.innerText.trim() == serviceName) return b; });
+            var arr = $(data).find('table tr').map(function (a, b) { if ($(b).find('td:eq(2)').text().trim() == serviceName) return b; });
             var configContent;
             for (var i = 0; i < arr.length; i++) {
                 if (arr[i].cells[4].innerText.trim() == 'WaitAllows') {
