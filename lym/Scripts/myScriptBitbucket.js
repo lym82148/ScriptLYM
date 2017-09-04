@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         BitbucketReviewer
 // @namespace    http://tampermonkey.net/
-// @version      0.5
+// @version      0.6
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0003.w10:7990/projects/cnb/repos/*
@@ -51,19 +51,20 @@
 <img src="http://www.gravatar.com/avatar/57e6d28e6ba87d3532b70b02ca1bb0fb.jpg?s=32&amp;d=mm" alt="{{displayName}}"></span></span><span class="display-name">{{displayName}}</span></div></div>\
 <a href="#" onclick="jQuery(this).closest(\'.select2-search-choice\').hide();jQuery(\'#reviewers\').val(jQuery(\'#s2id_reviewers ul:eq(0)>li:visible span[data-username]\').map(function(a,b){return jQuery(b).data(\'username\')}).toArray().join(\'|!|\'));"\
 class="select2-search-choice-close" tabindex="-1"></a></li>';
-
+    var sleep = function (time) {
+        return new Promise(function (resolve, reject) {
+            setTimeout(function () {
+                resolve();
+            }, time);
+        });
+    };
     tabFun({ key: 'Tab' });
-    setTimeout(function () {
-        if (jQuery('#s2id_reviewers ul:eq(0)>li:visible span[data-username]').map(function (a, b) { return jQuery(b).data('username'); }).toArray().length == 0) {
-            tabFun({ key: 'Tab' });
+    var startFun = async function(){
+        while(jQuery('#s2id_reviewers ul:eq(0)>li:visible span[data-username]').map(function (a, b) { return jQuery(b).data('username'); }).toArray().length != 0){
+            await sleep(100);
         }
-    }, 500);
-    setTimeout(function () {
-        if (jQuery('#s2id_reviewers ul:eq(0)>li:visible span[data-username]').map(function (a, b) { return jQuery(b).data('username'); }).toArray().length == 0) {
-            tabFun({ key: 'Tab' });
-        }
-    }, 1500);
-
+        tabFun({ key: 'Tab' });
+    };
     var title = jQuery('h2:eq(0)');
     if (title.html() == 'Create pull request') {
         var btn = document.createElement('a');
@@ -86,4 +87,5 @@ class="select2-search-choice-close" tabindex="-1"></a></li>';
             }
         }
     }
+    startFun();
 })();
