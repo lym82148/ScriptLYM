@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         CheckConfig
 // @namespace    http://tampermonkey.net/
-// @version      2.5
+// @version      2.6
 // @description  try to take over the world!
 // @author       You
 // @match        https://portal.azure.cn/*
@@ -46,13 +46,12 @@
             var jsonDiv=document.createElement('pre');
             jsonDiv.style.marginTop='10px';
             paDiv.className='col-md-12';
-            paDiv.append(expandBtn);            
+            paDiv.append(expandBtn);
             paDiv.append(collapseBtn);
 
             paDiv.append(jsonDiv);
-
             $('.row.clearfix').append(paDiv);
-            omc = $.config.omcArr||[];
+
             $.config.ini_dataOld = $.config.ini_data;
             $.config.ini_data = function(data){
                 try{
@@ -82,7 +81,7 @@
             var env = location.hash.substring(index+1);
             var arr = $('#service-list>li').toArray();
             for(var i=0;i<arr.length;i++){
-                if(arr[i].innerText==service){
+                if(arr[i].innerText.toLowerCase()==service.toLowerCase()){
                     $('#service-list').scrollTop(arr[i].offsetTop);
                     arr[i].click();
                     var envArr = $('#inst-list>li').toArray();
@@ -112,7 +111,7 @@
     var add = /=\s*"[^"]*/g;
     var keyArr = config.toString().match(add);
     var rep = /=\s*"/;
-
+    omc = $.config.omcArr||[];
     if (omc.length && keyArr.length % 2 == 0) {
         var keyArr2 = keyArr.filter(function (a, b) { return b % 2 == 0; }).map(function (a) { return a.replace(rep, ''); });
         var diff = function (a, b) {
