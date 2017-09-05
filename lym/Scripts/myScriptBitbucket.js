@@ -9,6 +9,7 @@
 // @match        http://suus0003.w10:7990//projects/CNB/repos/*
 // @match        http://suus0003.w10:7990//projects/cnb/repos/*
 // @match        http://suus0003.w10:7990/dashboard
+// @match        http://suus0003.w10:7990/plugins/servlet/create-branch*
 // @grant        none
 // ==/UserScript==
 
@@ -17,6 +18,33 @@
     var search = jQuery('#s2id_autogen1');
     var input = jQuery('#reviewers');
     var curUserName = jQuery('#current-user').data('username');
+    var sleep = function (time) {
+        return new Promise(function (resolve, reject) {
+            setTimeout(function () {
+                resolve();
+            }, time);
+        });
+    };
+    if(jQuery('#branch-type-menu').length){
+        jQuery('#branch-type-menu ul li[data-id=FEATURE]').click();
+        jQuery('#branch-name').val(curUserName+'/'+jQuery('#branch-name').val());
+        var branchDiv = jQuery('#branch-from-selector').click().parent();
+        var chooseDev = document.createElement('a');
+        chooseDev.href='javascript:void(0);';
+        chooseDev.style.marginLeft = '10px';
+        chooseDev.style.color = '#ff2424';
+        chooseDev.innerHTML = 'choose dev';
+        branchDiv.append(chooseDev);
+        var startFun = async function(){
+            while(!jQuery('#branch-from-selector-dialog-tab-pane-0>ul>li').length){
+                await sleep(100);
+            }
+            jQuery('#branch-from-selector-dialog-tab-pane-0>ul>li>a[data-id*="/dev"]:eq(0)').click();
+        };
+        chooseDev.onclick = startFun;
+        startFun();
+        return;
+    }
     var defaultUserList = [{ userName: 'shi', displayName: 'Baoyu SHI' },
                            { userName: 'han', displayName: 'Guoguang Han' },
                            { userName: 'xyang', displayName: 'Yuqi Zhao' },
