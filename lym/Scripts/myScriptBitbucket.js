@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         BitbucketReviewer
 // @namespace    http://tampermonkey.net/
-// @version      0.6
+// @version      0.7
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0003.w10:7990/projects/cnb/repos/*
@@ -27,7 +27,7 @@
     };
     if(jQuery('#branch-type-menu').length){
         jQuery('#branch-type-menu ul li[data-id=FEATURE]').click();
-        jQuery('#branch-name').val(curUserName+'/'+jQuery('#branch-name').val());
+        jQuery('#branch-name').val(curUserName+'/'+jQuery('#branch-name').val()).css({"min-width":'340px'});
         var branchDiv = jQuery('#branch-from-selector').click().parent();
         var chooseDev = document.createElement('a');
         chooseDev.href='javascript:void(0);';
