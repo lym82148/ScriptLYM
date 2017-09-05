@@ -29,7 +29,9 @@
             if (curA.length > 1) {
                 var curText = curA[1].text || '';
                 curText = curText.replace(/^China-/, '').replace(/-.*/, '').replace(/-h5$/i, '');
-
+                if (curText == 'Gateway') {
+                    curText = 'BTCAPIServer';
+                }
                 var divLinkConfig = document.createElement('div');
                 divLinkConfig.style.height = '50px';
                 var divs = ['Build', 'Dev', 'Int', 'Prod '];
