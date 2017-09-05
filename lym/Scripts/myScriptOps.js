@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         OpsAutoEmail
 // @namespace    http://tampermonkey.net/
-// @version      0.7
+// @version      1.7
 // @description  try to take over the world!
 // @author       You
 // @match        https://omcops.bmw.com.cn/Operation/Release/ReleasePlanDetails/*

@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         CheckConfig
 // @namespace    http://tampermonkey.net/
-// @version      2.6
+// @version      3.6
 // @description  try to take over the world!
 // @author       You
 // @match        https://portal.azure.cn/*
