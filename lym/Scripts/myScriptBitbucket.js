@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         BitbucketReviewer
 // @namespace    http://tampermonkey.net/
-// @version      2.0
+// @version      2.1
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0003.w10:7990/projects/cnb/repos/*
@@ -126,7 +126,24 @@ class="select2-search-choice-close" tabindex="-1"></a></li>';
     jenkins.style.fontSize='24px';
     jenkins.style.color = '#ff6e6e';
     jenkins.style.textDecoration='underline';
+    switch(service){
+        case 'bmwgateway':
+            service = 'gateway';
+            break;
+        case 'paymentgateway':
+            service = 'payment';
+            break;
+        case 'orderfulfillmentworker':
+            service = 'orderfullfilmentworker';
+            break;
+    }
     jenkins.href = 'http://suus0006.w10:8080/#'+service;
-    jQuery('.pull-request-metadata').after(jenkins);
+    if(jQuery('.pull-request-metadata').length){
+        jQuery('.pull-request-metadata').after(jenkins);
+    }
+    else if(jQuery('.repository-breadcrumbs').length){
+        jenkins.style.marginLeft='300px';
+        jQuery('.repository-breadcrumbs').append(jenkins);
+    }
     startFun();
 })();
