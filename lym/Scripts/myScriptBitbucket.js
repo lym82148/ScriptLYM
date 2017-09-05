@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         BitbucketReviewer
 // @namespace    http://tampermonkey.net/
-// @version      1.9
+// @version      2.0
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0003.w10:7990/projects/cnb/repos/*
@@ -10,7 +10,6 @@
 // @match        http://suus0003.w10:7990//projects/cnb/repos/*
 // @match        http://suus0003.w10:7990/dashboard
 // @match        http://suus0003.w10:7990/plugins/servlet/create-branch*
-// @match        http://suus0003.w10:7990/projects/CNB/repos/driveviolationservice/pull-requests*
 // @grant        none
 // ==/UserScript==
 
@@ -26,19 +25,6 @@
             }, time);
         });
     };
-    var regBran = /http:\/\/suus0003.w10:7990\/projects\/CNB\/repos\/driveviolationservice\/pull-requests/i;
-    if(regBran.test( location.href)){
-        var service = jQuery('#content').data('reposlug');
-        var jenkins = document.createElement('a');
-        jenkins.innerHTML = 'Jenkins';
-        jenkins.target = '_blank';
-        jenkins.style.fontSize='24px';
-        jenkins.style.color = '#ff6e6e';
-        jenkins.style.textDecoration='underline';
-        jenkins.href = 'http://suus0006.w10:8080/#'+service;
-        jQuery('.pull-request-metadata').after(jenkins);
-        return;
-    }
     if(jQuery('#branch-type-menu').length){
         jQuery('#branch-type-menu ul li[data-id=FEATURE]').click();
         jQuery('#branch-name').val(curUserName+'/'+jQuery('#branch-name').val()).css({"min-width":'340px'});
@@ -133,5 +119,14 @@ class="select2-search-choice-close" tabindex="-1"></a></li>';
             }
         }
     }
+    var service = jQuery('#content').data('reposlug');
+    var jenkins = document.createElement('a');
+    jenkins.innerHTML = 'Jenkins';
+    jenkins.target = '_blank';
+    jenkins.style.fontSize='24px';
+    jenkins.style.color = '#ff6e6e';
+    jenkins.style.textDecoration='underline';
+    jenkins.href = 'http://suus0006.w10:8080/#'+service;
+    jQuery('.pull-request-metadata').after(jenkins);
     startFun();
 })();
