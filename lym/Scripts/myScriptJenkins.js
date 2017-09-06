@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Jenkins
 // @namespace    http://tampermonkey.net/
-// @version      2.4
+// @version      2.5
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0006.w10:8080/
