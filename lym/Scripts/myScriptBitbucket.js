@@ -119,31 +119,91 @@ class="select2-search-choice-close" tabindex="-1"></a></li>';
             }
         }
     }
-    var service = jQuery('#content').data('reposlug');
+    var service = jQuery('#content').data('reponame');
+    var jenkinsService;
     var jenkins = document.createElement('a');
     jenkins.innerHTML = 'Jenkins';
     jenkins.target = '_blank';
     jenkins.style.fontSize='24px';
     jenkins.style.color = '#ff6e6e';
     jenkins.style.textDecoration='underline';
+    var opsName = service;
+    var until = 'dev';
     switch(service){
-        case 'bmwgateway':
-            service = 'gateway';
+        case 'BmwGateway':
+            jenkinsService = 'gateway';
+            opsName = 'BTCAPIServer';
+            until = 'ChinaDev';
             break;
-        case 'paymentgateway':
-            service = 'payment';
+        case 'PaymentGateway':
+            jenkinsService = 'payment';
+            opsName = 'PaymentService';
             break;
-        case 'orderfulfillmentworker':
-            service = 'orderfullfilmentworker';
+        case 'OrderFulfillmentWorker':
+            jenkinsService = 'orderfullfilmentworker';
+            opsName = 'OrderFullfilmentWorker';
             break;
     }
-    jenkins.href = 'http://suus0006.w10:8080/#'+service;
+    jenkins.href = 'http://suus0006.w10:8080/#'+jenkinsService;
+    var commitLink = document.createElement('a');
+    commitLink.innerHTML = 'Commits';
+    commitLink.style.color = '#ff6e6e';
+    commitLink.style.marginLeft = '100px';
+    commitLink.style.fontSize = '24px';
+    commitLink.style.marginBottom = '10px';
+    commitLink.style.display = 'block';
+    commitLink.style.textDecoration='underline';
+    commitLink.href = 'http://suus0003.w10:7990/projects/CNB/repos/'+service+'/commits?until='+until;
+    if(jQuery('h2').html()=='Commits'){
+        commitLink.innerHTML = 'Get Deploy Status From Ops';
+        commitLink.style.color = 'red';
+        commitLink.href = 'javascript:void(0);';
+        commitLink.onclick = () => {
+            window.open('https://omcops.bmw.com.cn/#' + opsName, null, "height=11,width=11,status=no,toolbar=no,scrollbars=no,menubar=no,location=no,top=" + (window.screenTop + 900) + ",left=" + (window.screenLeft + 500));
+            commitLink.innerHTML = 'Starting Task';
+            commitLink.style.color = 'pink';
+            setTimeout(function () {
+                commitLink.innerHTML = 'Get Deploy Status From Ops';
+                commitLink.style.color = 'red';
+            }, 1000);
+        };
+    }
     if(jQuery('.pull-request-metadata').length){
-        jQuery('.pull-request-metadata').after(jenkins);
+        jQuery('.pull-request-metadata').after(jenkins).after(commitLink);
     }
     else if(jQuery('.repository-breadcrumbs').length){
-        jenkins.style.marginLeft='300px';
-        jQuery('.repository-breadcrumbs').append(jenkins);
+        jenkins.style.marginLeft='100px';
+        jQuery('.repository-breadcrumbs').append(jenkins).append(commitLink);;
     }
+    var envArr = ["", "Build", "Dev", 'Int', 'Stg', 'Prod'];
+    window.onmessage = function (e) {
+        var arr = e.data.Data;
+        console.log(e.data);
+        var gitRepoTag;
+        for (var i = 0; i < arr.length; i++) {
+            if (arr[i].Status != 5 && arr[i].Status != 7) { continue; }
+            gitRepoTag = arr[i].GitRepoTag.replace(/[^\d]*/i,'');
+            break;
+        }
+        if(jQuery('span.tag[data-names*='+gitRepoTag+']').length){
+            if(jQuery('span.tag[data-names*='+gitRepoTag+']').closest('tr').find('td.commit>span.ops>a').length){
+                var ele =jQuery('span.tag[data-names*='+gitRepoTag+']').closest('tr').find('td.commit>span.ops>a')[0];
+            }else{
+                var span =document.createElement('span');
+                span.className='ops';
+                var ele = document.createElement('a');
+                ele.style.color = 'red';
+                ele.style.fontWeight = 'bolder';
+                ele.style.fontSize = '18px'  ;
+                ele.style.marginLeft='5px';
+                span.append(ele);
+                jQuery('span.tag[data-names*='+gitRepoTag+']').closest('tr').find('td.commit').append(span);
+            }
+            if (envArr.indexOf(ele.innerHTML) < envArr.indexOf(e.data.Environment)) {
+                ele.innerHTML = e.data.Environment;
+                ele.href = 'https://omcops.bmw.com.cn/Operation/Release/ReleasePlanIndex/' + e.data.Environment + '-' + opsName;
+            }
+        }
+    };
     startFun();
 })();

@@ -162,7 +162,7 @@
             opsLink.href = 'javascript:void(0);';
             opsLink.target = '_blank';
             opsLink.onclick = () => {
-                window.open('https://omcops.bmw.com.cn/#' + curText, null, "height=11,width=11,status=no,toolbar=no,scrollbars=no,menubar=no,location=no,top=" + (window.screenTop + 500) + ",left=" + (window.screenLeft + 500));
+                window.open('https://omcops.bmw.com.cn/#' + curText, null, "height=11,width=11,status=no,toolbar=no,scrollbars=no,menubar=no,location=no,top=" + (window.screenTop + 900) + ",left=" + (window.screenLeft + 500));
                 opsLink.innerHTML = 'Starting Task';
                 opsLink.style.color = 'pink';
                 setTimeout(function () {
