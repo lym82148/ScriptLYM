@@ -1,17 +1,48 @@
 ﻿// ==UserScript==
 // @name         OpsFilter
 // @namespace    http://tampermonkey.net/
-// @version      2.8
+// @version      2.9
 // @description  try to take over the world!
 // @author       You
 // @match        xxxhttps://omcops.bmw.com.cn/Configuration/DeployConfiguration/NewChange*
 // @match        https://omcops.bmw.com.cn/Operation/Release/ReleasePlanIndex*
 // @match        https://omcops.bmw.com.cn/Operation/Release/ReleaseJobIndex*
 // @match        https://omcops.bmw.com.cn/Operation/Release/ReleaseManagement*
+// @match        https://omcops.bmw.com.cn/
 // @grant        none
 // ==/UserScript==
 
 (function () {
+    if(location.href.startsWith('https://omcops.bmw.com.cn/#')){
+        for(var i=0;i<document.body.children.length;){
+            document.body.children[i].remove();
+        }
+        var waitDiv = document.createElement('div');
+        waitDiv.style.color= 'red';
+        waitDiv.innerHTML = 'Waiting';
+        document.body.append(waitDiv);
+        var startFun = function(){
+            var service = location.hash.substr(1);
+            var envs = ['Dev','Int','Stg','Prod'];
+            var tasks = [];
+            envs.forEach(function(a){
+                var link =  'https://omcops.bmw.com.cn/Operation/Release/ReleasePlanAsync?limit=10&start=0&page=1&serviceName='+service+'&environment='+a;
+                tasks.push($.ajax(link).then(function(data){
+                    opener.postMessage(data,'*');
+                }));
+            });
+            $.when(...tasks).then(function(){close();});
+        };
+        setTimeout( startFun,0);
+        return;
+    }
+    var sleep = function (time) {
+        return new Promise(function (resolve, reject) {
+            setTimeout(function () {
+                resolve();
+            }, time);
+        });
+    };
     console.log('输入 c 切换筛选');
     var div = document.createElement('div');
     div.style.color = 'red';
@@ -291,7 +322,6 @@
             // }
         };
         setInterval(waitTable, 300);
-
     }
     var regMain = /^https:\/\/omcops.bmw.com.cn\/Operation\/Release\/ReleaseManagement.*/i;
     var pageLengthFlag = false;
@@ -381,5 +411,34 @@
         // $('h1').prepend(autoRefreshLabel);
         // autoRefresh.checked = true;
         // $(autoRefresh).change();
+    }
+    var hrefFun = async function(){
+        while(!$('.nav.nav-tabs>li:first').length){
+            await sleep(100);
+        }
+        var liArr = ['Filter:','Build','Dev','Int','Stg','Prod'];
+        var model = $('.nav.nav-tabs>li:first>a');
+        var href = model.attr('href').substr(0,model.attr('href').lastIndexOf('/')+1);
+        var newUl = document.createElement('ul');
+        newUl.className = 'nav nav-tabs';
+        for(var i=0;i<liArr.length;i++){
+            var currentLi = document.createElement('li');
+            var currentA = document.createElement('a');
+            currentA.innerHTML = liArr[i];
+            currentLi.append(currentA);
+            if(i>0){
+                currentA.onclick = function(){
+                    location.href = href+this.innerHTML+'-'+$('.btn.btn-primary.btn-text').html();
+                };
+            }
+            newUl.append(currentLi);
+        }
+        $('.nav.nav-tabs').prepend($('<li><a>All&nbsp;&nbsp;&nbsp;&nbsp;:</a></li>')).after(newUl);
+        $('.nav.nav-tabs').find('a:first').css({cursor:'unset','font-weight':'bolder'});
+        $('.nav.nav-tabs:last').find('a:gt(0)').css({color:'#ff6a6a'});
+        
+    };
+    if(!isAll){
+        hrefFun();
     }
 })();
