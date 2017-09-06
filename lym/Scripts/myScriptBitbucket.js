@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         BitbucketReviewer
 // @namespace    http://tampermonkey.net/
-// @version      2.2
+// @version      2.3
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0003.w10:7990/projects/cnb/repos/*
@@ -120,7 +120,6 @@ class="select2-search-choice-close" tabindex="-1"></a></li>';
         }
     }
     var service = jQuery('#content').data('reponame');
-    var jenkinsService;
     var jenkins = document.createElement('a');
     jenkins.innerHTML = 'Jenkins';
     jenkins.target = '_blank';
@@ -128,6 +127,7 @@ class="select2-search-choice-close" tabindex="-1"></a></li>';
     jenkins.style.color = '#ff6e6e';
     jenkins.style.textDecoration='underline';
     var opsName = service;
+    var jenkinsService = service;
     var until = 'dev';
     switch(service){
         case 'BmwGateway':
@@ -144,7 +144,7 @@ class="select2-search-choice-close" tabindex="-1"></a></li>';
             opsName = 'OrderFullfilmentWorker';
             break;
     }
-    jenkins.href = 'http://suus0006.w10:8080/#'+jenkinsService;
+    jenkins.href = 'http://suus0006.w10:8080/#'+jenkinsService.toLowerCase();
     var commitLink = document.createElement('a');
     commitLink.innerHTML = 'Commits';
     commitLink.style.color = '#ff6e6e';
