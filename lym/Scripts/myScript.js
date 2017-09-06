@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         CheckConfig
 // @namespace    http://tampermonkey.net/
-// @version      3.6
+// @version      3.7
 // @description  try to take over the world!
 // @author       You
 // @match        https://portal.azure.cn/*
@@ -9,11 +9,12 @@
 // @grant        none
 // ==/UserScript==
 
-(function ds() {
+(function ds(oldJsonConfig) {
     //narr
     var time = 150;
     //var omc = $('pre').find('[class=str]').map(function (a, b) { if (b.innerHTML.indexOf('"appsetting_') == 0) return b.innerHTML.replace('"appsetting_', '').replace('"', ''); }).toArray();
     var omc = [];
+    var envs = ['build','dev','int','stg','prod'];
     var omcNew = $('#service-list');
     if (!("r" in window)) {
         Object.defineProperty(window, "r", {
@@ -25,11 +26,13 @@
             var paTitle = document.createElement('span');
             paTitle.innerHTML="Old Config ";
             paTitle.style.fontWeight = 'bolder';
+            paTitle.style.marginLeft='10px';
             paDiv.append(paTitle);
             var expandBtn = document.createElement('span');
             expandBtn.className='btn btn-info';
             expandBtn.innerHTML="Expand";
             expandBtn.style.display='none';
+            expandBtn.style.marginLeft='10px';
             expandBtn.onclick = function(){
                 jsonDiv.style.display='';
                 collapseBtn.style.display='';
@@ -38,6 +41,7 @@
             var collapseBtn = document.createElement('span');
             collapseBtn.className='btn btn-primary';
             collapseBtn.innerHTML="Collapse";
+            collapseBtn.style.marginLeft='10px';
             collapseBtn.onclick = function(){
                 jsonDiv.style.display='none';
                 expandBtn.style.display='';
@@ -48,7 +52,21 @@
             paDiv.className='col-md-12';
             paDiv.append(expandBtn);
             paDiv.append(collapseBtn);
-
+            var promoteBtn = document.createElement('span');
+            promoteBtn.className='btn btn-danger';
+            promoteBtn.innerHTML="Promote";
+            promoteBtn.style.marginLeft='10px';
+            promoteBtn.style.display = 'none';
+            promoteBtn.onclick = function(){
+                var env = this.getAttribute('data-env');
+                if($.inst.obj.find('li:contains(-'+env+')').length){
+                    var oldConfig= $.config.omcObj;
+                    $.inst.obj.find('li:contains(-'+env+')').click();
+                    $('#comp-list>li:eq(0)').click();
+                    ds(oldConfig);
+                }
+            };
+            paDiv.append(promoteBtn);
             paDiv.append(jsonDiv);
             $('.row.clearfix').append(paDiv);
 
@@ -56,6 +74,7 @@
             $.config.ini_data = function(data){
                 try{
                     $.config.omcArr = data.map(function(a){return a.Name.replace(/-instance$/,'');});
+                    $.config.omcValueArr = data.map(function(a){return a.Value;});
                     var obj = {};
                     data.forEach(function(a){
                         if(a.ParentToName =="properties" ){
@@ -65,6 +84,17 @@
                     });
                     $.config.omcObj= obj;
                     jsonDiv.innerHTML = format_json(JSON.stringify( $.config.omcObj));
+                    paTitle.innerHTML = $.inst.obj.find('li.active').text().split('-').pop();
+                    var index = envs.indexOf(paTitle.innerHTML);
+                    if(index>= 0 && index < envs.length - 1){
+                        var newEnv = envs.indexOf(paTitle.innerHTML);
+                        promoteBtn.innerHTML = 'Promote To '+envs[index+1];
+                        promoteBtn.setAttribute('data-env',envs[index+1]);
+                        promoteBtn.style.display = '';
+                    }else{
+                        promoteBtn.style.display = 'none';
+                    }
+
                 }catch(e){
                     console.log(e);
                 }
@@ -101,16 +131,26 @@
         }
         return;
     }
-    var res = window.prompt();
-    if (!res) { return; }
-    var re = /<!--[\S\s]+?-->/g;
-    res = res.replace(re, '');
-    var appSettings = /<appSettings>[\s\S]+<\/appSettings>/;
-    var config = appSettings.exec(res);
-    if (config == null) { config = res; }
-    var add = /=\s*"[^"]*/g;
-    var keyArr = config.toString().match(add);
-    var rep = /=\s*"/;
+    if(!oldJsonConfig){
+        var res = window.prompt();
+        if (!res) { return; }
+        var re = /<!--[\S\s]+?-->/g;
+        res = res.replace(re, '');
+        var appSettings = /<appSettings>[\s\S]+<\/appSettings>/;
+        var config = appSettings.exec(res);
+        if (config == null) { config = res; }
+        var add = /=\s*"[^"]*/g;
+        var keyArr = config.toString().match(add);
+        var rep = /=\s*"/;
+    }else{
+        var okeys = Object.keys(oldJsonConfig);
+        var ovalues = Object.values(oldJsonConfig);
+        var keyArr = [];
+        for(var i=0;i<okeys.length;i++){
+            keyArr.push(okeys[i],ovalues[i]);
+        }
+        var rep = '';
+    }
     omc = $.config.omcArr||[];
     if (omc.length && keyArr.length % 2 == 0) {
         var keyArr2 = keyArr.filter(function (a, b) { return b % 2 == 0; }).map(function (a) { return a.replace(rep, ''); });
@@ -122,6 +162,7 @@
         var cj2 = diff(keyArr2, omc);
         var cj2str = cj2.join('"\r\n"');
         var cj1str = cj1.join('"\r\n"');
+        console.clear();
         if (cj2str == '') {
             alert("没有需要增加的配置。");
             console.log("没有需要增加的配置。\r\n ");
@@ -130,6 +171,7 @@
             console.warn("增加的配置：");
             console.log(cj2str);
         }
+        console.log('');
         if (cj1str == '') {
             console.log("没有多余的配置。\r\n ");
         } else {
@@ -152,6 +194,7 @@
         update();
         var start = async function(){
             var firstFlag;
+            var warnFlag;
             for (var i = 0; i < keyArr.length; i += 2) {
                 var key = keyArr[i].replace(rep, '');
                 if (omc.indexOf(key) < 0) {
@@ -180,6 +223,20 @@
                     model.find('.def-dvalue') .val(' ');
                     model.find('.inst-value').val(keyArr[i + 1].replace(rep, ''));
                     continue;
+                }else{
+                    var oldV = keyArr[i + 1].replace(rep, '');
+                    var newV = $.config.omcValueArr[omc.indexOf(key)];
+                    if( oldV!==newV ){
+                        if(!warnFlag){
+                            console.log('');
+                            console.warn("不同的配置");
+                            warnFlag = true;
+                        }
+                        console.log('%c'+key,'font-weight:bolder');
+                        console.log('%c'+oldV,'color:grey');
+                        console.log('%c'+newV,'color:grey');
+                        console.log('');
+                    }
                 }
             }
         };
@@ -230,7 +287,7 @@
             }
         })();
     }
-    
+
     function format_json(txt, compress) {
         var indentChar = '&nbsp;&nbsp;&nbsp;&nbsp;';
         if (/^\s*$/.test(txt)) {
