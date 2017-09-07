@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         OpsFilter
 // @namespace    http://tampermonkey.net/
-// @version      2.9
+// @version      3.0
 // @description  try to take over the world!
 // @author       You
 // @match        xxxhttps://omcops.bmw.com.cn/Configuration/DeployConfiguration/NewChange*
@@ -36,6 +36,17 @@
         setTimeout( startFun,0);
         return;
     }
+    var comAlert = '<div class="modal fade" data-show="true"><div class="modal-dialog" style="left:0px"><div class="modal-content"><div class="modal-header"><h4 class="modal-title">提示</h4></div><div class="modal-body">' + '' + '</div><div style="padding-left:42%;padding-right:40%;padding-bottom:20px"><button type="button" class="btn btn-primary" data-dismiss="modal" aria-hidden="true" style="width:100px" data-res="yes">确认</button></div></div></div></div>';
+    comAlert = $(comAlert);
+    var comClose = function (type) {
+        divAlert.modal('hide');
+    };
+    comAlert.find('button').click(comClose);
+    var comAlertAction = function (content) {
+        comAlert.find('.modal-body').html(content);
+        comAlert.modal('show');
+    };
+a=comAlertAction;
     var sleep = function (time) {
         return new Promise(function (resolve, reject) {
             setTimeout(function () {
@@ -242,16 +253,22 @@
     var reg = /^https:\/\/omcops.bmw.com.cn\/Operation\/Release\/ReleasePlanIndex.*/i;
     if (reg.test(location.href)) {
         if (location.hash != '') {
-            var id = location.hash.replace('#', '');
+            var cont = location.hash.replace('#', '').split('-');
             var find = function () {
                 var idLinks = $('#tbList>tbody>tr>td>a[href*="/job/"]');
                 if (idLinks.length) {
                     for (var i = 0; i < idLinks.length; i++) {
-                        if (idLinks[i].text == id) {
+                        if (idLinks[i].text == cont[0]) {
                             var tr = $(idLinks[i]).closest('tr');
                             if (tr.length) {
                                 tr.css('backgroundColor', 'rgba(0, 55, 255, 0.18)');
-                                tr.find('a:lt(4)').css({ 'color': 'red', 'font-weight': 'bolder' });
+                                tr.find('a:not(.btn):not(.pull-right)').css({ 'color': 'red', 'font-weight': 'bolder' });
+                                if(tr.find('td>a.btn[href*="/ReleasePlanSchedule/"]').length){
+                                    var planId = tr.find('td>a.btn[href*="/ReleasePlanSchedule/"]')[0].href.split('/').pop();
+                                    var service = tr.find('td>a[href*="/ReleasePlanDetails/"]').text();
+                                    sessionStorage.setItem('OpsDeployContent',JSON.stringify({service:service,id:cont[0],planId:planId,env:cont[1]}));
+                                    tr.find('td>a.btn[href*="/ReleasePlanSchedule/"]')[0].click();
+                                }
                             }
                         }
                     }
@@ -261,29 +278,99 @@
             };
             setTimeout(find, 100);
         }
+        var divAlert = '<div class="modal fade" data-show="true"><div class="modal-dialog" style="left:0px"><div class="modal-content"><div class="modal-header"><h4 class="modal-title">确认</h4></div><div class="modal-body">' + '' + '</div><div style="padding-left:25%;padding-right:25%;padding-bottom:20px"><button type="button" class="btn btn-primary" data-dismiss="modal" aria-hidden="true" style="width:100px" data-res="yes">是</button><button type="button" data-res="no"  class="pull-right btn btn-danger" data-dismiss="modal"style="width:100px" aria-hidden="true">否</button></div></div></div></div>';
+        divAlert = $(divAlert);
+        var confirmCopy = function (type) {
+            // $('.modal-backdrop').remove();
+            divAlert.modal('hide');
+            if ($(this).data('res') == 'no') {
+
+            }
+            else
+            {
+                var content = divAlert.find('.modal-body').data('content');
+                sessionStorage.setItem('OpsDeployContent',JSON.stringify({service:content.service,id:content.id,planId:content.planId,env:content.env}));
+                content.btn.click();
+            }
+        };
+        divAlert.find('button').click(confirmCopy);
+        var confirmBox = function (content) {
+            divAlert.find('.modal-body').html('发布 '+content.service+' '+content.id+' 到 '+content.env+' 环境').data('content',content);
+            divAlert.modal('show');
+            console.log(content);
+        };
         var waitTable = function () {
             var idLinks = $('#tbList>tbody>tr>td>a[href*="/job/"]');
             if (idLinks.length) {
                 var deployNow, promoteNow, config;
-                for (var i = 0; i < $('td>a.btn[href*=ReleasePlanSchedule]').length; i++) {
-                    if ($('td>a.btn[href*=ReleasePlanSchedule]').eq(i).next('a').length) {
+                /*jshint multistr:true */
+                var dropdownHtml = '<div class="btn-group" style="margin-left:10px">\
+<button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown">More \
+<span class="caret"></span>\
+</button>\
+<ul class="dropdown-menu" role="menu" name="mEnvList">\
+<li><a href="#" name="Build">上 Build</a></li>\
+<li><a href="#" name="Dev">上 Dev</a></li>\
+<li><a href="#" name="Int">上 Int</a></li>\
+<li><a href="#" name="Stg">上 Stg</a></li>\
+</ul>\
+</div>';
+                var curEnv = $('.nav.nav-tabs>.active>a').text();
+                var envs = ['Build','Dev','Int','Stg','Prod'];
+                var curEnvIndex = envs.indexOf(curEnv);
+                var content =JSON.parse( sessionStorage.getItem('OpsDeployContent'));
+                for (var i = 0; i < $('td>a.btn[href*="/ReleasePlanSchedule/"]').length; i++) {
+                    if ($('td>a.btn[href*="/ReleasePlanSchedule/"]').eq(i).next('div').length) {
                         continue;
                     }
-                    deployNow = document.createElement('a');
-                    deployNow.className = 'btn btn-info';
-                    deployNow.innerHTML = 'DNow';
-                    deployNow.style.marginLeft = '10px';
-                    $(deployNow).click(function () {
-                        var id = $(this).closest('tr').find('td>a[href*="/job/"]').text();
-                        var href = $(this).prev()[0].href;
-                        sessionStorage.setItem('OpsDeployId', href.split('/').pop());
-                        $(this).prev()[0].click();
-                        $(this).addClass('disabled');
-                        $(this).prev().addClass('disabled');
+                    if(content){
+                        if(envs.indexOf(content.env)>=curEnvIndex){
+                            var tr = $('td>a.btn[href*="/ReleasePlanSchedule/"]').eq(i).closest('tr');
+                            if(content.id == tr.find('td>a[href*="/job/"]').text()&& content.service == tr.find('td>a[href*="/ReleasePlanDetails/"]').text()){
+                                content.planId = tr.find('td>a.btn[href*="/ReleasePlanSchedule/"]')[0].href.split('/').pop();
+                                sessionStorage.setItem('OpsDeployContent',JSON.stringify(content));
+                                tr.css('backgroundColor', 'rgba(0, 55, 255, 0.18)');
+                                tr.find('a:not(.btn):not(.pull-right)').css({ 'color': 'red', 'font-weight': 'bolder' });
+                                tr.find('td>a.btn[href*="/ReleasePlanSchedule/"]')[0].click();
+                            }
+                        }else{
+                            sessionStorage.removeItem('OpsDeployContent');
+                            comAlertAction(content.service+' '+content.id+' 已成功发布到 '+content.env+' 环境');
+                        }
+                    }
+                    // deployNow = document.createElement('a');
+                    // deployNow.className = 'btn btn-info';
+                    // deployNow.innerHTML = 'DNow';
+                    // deployNow.style.marginLeft = '10px';
+                    // $(deployNow).click(function () {
+                    //     var id = $(this).closest('tr').find('td>a[href*="/job/"]').text();
+                    //     var href = $(this).prev()[0].href;
+                    //     sessionStorage.setItem('OpsDeployId', href.split('/').pop());
+                    //     $(this).prev()[0].click();
+                    //     $(this).addClass('disabled');
+                    //     $(this).prev().addClass('disabled');
+                    // });
+                    // $('td>a.btn[href*=ReleasePlanSchedule]')[i].after(deployNow);
+                    $('td>a.btn[href*="/ReleasePlanSchedule/"]:eq('+i+')').after($(dropdownHtml)).next('div').find('ul>li>a[name]').click(function(){
+                        var tr = $(this).closest('tr');
+                        var id = tr.find('td>a[href*="/job/"]').text();
+                        var service = tr.find('td>a[href*="/ReleasePlanDetails/"]').text();
+                        var deBtn = tr.find('td>a.btn[href*="/ReleasePlanSchedule/"]')[0];
+                        confirmBox({service:service,id:id,planId:deBtn.href.split('/').pop(),env:this.name,btn:deBtn});
                     });
-                    $('td>a.btn[href*=ReleasePlanSchedule]')[i].after(deployNow);
-                    $(deployNow).addClass('btn-sm').prev().addClass('btn-sm');
+                    // $(deployNow).addClass('btn-sm').prev().addClass('btn-sm');
                 }
+                for(var i=0;i<envs.length;i++){
+                    if(envs[i] == curEnv){
+                        if(curEnv == 'Prod' && !$('ul[name=mEnvList]>li>[name=Prod]').length){
+                            $('ul[name=mEnvList]').append($('<li><a href="#" name="Prod">上 Prod</a></li>'));
+                        }
+                        break;
+                    }else{
+                        $('ul[name=mEnvList]>li>[name='+envs[i]+']').parent().remove();
+                    }
+                }
+
                 for (var i = 0; i < $('td>a.btn[href*=ReleasePlanPromote]').length; i++) {
                     if ($('td>a.btn[href*=ReleasePlanPromote]').eq(i).next('a').length) {
                         continue;
@@ -335,31 +422,32 @@
         var waitMain = function () {
             if ($('#tbPlanList tr').length > 1) {
                 var trs = $('#tbPlanList>tbody>tr');
-                var id = sessionStorage.getItem('OpsDeployId');
-                if (!id) {
-                    return;
-                }
-                for (var i = 0; i < trs.length; i++) {
-                    if (trs[i].getAttribute('planid') == id) {
-                        pageLengthFlag = true;
-                        var schedule = $(trs[i]).find('.btn.btn-primary');
-                        var waitAlert = function () {
-                            var alertId = $('#mdPlanId').val();
-                            if (alertId == id) {
-                                $('#createJobModal button.btn-primary')[0].click();
-                                sessionStorage.removeItem('OpsDeployId');
-                            } else {
-                                setTimeout(waitAlert, 100);
-                            }
-                        };
-                        setTimeout(waitAlert, 100);
-                        schedule[0].click();
+                var content = JSON.parse( sessionStorage.getItem('OpsDeployContent'));
+                if (content) {
+                    for (var i = 0; i < trs.length; i++) {
+                        if (trs[i].getAttribute('planid') == content.planId) {
+                            trs.eq(i).css('backgroundColor', 'rgba(0, 55, 255, 0.18)');
+                            trs.eq(i).find('a:not(.btn):not(.pull-right)').css({ 'color': 'red', 'font-weight': 'bolder' });
+                            pageLengthFlag = true;
+                            var schedule = $(trs[i]).find('.btn.btn-primary');
+                            var waitAlert = function () {
+                                var alertId = $('#mdPlanId').val();
+                                if (alertId == content.planId) {
+                                    $('#createJobModal button.btn-primary')[0].click();
+                                    //sessionStorage.removeItem('OpsDeployContent');
+                                } else {
+                                    setTimeout(waitAlert, 100);
+                                }
+                            };
+                            setTimeout(waitAlert, 100);
+                            schedule[0].click();
+                        }
                     }
-                }
-                if (!pageLengthFlag) {
-                    pageLengthFlag = true;
-                    $('[name=tbPlanList_length]').val(100).change();
-                    setTimeout(waitMain, 100);
+                    // if (!pageLengthFlag) {
+                    //     pageLengthFlag = true;
+                    //     $('[name=tbPlanList_length]').val(100).change();
+                    //     setTimeout(waitMain, 100);
+                    // }
                 }
             }
             else {
@@ -367,11 +455,30 @@
             }
         };
         setTimeout(waitMain, 100);
+        var curEnv = $('.nav.nav-tabs>.active>a').text();
         setInterval(function () {
             var promoteNow;
-            for (var i = 0; i < $('td>a.btn[href*=ReleasePlanPromote]').length; i++) {
-                if ($('td>a.btn[href*=ReleasePlanPromote]').eq(i).next('a').length) {
+            var content = JSON.parse(sessionStorage.getItem('OpsDeployContent'));
+            for (var i = 0; i < $('td>a[href*=ReleaseJobDetails]').length; i++) {
+                var tr = $('td>a[href*=ReleaseJobDetails]').eq(i).closest('tr');
+                var service = tr.find('td>a[href*="/ReleaseJobDetails/"]').text();
+                var promoteBtn = tr.find('td>a.btn[href*=ReleasePlanPromote]');
+                if (promoteBtn.length && promoteBtn.next('a').length) {
                     continue;
+                }
+                if (content) {
+                    if(content.service == service){
+                        tr.css('backgroundColor', 'rgba(0, 55, 255, 0.18)');
+                        tr.find('a:not(.btn):not(.pull-right)').css({ 'color': 'red', 'font-weight': 'bolder' });
+                        if(promoteBtn.length){
+                            if(curEnv!='Stg'){
+                                location.href = promoteBtn[0].href + '#ap';
+                            }else{
+                                sessionStorage.removeItem('OpsDeployContent');
+                                comAlertAction(content.service+' '+content.id+' 已成功发布到 '+content.env+' 环境');
+                            }
+                        }
+                    }
                 }
                 promoteNow = document.createElement('a');
                 promoteNow.className = 'btn btn-info';
@@ -381,9 +488,8 @@
                     var id = $(this).closest('tr').find('td>a[href*="/job/"]').text();
                     var href = $(this).prev()[0].href;
                     location.href = href + '#ap';
-                    //$(this)[0].click();
                 });
-                $('td>a.btn[href*=ReleasePlanPromote]')[i].after(promoteNow);
+                promoteBtn.after(promoteNow);
                 $(promoteNow).addClass('btn-sm').prev().addClass('btn-sm');
             }
         }, 300);
@@ -436,7 +542,7 @@
         $('.nav.nav-tabs').prepend($('<li><a>All&nbsp;&nbsp;&nbsp;&nbsp;:</a></li>')).after(newUl);
         $('.nav.nav-tabs').find('a:first').css({cursor:'unset','font-weight':'bolder'});
         $('.nav.nav-tabs:last').find('a:gt(0)').css({color:'#ff6a6a'});
-        
+
     };
     if(!isAll){
         hrefFun();

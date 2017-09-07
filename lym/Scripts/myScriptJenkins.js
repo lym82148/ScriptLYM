@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Jenkins
 // @namespace    http://tampermonkey.net/
-// @version      2.5
+// @version      2.6
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0006.w10:8080/
@@ -134,76 +134,99 @@
                 divOther.innerHTML = '';
             }
         };
-        var deployArr = document.getElementsBySelector('#buildHistory tr .icon-blue');
-        if (deployArr.length > 0) {
-            var cli = function (obj) {
-                window.open('https://omcops.bmw.com.cn/Operation/Release/ReleasePlanIndex/Build-' + curText + "#" + obj.num);
-                obj.blur();
-            };
-            for (var dei = 0 ; dei < deployArr.length; dei++) {
-                if (dei == 10) { break; }
-                var id = document.getElementsBySelector('#buildHistory tr .icon-blue')[dei].parentElement.parentElement.next().text.replace('#', '').replace('​', '');
-                var ele = document.createElement('a');
-                ele.innerHTML = 'Deploy';
-                ele.num = id;
-                ele.onclick = function (a) { return function () { cli(a); }; }(ele);
-                ele.href = 'javascript:void(0);';
-                deployArr[dei].parentElement.parentElement.parentElement.next(1).firstElementChild.prepend(ele);
-                // console.log(1)
-            }
-            var opsLink = document.createElement('a');
-            opsLink.innerHTML = 'Get Deploy Status From Ops';
-            opsLink.style.color = 'red';
-            // opsLink.style.fontWeight='bolder';
-            opsLink.style.marginLeft = '10px';
-            opsLink.style.fontSize = '20px';
-            opsLink.style.marginBottom = '10px';
-            opsLink.style.display = 'block';
-            opsLink.href = 'javascript:void(0);';
-            opsLink.target = '_blank';
-            opsLink.onclick = () => {
-                window.open('https://omcops.bmw.com.cn/#' + curText, null, "height=11,width=11,status=no,toolbar=no,scrollbars=no,menubar=no,location=no,top=" + (window.screenTop + 900) + ",left=" + (window.screenLeft + 500));
-                opsLink.innerHTML = 'Starting Task';
-                opsLink.style.color = 'pink';
-                setTimeout(function () {
-                    opsLink.innerHTML = 'Get Deploy Status From Ops';
-                    opsLink.style.color = 'red';
-                }, 1000);
-            };
-            document.getElementById('buildHistoryPage').prepend(opsLink);
-            // document.getElementsByClassName('pane-header')[0].append(opsLink);
-            var envArr = ["", "Build", "Dev", 'Int', 'Stg', 'Prod'];
-            window.onmessage = function (e) {
-                var arr = e.data.Data;
-                var jenkinsBuildNo;
-                for (var i = 0; i < arr.length; i++) {
-                    if (arr[i].Status != 5 && arr[i].Status != 7) { continue; }
-                    jenkinsBuildNo = arr[i].JenkinsBuildNo;
-                    break;
-                }
+        /*jshint multistr:true */
+        var dropdownHtml = '<select name="deploySelect" style="font-size:13px;width:45px">\
+<option value="Deploy">Deploy</option>\
+<option disabled="">=====</option>\
+<option value="Build">上Build</option>\
+<option value="Dev">上Dev</option>\
+<option value="Int">上Int</option>\
+<option value="Stg">上Stg</option>\
+</select>';
+        var startFun = function () {
+            var deployArr = document.getElementsBySelector('#buildHistory tr .icon-blue');
+            if (deployArr.length > 0) {
+                var cli = function (obj) {
+                    window.open('https://omcops.bmw.com.cn/Operation/Release/ReleasePlanIndex/Build-' + curText + "#" + obj.num);
+                    obj.blur();
+                };
                 for (var dei = 0 ; dei < deployArr.length; dei++) {
-                    var id = document.getElementsBySelector('#buildHistory tr .icon-blue')[dei].parentElement.parentElement.next().text.replace('#', '').replace('​', '');
-                    if (id != jenkinsBuildNo) { continue; }
-                    if (deployArr[dei].parentElement.parentElement.parentElement.next(0).children.length == 1) {
-                        var ele = document.createElement('a');
-                        ele.style.color = 'red';
-                        ele.target = '_blank';
-                        ele.style.fontWeight = 'bolder';
-                        ele.style.textDecoration = 'underline';
-                        ele.style.fontSize = '15px';
-                        deployArr[dei].parentElement.parentElement.parentElement.next(0).append(ele);
-                    } else {
-                        ele = deployArr[dei].parentElement.parentElement.parentElement.next(0).children[1];
+                    var id = document.getElementsBySelector('#buildHistory tr .icon-blue')[dei].parentElement.parentElement.next().text.replace('#', '').replace('​', '').replace(' ', '');
+                    var ele = document.createElement('input');
+                    ele.innerHTML = 'Deploy';
+                    ele.num = id;
+                    ele.onclick = function (a) { return function () { cli(a); }; }(ele);
+                    ele.href = 'javascript:void(0);';
+                    var lastTd = deployArr[dei].parentElement.parentElement.parentElement.next(1).firstElementChild;
+                    if (!lastTd.getElementsByTagName('select').length) {
+                        lastTd.innerHTML = dropdownHtml + lastTd.innerHTML;
+                        lastTd.getElementsByTagName('select')[0].setAttribute('build-id', id);
+                        lastTd.getElementsByTagName('select')[0].onchange = function () {
+                            if (this.value != 'Deploy') {
+                                if (confirm('确认发布 ' + curText + ' ' + id + ' 到 ' + this.value + ' 环境？')) {
+                                    location.href = 'https://omcops.bmw.com.cn/Operation/Release/ReleasePlanIndex/Build-' + curText + "#" + this.getAttribute('build-id') + '-' + this.value;
+                                } else {
+                                    this.value = 'Deploy';
+                                }
+                            }
+                        };
                     }
-                    if (envArr.indexOf(ele.innerHTML) < envArr.indexOf(e.data.Environment)) {
-                        ele.innerHTML = e.data.Environment;
-                        ele.href = 'https://omcops.bmw.com.cn/Operation/Release/ReleasePlanIndex/' + e.data.Environment + '-' + curText;
-                    }
-                    break;
                 }
-            };
-        }
-
+            }
+        };
+        setInterval(startFun, 300);
+        var opsLink = document.createElement('a');
+        opsLink.innerHTML = 'Get Deploy Status From Ops';
+        opsLink.style.color = 'red';
+        // opsLink.style.fontWeight='bolder';
+        opsLink.style.marginLeft = '10px';
+        opsLink.style.fontSize = '20px';
+        opsLink.style.marginBottom = '10px';
+        opsLink.style.display = 'block';
+        opsLink.href = 'javascript:void(0);';
+        opsLink.target = '_blank';
+        opsLink.onclick = () => {
+            window.open('https://omcops.bmw.com.cn/#' + curText, null, "height=11,width=11,status=no,toolbar=no,scrollbars=no,menubar=no,location=no,top=" + (window.screenTop + 900) + ",left=" + (window.screenLeft + 500));
+            opsLink.innerHTML = 'Starting Task';
+            opsLink.style.color = 'pink';
+            setTimeout(function () {
+                opsLink.innerHTML = 'Get Deploy Status From Ops';
+                opsLink.style.color = 'red';
+            }, 1000);
+        };
+        document.getElementById('buildHistoryPage').prepend(opsLink);
+        // document.getElementsByClassName('pane-header')[0].append(opsLink);
+        var envArr = ["", "Build", "Dev", 'Int', 'Stg', 'Prod'];
+        window.onmessage = function (e) {
+            var arr = e.data.Data;
+            var jenkinsBuildNo;
+            for (var i = 0; i < arr.length; i++) {
+                if (arr[i].Status != 5 && arr[i].Status != 7) { continue; }
+                jenkinsBuildNo = arr[i].JenkinsBuildNo;
+                break;
+            }
+            var deployArr = document.getElementsBySelector('#buildHistory tr .icon-blue');
+            for (var dei = 0 ; dei < deployArr.length; dei++) {
+                var id = document.getElementsBySelector('#buildHistory tr .icon-blue')[dei].parentElement.parentElement.next().text.replace('#', '').replace('​', '');
+                if (id != jenkinsBuildNo) { continue; }
+                if (deployArr[dei].parentElement.parentElement.parentElement.next(0).children.length == 1) {
+                    var ele = document.createElement('a');
+                    ele.style.color = 'red';
+                    ele.target = '_blank';
+                    ele.style.fontWeight = 'bolder';
+                    ele.style.textDecoration = 'underline';
+                    ele.style.fontSize = '15px';
+                    deployArr[dei].parentElement.parentElement.parentElement.next(0).append(ele);
+                } else {
+                    ele = deployArr[dei].parentElement.parentElement.parentElement.next(0).children[1];
+                }
+                if (envArr.indexOf(ele.innerHTML) < envArr.indexOf(e.data.Environment)) {
+                    ele.innerHTML = e.data.Environment;
+                    ele.href = 'https://omcops.bmw.com.cn/Operation/Release/ReleasePlanIndex/' + e.data.Environment + '-' + curText;
+                }
+                break;
+            }
+        };
     } else {
         console.log('输入 c 切换筛选');
         var trs = document.getElementById('projectstatus').getElementsByTagName('tr');
