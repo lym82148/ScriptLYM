@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         BitbucketReviewer
 // @namespace    http://tampermonkey.net/
-// @version      2.3
+// @version      2.4
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0003.w10:7990/projects/cnb/repos/*
@@ -27,22 +27,34 @@
     };
     if(jQuery('#branch-type-menu').length){
         jQuery('#branch-type-menu ul li[data-id=FEATURE]').click();
-        jQuery('#branch-name').val(curUserName+'/'+jQuery('#branch-name').val()).css({"min-width":'340px'});
+        var newName = curUserName;
+        switch(newName){
+            case'xyang':
+                newName='yuqi';
+                break;
+            case 'han':
+                newName='guoguang';
+                break;
+            case 'yliu':
+                newName='yiming';
+                break;
+        }
+        jQuery('#branch-name').val(newName+'/'+jQuery('#branch-name').val()).css({"min-width":'340px'});
         var branchDiv = jQuery('#branch-from-selector').click().parent();
         var chooseDev = document.createElement('a');
         chooseDev.href='javascript:void(0);';
         chooseDev.style.marginLeft = '10px';
         chooseDev.style.color = '#ff2424';
-        chooseDev.innerHTML = 'choose dev';
+        chooseDev.innerHTML = 'Choose ChinaDev';
         branchDiv.append(chooseDev);
         var startFun = async function(){
             while(!jQuery('#branch-from-selector-dialog-tab-pane-0>ul>li').length){
                 await sleep(100);
             }
-            if(jQuery('#branch-from-selector-dialog-tab-pane-0>ul>li>a[data-id*="/dev"]:eq(0)').length){
-                jQuery('#branch-from-selector-dialog-tab-pane-0>ul>li>a[data-id*="/dev"]:eq(0)').click();
-            }else{
+            if(jQuery('#branch-from-selector-dialog-tab-pane-0>ul>li>a[data-id*="/ChinaDev"]:eq(0)').length){
                 jQuery('#branch-from-selector-dialog-tab-pane-0>ul>li>a[data-id*="/ChinaDev"]:eq(0)').click();
+            }else{
+                jQuery('#branch-from-selector-dialog-tab-pane-0>ul>li>a[data-id*="/dev"]:eq(0)').click();
             }
         };
         chooseDev.onclick = startFun;
@@ -100,22 +112,22 @@ class="select2-search-choice-close" tabindex="-1"></a></li>';
     var title = jQuery('h2:eq(0)');
     if (title.html() == 'Create pull request') {
         var btn = document.createElement('a');
-        btn.innerHTML = 'Change To Dev';
+        btn.innerHTML = 'Change To ChinaDev';
         btn.style.color = 'red';
         btn.style.marginLeft = '20px';
 
-        btn.href = location.href.replace(/targetBranch=/i, 'targetBranch=dev&targetBranchOld=');
+        btn.href = location.href.replace(/targetBranch=/i, 'targetBranch=chinadev&targetBranchOld=');
         if (btn.href.indexOf('targetBranch=') < 0) {
-            btn.href += '&targetBranch=dev';
+            btn.href += '&targetBranch=chinadev';
         }
         title.append(btn);
     }
     if (location.href == 'http://suus0003.w10:7990/dashboard') {
         var arr = jQuery('a').filter(function (a, b) { return b.innerHTML == 'Create pull request'; });
         for (var i = 0; i < arr.length; i++) {
-            arr[i].href = arr[i].href.replace(/targetBranch=/i, 'targetBranch=dev&targetBranchOld=');
+            arr[i].href = arr[i].href.replace(/targetBranch=/i, 'targetBranch=chinadev&targetBranchOld=');
             if (arr[i].href.indexOf('targetBranch=') < 0) {
-                arr[i].href += '&targetBranch=dev';
+                arr[i].href += '&targetBranch=chinadev';
             }
         }
     }
@@ -128,7 +140,7 @@ class="select2-search-choice-close" tabindex="-1"></a></li>';
     jenkins.style.textDecoration='underline';
     var opsName = service;
     var jenkinsService = service;
-    var until = 'dev';
+    var until = 'ChinaDev';
     switch(service){
         case 'BmwGateway':
             jenkinsService = 'gateway';
