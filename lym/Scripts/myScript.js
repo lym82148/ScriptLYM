@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         CheckConfig
 // @namespace    http://tampermonkey.net/
-// @version      3.8
+// @version      3.9
 // @description  try to take over the world!
 // @author       You
 // @match        https://portal.azure.cn/*
@@ -175,11 +175,12 @@
             window.alert = function (a) {
                 if (a!==true) {
                     window.alertOld(a);
+                }else{
+                    var env = $.inst.obj.find('li.active').text().split('-').pop();
+                    env= env.substr(0,1).toUpperCase()+env.substr(1);
+                    var service = $.svc.obj.find('li.active').text();
+                    location.href = 'https://omcops.bmw.com.cn/Configuration/DeployConfiguration/Index/'+env+'-'+service;
                 }
-                var env = $.inst.obj.find('li.active').text().split('-').pop();
-                env= env.substr(0,1).toUpperCase()+env.substr(1);
-                var service = $.svc.obj.find('li.active').text();
-                location.href = 'https://omcops.bmw.com.cn/Configuration/DeployConfiguration/Index/'+env+'-'+service;
             };
         }
         else {
