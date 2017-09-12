@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         BitbucketReviewer
 // @namespace    http://tampermonkey.net/
-// @version      2.6
+// @version      2.7
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0003.w10:7990/projects/cnb/repos/*
@@ -14,7 +14,6 @@
 // ==/UserScript==
 
 (function () {
-
     var search = jQuery('#s2id_autogen1');
     var input = jQuery('#reviewers');
     var curUserName = jQuery('#current-user').data('username');
@@ -153,7 +152,7 @@ class="select2-search-choice-close" tabindex="-1"></a></li>';
             }
         }
     }
-    var service = jQuery('#content').data('reponame');
+    var service = jQuery('#content').data('reponame')||'';
     var jenkins = document.createElement('a');
     jenkins.innerHTML = 'Jenkins';
     jenkins.target = '_blank';
@@ -180,28 +179,28 @@ class="select2-search-choice-close" tabindex="-1"></a></li>';
     }
     jenkins.href = 'http://suus0006.w10:8080/#'+jenkinsService.toLowerCase();
     var commitLink = document.createElement('a');
-    commitLink.innerHTML = 'Commits';
     commitLink.style.color = '#ff6e6e';
     commitLink.style.marginLeft = '100px';
     commitLink.style.fontSize = '24px';
     commitLink.style.marginBottom = '10px';
     commitLink.style.display = 'block';
     commitLink.style.textDecoration='underline';
-    commitLink.href = 'http://suus0003.w10:7990/projects/CNB/repos/'+service+'/commits?until='+until;
-    if(jQuery('h2').html()=='Commits'){
-        commitLink.innerHTML = 'Get Deploy Status From Ops';
-        commitLink.style.color = 'red';
-        commitLink.href = 'javascript:void(0);';
-        commitLink.onclick = () => {
-            window.open('https://omcops.bmw.com.cn/#' + opsName, null, "height=11,width=11,status=no,toolbar=no,scrollbars=no,menubar=no,location=no,top=" + (window.screenTop + 900) + ",left=" + (window.screenLeft + 500));
-            commitLink.innerHTML = 'Starting Task';
-            commitLink.style.color = 'pink';
-            setTimeout(function () {
-                commitLink.innerHTML = 'Get Deploy Status From Ops';
-                commitLink.style.color = 'red';
-            }, 1000);
-        };
-    }
+    commitLink.innerHTML = 'Get Deploy Status From Ops';
+    commitLink.href = 'javascript:void(0);';
+    commitLink.onclick = () => {
+        commitLink.innerHTML = 'Starting Task';
+        commitLink.style.color = 'pink';
+        setTimeout(function () {
+            commitLink.innerHTML = 'Get Deploy Status From Ops';
+            commitLink.style.color = '#ff6e6e';
+        }, 1000);
+        if(jQuery('h2:first').text()!=='Commits'){
+            commitLink.href = 'http://suus0003.w10:7990/projects/CNB/repos/'+service+'/commits?until='+until;
+        }else{
+            commitLink.href = 'javascript:void(0);';
+        }
+        window.open('https://omcops.bmw.com.cn/#' + opsName, null, "height=11,width=11,status=no,toolbar=no,scrollbars=no,menubar=no,location=no,top=" + (window.screenTop + 900) + ",left=" + (window.screenLeft + 500));
+    };
     if(jQuery('.pull-request-metadata').length){
         jQuery('.pull-request-metadata').after(jenkins).after(commitLink);
     }
