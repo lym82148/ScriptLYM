@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         CheckConfig
 // @namespace    http://tampermonkey.net/
-// @version      3.7
+// @version      3.8
 // @description  try to take over the world!
 // @author       You
 // @match        https://portal.azure.cn/*
@@ -9,7 +9,7 @@
 // @grant        none
 // ==/UserScript==
 
-(function ds(oldJsonConfig) {
+(function ds(oldJsonConfig,oldXmlConfig) {
     //narr
     var time = 150;
     //var omc = $('pre').find('[class=str]').map(function (a, b) { if (b.innerHTML.indexOf('"appsetting_') == 0) return b.innerHTML.replace('"appsetting_', '').replace('"', ''); }).toArray();
@@ -125,14 +125,78 @@
                     break;
                 }
             }
+            var curText = service;
+            var browse = 'WebApiHost/Web.config';
+            switch(curText){
+                case 'DriveViolationService':
+                    break;
+                case 'PaymentService':
+                    curText = 'PaymentGateway';
+                    browse = 'PaymentService/Web.config';
+                    break;
+                case 'OrderFulfillmentFrontEnd':
+                    browse = 'OrderService/Web.config';
+                    break;
+                case 'BTCAPIServer':
+                    curText = 'bmwgateway';
+                    browse = 'BTCAPIServer/Web.config';
+                    break;
+                case 'EnterprisePortal':
+                    curText = 'EnterprisePortal';
+                    browse = 'WebHost/Web.config';
+                    break;
+                default:
+                    return;
+                    break;
+            }
+            var configLink = document.createElement('a');
+            configLink.innerHTML = 'Get Config From Git';
+            configLink.style.color = 'red';
+            configLink.style.marginLeft = '40px';
+            configLink.style.textDecoration = 'underline';
+            configLink.style.fontSize = '20px';
+            configLink.style.marginBottom = '10px';
+            configLink.href = 'javascript:void(0);';
+            configLink.target = '_blank';
+            configLink.onclick = () => {
+                window.open('http://suus0003.w10:7990/projects/CNB/repos/' + curText +'/browse/'+ browse+'?at=ChinaDev#ad', null, "height=11,width=11,status=no,toolbar=no,scrollbars=no,menubar=no,location=no,top=" + (window.screenTop + 200) + ",left=" + (window.screenLeft + 600));
+                configLink.innerHTML = 'Starting Task';
+                configLink.style.color = 'pink';
+                setTimeout(function () {
+                    configLink.innerHTML = 'Get Config From Git';
+                    configLink.style.color = 'red';
+                }, 1000);
+            };
+            $('h1').append(configLink);
+            window.onmessage = function (e) {
+                ds(null,e.data);
+            };
+            window.alertOld = window.alert;
+            window.alert = function (a) {
+                if (a!==true) {
+                    window.alertOld(a);
+                }
+                var env = $.inst.obj.find('li.active').text().split('-').pop();
+                env= env.substr(0,1).toUpperCase()+env.substr(1);
+                var service = $.svc.obj.find('li.active').text();
+                location.href = 'https://omcops.bmw.com.cn/Configuration/DeployConfiguration/Index/'+env+'-'+service;
+            };
         }
         else {
             setTimeout('console.log("输入 r 更新配置");', 5000);
         }
         return;
     }
-    if(!oldJsonConfig){
-        var res = window.prompt();
+    if(oldJsonConfig){
+        var okeys = Object.keys(oldJsonConfig);
+        var ovalues = Object.values(oldJsonConfig);
+        var keyArr = [];
+        for(var i=0;i<okeys.length;i++){
+            keyArr.push(okeys[i],ovalues[i]);
+        }
+        var rep = '';
+    }else{
+        var res = oldXmlConfig || window.prompt();
         if (!res) { return; }
         var re = /<!--[\S\s]+?-->/g;
         res = res.replace(re, '');
@@ -142,14 +206,6 @@
         var add = /=\s*"[^"]*/g;
         var keyArr = config.toString().match(add);
         var rep = /=\s*"/;
-    }else{
-        var okeys = Object.keys(oldJsonConfig);
-        var ovalues = Object.values(oldJsonConfig);
-        var keyArr = [];
-        for(var i=0;i<okeys.length;i++){
-            keyArr.push(okeys[i],ovalues[i]);
-        }
-        var rep = '';
     }
     omc = $.config.omcArr||[];
     if (omc.length && keyArr.length % 2 == 0) {

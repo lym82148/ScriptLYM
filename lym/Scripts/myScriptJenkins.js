@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Jenkins
 // @namespace    http://tampermonkey.net/
-// @version      2.6
+// @version      2.7
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0006.w10:8080/
@@ -194,7 +194,10 @@
                 opsLink.style.color = 'red';
             }, 1000);
         };
-        document.getElementById('buildHistoryPage').prepend(opsLink);
+        var buildHistory = document.getElementById('buildHistoryPage');
+        if (buildHistory) {
+            buildHistory.prepend(opsLink);
+        }
         // document.getElementsByClassName('pane-header')[0].append(opsLink);
         var envArr = ["", "Build", "Dev", 'Int', 'Stg', 'Prod'];
         window.onmessage = function (e) {
