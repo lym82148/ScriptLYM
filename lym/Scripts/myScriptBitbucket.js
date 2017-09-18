@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         BitbucketReviewer
 // @namespace    http://tampermonkey.net/
-// @version      3.0
+// @version      3.1
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0003.w10:7990/projects/cnb/repos/*
@@ -103,7 +103,7 @@
             a.style.fontSize = '18px';
             a.style.margin = '5px';
             a.style.padding = '2px';
-            if(location.href.toLowerCase().startsWith('http://suus0003.w10:7990/dashboard')){
+            if(location.href.toLowerCase().startsWith('http://suus0003.w10:7990/dashboard') ||location.href.indexOf('pull-requests/')>0 ){
                 a.href = item.href + '?at=ChinaDev';
             }else{
                 a.href = location.href.replace(regK,'/repos/'+item.lid);
