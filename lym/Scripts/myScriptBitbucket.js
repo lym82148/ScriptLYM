@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         BitbucketReviewer
 // @namespace    http://tampermonkey.net/
-// @version      2.7
+// @version      2.8
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0003.w10:7990/projects/cnb/repos/*
@@ -45,7 +45,6 @@
         setTimeout(startFun,0);
         return;
     }
-
     if(jQuery('#branch-type-menu').length){
         jQuery('#branch-type-menu ul li[data-id=FEATURE]').click();
         var newName = curUserName;
@@ -82,6 +81,176 @@
         startFun();
         return;
     }
+
+    var json = localStorage.getItem('bitRepoList');
+    var obj = JSON.parse(json);
+    if(obj && new Date(obj.expireTime) > new Date()){
+        var div = document.createElement('div');
+        div.style.color = 'red';
+        div.style.fontSize = '32px';
+        div.innerHTML = 'Filter: ';
+        div.style.marginButtom = '9px';
+        var listDiv = document.createElement('div');
+        listDiv.id = 'listDivFilterRes';
+        var res = obj.links;
+        var regK = /\/repos\/[^\/]*/i;
+        for (var i = 0; i < res.length; i++) {
+            var item = res[i];
+            var divItem = document.createElement('div');
+            divItem.style.margin = '2px';
+            var a = document.createElement('a');
+            a.lid = item.lid;
+            a.style.fontSize = '18px';
+            a.style.margin = '5px';
+            a.style.padding = '2px';
+            if(location.href.toLowerCase().startsWith('http://suus0003.w10:7990/dashboard')){
+                a.href = item.href + '?at=ChinaDev';
+            }else{
+                a.href = location.href.replace(regK,'/repos/'+item.lid);
+            }
+            a.innerHTML = item.name;
+            a.style.display = 'none';
+            divItem.append(a);
+            listDiv.append(divItem);
+            item.a = a;
+        }
+        res = res.map(function (a) { return a.a; });
+        if(location.href.toLowerCase().startsWith('http://suus0003.w10:7990/dashboard')){
+            jQuery('h3:first').append(div);
+        }else{
+            jQuery('h2:first').append(div);
+        }
+        div.after(listDiv);
+        var divOther = document.createElement('div');
+        divOther.style.fontSize = '18px';
+        divOther.style.marginTop = '7px';
+        divOther.style.fontWeight = 'bold';
+        listDiv.after(divOther);
+
+        var filterFun = function () {
+            div.innerHTML = 'Filter: ' + str;
+            var first = true;
+            curList = [];
+            var maxCount = 2;
+            var otherCount = 0;
+            for (var i = 0; i < res.length; i++) {
+                if (str != '' && res[i].lid.indexOf(str) >= 0) {
+                    if (first) {
+                        res[i].style.backgroundColor = lineColor;
+                        first = false;
+                        curList.curIndex = 0;
+                    } else {
+                        res[i].style.backgroundColor = '';
+                    }
+                    if (curList.length <= maxCount) {
+                        res[i].style.display = '';
+                        curList.push(res[i]);
+                    } else {
+                        res[i].style.display = 'none';
+                        otherCount++;
+                    }
+                } else {
+                    res[i].style.display = 'none';
+                }
+            }
+            if (otherCount) {
+                divOther.innerHTML = 'other ' + otherCount + ' records...';
+            } else {
+                divOther.innerHTML = '';
+            }
+        };
+        var str = '';
+        var ignoreKey = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
+        var curList = [];
+        var lineColor = 'lightgrey';
+        var moveFun = function (a) {
+            if (curList.length == 0) { return; }
+            var nextIndex = curList.curIndex + a;
+            if (nextIndex < 0) {
+                nextIndex = curList.length - 1;
+            } else if (nextIndex >= curList.length) {
+                nextIndex = 0;
+            }
+            curList[curList.curIndex].style.backgroundColor = '';
+            curList[nextIndex].style.backgroundColor = lineColor;
+            curList.curIndex = nextIndex;
+        };
+
+        onkeydown = function (e) {
+            if (!auto) { return; }
+            if (e.target.tagName == 'INPUT') {
+                return;
+            }
+            if (e.ctrlKey && e.key != 'Enter') {
+                return;
+            }
+            var arrow;
+            if (e.key.length > 1) {
+                if (e.key == 'Backspace') {
+                    str = str.substr(0, str.length - 1);
+                } else if ((arrow = ignoreKey.indexOf(e.key)) >= 0) {
+                    if (arrow == 0 || arrow == 2) {
+                        moveFun(-1);
+                    } else if (arrow == 1 || arrow == 3) {
+                        moveFun(1);
+                    }
+                    return false;
+                }
+                else if (e.key == 'Enter') {
+                    if (curList.length) {
+                        if (curList[curList.curIndex].tagName == 'A') {
+                            if (e.ctrlKey) {
+                                curList[curList.curIndex].target = '_blank';
+                            } else {
+                                curList[curList.curIndex].target = '';
+                            }
+                            curList[curList.curIndex].click();
+                        } else {
+                            if (e.ctrlKey) {
+                                curList[curList.curIndex].getElementsByTagName('a')[1].target = '_blank';
+                            } else {
+                                curList[curList.curIndex].getElementsByTagName('a')[1].target = '';
+                            }
+                            curList[curList.curIndex].getElementsByTagName('a')[1].click();
+                        }
+                    }
+                    return;
+                }
+                else {
+                    str = '';
+                }
+            } else {
+                if (e.key == 'v' && e.ctrlKey) {
+                    return;
+                }
+                else if (e.key == ' ') {
+                    return false;
+                } else {
+                    str += e.key.toLowerCase();
+                }
+            }
+            filterFun();
+            if (e.key.length <= 1) {
+                return false;
+            }
+        };
+
+        document.onpaste = (e) => {
+            if (!auto) { return; }
+            str = e.clipboardData.getData('Text').toLowerCase();
+            filterFun();
+        };
+        var auto = true;
+    }else{
+        jQuery.ajax('http://suus0003.w10:7990/projects/CNB').then(function(data){
+            var links = jQuery(data).find('tbody a[data-repository-id]');
+            var linksObj =  links.toArray().map(function(b){return {href:b.href,name:b.innerHTML,lid:b.innerHTML.toLowerCase()};});
+            var json =JSON.stringify({ links:linksObj,expireTime:new Date(+new Date()+86400e3)});
+            localStorage.setItem('bitRepoList',json);
+        });
+    }
+
+
     var defaultUserList = [{ userName: 'shi', displayName: 'Baoyu SHI' },
                            { userName: 'han', displayName: 'Guoguang Han' },
                            { userName: 'xyang', displayName: 'Yuqi Zhao' },
