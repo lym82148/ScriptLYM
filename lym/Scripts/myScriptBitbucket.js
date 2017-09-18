@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         BitbucketReviewer
 // @namespace    http://tampermonkey.net/
-// @version      2.8
+// @version      2.9
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0003.w10:7990/projects/cnb/repos/*
@@ -82,9 +82,9 @@
         return;
     }
 
-    var json = localStorage.getItem('bitRepoList');
-    var obj = JSON.parse(json);
-    if(obj && new Date(obj.expireTime) > new Date()){
+    var filterInit = function(){
+        var json = localStorage.getItem('bitRepoList');
+        var obj = JSON.parse(json);
         var div = document.createElement('div');
         div.style.color = 'red';
         div.style.fontSize = '32px';
@@ -214,7 +214,7 @@
                             curList[curList.curIndex].getElementsByTagName('a')[1].click();
                         }
                     }
-                    return;
+                    return false;
                 }
                 else {
                     str = '';
@@ -241,12 +241,19 @@
             filterFun();
         };
         var auto = true;
-    }else{
+    };
+    var json = localStorage.getItem('bitRepoList');
+    var obj = JSON.parse(json);
+    if(obj && new Date(obj.expireTime) > new Date()){
+        filterInit();
+    }
+    else{
         jQuery.ajax('http://suus0003.w10:7990/projects/CNB').then(function(data){
             var links = jQuery(data).find('tbody a[data-repository-id]');
             var linksObj =  links.toArray().map(function(b){return {href:b.href,name:b.innerHTML,lid:b.innerHTML.toLowerCase()};});
             var json =JSON.stringify({ links:linksObj,expireTime:new Date(+new Date()+86400e3)});
             localStorage.setItem('bitRepoList',json);
+            filterInit();
         });
     }
 
