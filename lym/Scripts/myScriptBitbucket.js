@@ -175,7 +175,7 @@
             curList[nextIndex].style.backgroundColor = lineColor;
             curList.curIndex = nextIndex;
         };
-
+        jQuery('.focused').removeClass('focused');
         onkeydown = function (e) {
             if (!auto) { return; }
             if (e.target.tagName == 'INPUT') {
