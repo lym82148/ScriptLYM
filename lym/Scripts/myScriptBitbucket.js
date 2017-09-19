@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         BitbucketReviewer
 // @namespace    http://tampermonkey.net/
-// @version      3.1
+// @version      3.2
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0003.w10:7990/projects/cnb/repos/*
@@ -307,7 +307,7 @@ class="select2-search-choice-close" tabindex="-1"></a></li>';
         tabFun({ key: 'Tab' });
     };
     var title = jQuery('h2:eq(0)');
-    if (title.html() == 'Create pull request') {
+    if (title.html().startsWith( 'Create pull request')){
         var btn = document.createElement('a');
         btn.innerHTML = 'Change To ChinaDev';
         btn.style.color = 'red';
@@ -317,7 +317,7 @@ class="select2-search-choice-close" tabindex="-1"></a></li>';
         if (btn.href.indexOf('targetBranch=') < 0) {
             btn.href += '&targetBranch=ChinaDev';
         }
-        title.append(btn);
+        title.children(':first').before(btn);
     }
     if (location.href == 'http://suus0003.w10:7990/dashboard') {
         var arr = jQuery('a').filter(function (a, b) { return b.innerHTML == 'Create pull request'; });
