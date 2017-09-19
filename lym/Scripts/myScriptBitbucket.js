@@ -370,7 +370,7 @@ class="select2-search-choice-close" tabindex="-1"></a></li>';
             commitLink.innerHTML = 'Get Deploy Status From Ops';
             commitLink.style.color = '#ff6e6e';
         }, 1000);
-        if(jQuery('h2:first').text()!=='Commits'){
+        if(!jQuery('h2:first').text().startsWith('Commits')){
             commitLink.href = 'http://suus0003.w10:7990/projects/CNB/repos/'+service+'/commits?until='+until;
         }else{
             commitLink.href = 'javascript:void(0);';
