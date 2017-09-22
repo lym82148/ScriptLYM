@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Confluence
 // @namespace    http://tampermonkey.net/
-// @version      1.5
+// @version      1.6
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0001.w10:8090/*
@@ -221,4 +221,169 @@
     });
     $('.favourite-space-icon>button').css({ top: 'unset', "margin-top": '-18px' });
 
+    if (location.href.startsWith('http://suus0001.w10:8090/')) {
+        var changeName = function (name) {
+            var r = /(_\w|^\w)/g;
+            return name.replace(r, ($1) =>$1.replace('_', '').toUpperCase());
+        };
+        var tableName = $('.confluenceTh:contains(Table):contains(Name):first').next().text().trim();
+        if (!tableName) {
+            tableName = $('h1#title-text>a:first').text().trim();
+        }
+        var tableNameCode = changeName(tableName);
+        tableNameCode = tableNameCode.replace(/s$/, '');
+        var columnsRow = $('.confluenceTh:contains(Column):contains(Name):first').closest('table').find('tbody tr');
+        if (!columnsRow.length) {
+            columnsRow = $('td.confluenceTd:contains(Column Name)').closest('tr').siblings();
+        }
+        if (!tableName || !columnsRow.length) {
+            return;
+        }
+        var columns = [];
+        for (var i = 0; i < columnsRow.length; i++) {
+            var tds = columnsRow.eq(i).find('td');
+            if (tds.eq(0).text().trim() == 'id') { continue; }
+            columns.push({
+                name: tds.eq(0).text().trim(),
+                code: changeName(tds.eq(0).text().trim()),
+                type: tds.eq(1).text().trim(),
+                desc: tds.eq(3).text().trim()
+            });
+        }
+        var serviceName = $('#breadcrumbs>li:last').text().replace(/Service.*/, '').trim();
+        console.log(tableName);
+        console.log(columns);
+        var divCopy = document.createElement('pre');
+        $('body').append('<style>.hideForCopy{display:none;}</style>');
+        var cFun = function (tmp) {
+            divCopy.innerText = tmp;
+            $('body').children().addClass('hideForCopy');
+            document.body.appendChild(divCopy);
+            document.execCommand('SelectAll');
+            document.execCommand('Copy');
+            document.execCommand('UnSelect');
+            document.body.removeChild(divCopy);
+            $('body').children().removeClass('hideForCopy');
+        };
+        var copy = function () {
+            divExport.innerHTML = 'Copying...';
+            divExport.style.color = 'pink';
+            setTimeout(function () {
+                divExport.innerHTML = 'Copy Code';
+                divExport.style.color = 'red';
+            }, 400);
+            var data = { tableName: tableName, tableNameCode: tableNameCode, serviceName: serviceName, columns: "", columnsScript: "" };
+            var stringDefault = ' = string.Empty;';
+            var dateDefault = ' = DateTime.UtcNow;';
+            for (var i = 0; i < columns.length; i++) {
+                var type = 'string';
+                var length = 0;
+                var defaultValue = '';
+                var textType = columns[i].type.toLowerCase();
+                switch (textType) {
+                    case 'int':
+                    case 'tinyint':
+                        type = 'int';
+                        break;
+                    case 'string':
+                    case 'nvarchar':
+                    case 'varchar':
+                        type = 'string';
+                        defaultValue = stringDefault;
+                        break;
+                    case 'datetime':
+                    case 'date':
+                    case 'time':
+                        type = 'DateTime';
+                        defaultValue = dateDefault;
+                        break;
+                    case 'uniqueidentifier':
+                    case 'guid':
+                        type = 'Guid';
+                        break;
+                    case 'decimal':
+                        type = 'decimal';
+                        break;
+                    case 'float':
+                        type = 'float';
+                        break;
+                    case 'double':
+                        type = 'double';
+                        break;
+                    default:
+                        if (textType.startsWith('decimal')) {
+                            type = 'decimal';
+                        } else if (textType.startsWith('nvarchar')) {
+                            type = 'string';
+                            defaultValue = stringDefault;
+                            lengthReg = textType.match(/\((.*)\)/);
+                            if (lengthReg && lengthReg.length == 2) {
+                                length = +lengthReg[1];
+                            }
+                        } else if (textType.indexOf('enum') >= 0) {
+                            type = 'int';
+                        } else {
+                            type = textType;
+                        }
+                        break;
+                }
+                data.columns += "        /// <summary>\r\n";
+                data.columns += "        /// " + columns[i].desc + "\r\n";
+                data.columns += "        /// </summary>\r\n";
+                data.columns += "        public " + type + " " + columns[i].code + " { get; set; }" + defaultValue + '\r\n';
+                data.columnsScript += "            Property(p => p." + columns[i].code + ").HasColumnName(\"" + columns[i].name + "\")" + (length > 0 ? ".HasMaxLength(" + length + ")" : "") + ".IsRequired();\r\n";
+            }
+            var copyModel = model;
+            for (var a in data) {
+                copyModel = copyModel.replace(new RegExp('{{' + a + '}}', 'g'), data[a]);
+            }
+            cFun(copyModel);
+        };
+        var divExport = document.createElement('a');
+        divExport.style.color = 'red';
+        divExport.innerHTML = 'Copy Code';
+        divExport.style.marginLeft = '9px';
+        divExport.onclick = copy;
+        divExport.style.textDecoration = 'underline';
+        divExport.href = 'javascript:void(0);';
+        $('h1#title-text>a:first').after(divExport);
+        var column = "        public string ParentOrderNo { get; set; } = string.Empty;\r\n";
+        var columnScript = "            Property(p => p.ParentOrderNo).HasColumnName(\"parent_order_no\").HasMaxLength(50).IsRequired();\r\n";
+        /*jshint multistr:true */
+        var model = "using Common;\r\n\
+using {{serviceName}}Service.Repositories;\r\n\r\n\
+using System;\r\n\
+using System.ComponentModel.DataAnnotations.Schema;\r\n\
+using System.Data.Entity.ModelConfiguration;\r\n\
+using System.Diagnostics.CodeAnalysis;\r\n\
+\r\n\
+namespace {{serviceName}}Service.Entities\r\n\
+{\r\n\
+    [ExcludeFromCodeCoverage]\r\n\
+    public class {{tableNameCode}} : IEntity\r\n\
+    {\r\n\
+        public int Id { get; set; }\r\n\
+{{columns}}\r\n\
+    }\r\n\
+\r\n\
+    [ExcludeFromCodeCoverage]\r\n\
+    public class {{tableNameCode}}Configuration : EntityTypeConfiguration<{{tableNameCode}}>\r\n\
+    {\r\n\
+        public {{tableNameCode}}Configuration()\r\n\
+        {\r\n\
+            ToTable(\"{{tableName}}\", {{serviceName}}ServiceContext.SchemaName);\r\n\
+            HasKey(p => p.Id).Property(p => p.Id).HasColumnName(\"id\").HasDatabaseGeneratedOption(DatabaseGeneratedOption.Identity);\r\n\
+{{columnsScript}}\r\n\
+        }\r\n\
+    }\r\n\
+\r\n\
+    public interface I{{tableNameCode}}Repository : IRepository<{{tableNameCode}}> { }\r\n\
+\r\n\
+    [ExcludeFromCodeCoverage]\r\n\
+    public class {{tableNameCode}}Repository : {{serviceName}}DbRepository<{{tableNameCode}}>, I{{tableNameCode}}Repository\r\n\
+    {\r\n\
+        public {{tableNameCode}}Repository(I{{serviceName}}DbFactory dbFactory) : base(dbFactory) { }\r\n\
+    }\r\n\
+}";
+    }
 })();
