@@ -351,7 +351,7 @@
         var columnScript = "            Property(p => p.ParentOrderNo).HasColumnName(\"parent_order_no\").HasMaxLength(50).IsRequired();\r\n";
         /*jshint multistr:true */
         var model = "using Common;\r\n\
-using {{serviceName}}Service.Repositories;\r\n\r\n\
+using {{serviceName}}Service.Repositories;\r\n\
 using System;\r\n\
 using System.ComponentModel.DataAnnotations.Schema;\r\n\
 using System.Data.Entity.ModelConfiguration;\r\n\
