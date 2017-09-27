@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Confluence
 // @namespace    http://tampermonkey.net/
-// @version      1.7
+// @version      1.8
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0001.w10:8090/*
@@ -351,13 +351,12 @@
         var columnScript = "            Property(p => p.ParentOrderNo).HasColumnName(\"parent_order_no\").HasMaxLength(50).IsRequired();\r\n";
         /*jshint multistr:true */
         var model = "using Common;\r\n\
-using {{serviceName}}Service.Repositories;\r\n\
 using System;\r\n\
 using System.ComponentModel.DataAnnotations.Schema;\r\n\
 using System.Data.Entity.ModelConfiguration;\r\n\
 using System.Diagnostics.CodeAnalysis;\r\n\
 \r\n\
-namespace {{serviceName}}Service.Entities\r\n\
+namespace {{serviceName}}.DataAccess\r\n\
 {\r\n\
     [ExcludeFromCodeCoverage]\r\n\
     public class {{tableNameCode}} : IEntity\r\n\
