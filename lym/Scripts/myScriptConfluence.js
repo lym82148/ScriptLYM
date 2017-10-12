@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Confluence
 // @namespace    http://tampermonkey.net/
-// @version      1.8
+// @version      1.9
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0001.w10:8090/*
@@ -235,7 +235,11 @@
         var columnsRow = $('.confluenceTh:contains(Column):contains(Name):first').closest('table').find('tbody tr');
         if (!columnsRow.length) {
             columnsRow = $('td.confluenceTd:contains(Column Name)').closest('tr').siblings();
+            if (!columnsRow.length) {
+                columnsRow = $('td.confluenceTd:contains(Column Name)').closest('thead').next().find('tr');
+            }
         }
+
         if (!tableName || !columnsRow.length) {
             return;
         }
@@ -358,31 +362,31 @@ using System.Diagnostics.CodeAnalysis;\r\n\
 \r\n\
 namespace {{serviceName}}.DataAccess\r\n\
 {\r\n\
-    [ExcludeFromCodeCoverage]\r\n\
-    public class {{tableNameCode}} : IEntity\r\n\
-    {\r\n\
-        public int Id { get; set; }\r\n\
+[ExcludeFromCodeCoverage]\r\n\
+public class {{tableNameCode}} : IEntity\r\n\
+{\r\n\
+public int Id { get; set; }\r\n\
 {{columns}}\r\n\
-    }\r\n\
+}\r\n\
 \r\n\
-    [ExcludeFromCodeCoverage]\r\n\
-    public class {{tableNameCode}}Configuration : EntityTypeConfiguration<{{tableNameCode}}>\r\n\
-    {\r\n\
-        public {{tableNameCode}}Configuration()\r\n\
-        {\r\n\
-            ToTable(\"{{tableName}}\", {{serviceName}}ServiceContext.SchemaName);\r\n\
-            HasKey(p => p.Id).Property(p => p.Id).HasColumnName(\"id\").HasDatabaseGeneratedOption(DatabaseGeneratedOption.Identity);\r\n\
+[ExcludeFromCodeCoverage]\r\n\
+public class {{tableNameCode}}Configuration : EntityTypeConfiguration<{{tableNameCode}}>\r\n\
+{\r\n\
+public {{tableNameCode}}Configuration()\r\n\
+{\r\n\
+ToTable(\"{{tableName}}\", {{serviceName}}ServiceContext.SchemaName);\r\n\
+HasKey(p => p.Id).Property(p => p.Id).HasColumnName(\"id\").HasDatabaseGeneratedOption(DatabaseGeneratedOption.Identity);\r\n\
 {{columnsScript}}\r\n\
-        }\r\n\
-    }\r\n\
+}\r\n\
+}\r\n\
 \r\n\
-    public interface I{{tableNameCode}}Repository : IRepository<{{tableNameCode}}> { }\r\n\
+public interface I{{tableNameCode}}Repository : IRepository<{{tableNameCode}}> { }\r\n\
 \r\n\
-    [ExcludeFromCodeCoverage]\r\n\
-    public class {{tableNameCode}}Repository : {{serviceName}}DbRepository<{{tableNameCode}}>, I{{tableNameCode}}Repository\r\n\
-    {\r\n\
-        public {{tableNameCode}}Repository(I{{serviceName}}DbFactory dbFactory) : base(dbFactory) { }\r\n\
-    }\r\n\
+[ExcludeFromCodeCoverage]\r\n\
+public class {{tableNameCode}}Repository : {{serviceName}}DbRepository<{{tableNameCode}}>, I{{tableNameCode}}Repository\r\n\
+{\r\n\
+public {{tableNameCode}}Repository(I{{serviceName}}DbFactory dbFactory) : base(dbFactory) { }\r\n\
+}\r\n\
 }";
     }
 })();
