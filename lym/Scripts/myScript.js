@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         CheckConfig
 // @namespace    http://tampermonkey.net/
-// @version      3.9
+// @version      4.0
 // @description  try to take over the world!
 // @author       You
 // @match        https://portal.azure.cn/*
@@ -10,6 +10,13 @@
 // ==/UserScript==
 
 (function ds(oldJsonConfig,oldXmlConfig) {
+    var sleep = function (time) {
+        return new Promise(function (resolve, reject) {
+            setTimeout(function () {
+                resolve();
+            }, time);
+        });
+    };
     //narr
     var time = 150;
     //var omc = $('pre').find('[class=str]').map(function (a, b) { if (b.innerHTML.indexOf('"appsetting_') == 0) return b.innerHTML.replace('"appsetting_', '').replace('"', ''); }).toArray();
@@ -69,9 +76,10 @@
             paDiv.append(promoteBtn);
             paDiv.append(jsonDiv);
             $('.row.clearfix').append(paDiv);
+            $.config.appsettings.ini_dataOld = $.config.appsettings.ini_data;
+            $.config.connectionstrings.ini_dataOld = $.config.connectionstrings.ini_data;
 
-            $.config.ini_dataOld = $.config.ini_data;
-            $.config.ini_data = function(data){
+            $.config.appsettings.ini_data = function(data){
                 try{
                     $.config.omcArr = data.map(function(a){return a.Name.replace(/-instance$/,'');});
                     $.config.omcValueArr = data.map(function(a){return a.Value;});
@@ -98,7 +106,36 @@
                 }catch(e){
                     console.log(e);
                 }
-                $.config.ini_dataOld.call(this,data);
+                $.config.appsettings.ini_dataOld.call(this,data);
+            };
+            $.config.connectionstrings.ini_data = function(data){
+                try{
+                    $.config.omcArr = data.map(function(a){return a.Name.replace(/-instance$/,'');});
+                    $.config.omcValueArr = data.map(function(a){return a.Value;});
+                    var obj = {};
+                    data.forEach(function(a){
+                        if(a.ParentToName =="properties" ){
+                            var key = a.Name.replace(/-instance$/,'');
+                            obj[key]= a.Value;
+                        }
+                    });
+                    $.config.omcObj= obj;
+                    jsonDiv.innerHTML = format_json(JSON.stringify( $.config.omcObj));
+                    paTitle.innerHTML = $.inst.obj.find('li.active').text().split('-').pop();
+                    var index = envs.indexOf(paTitle.innerHTML);
+                    if(index>= 0 && index < envs.length - 1){
+                        var newEnv = envs.indexOf(paTitle.innerHTML);
+                        promoteBtn.innerHTML = 'Promote To '+envs[index+1];
+                        promoteBtn.setAttribute('data-env',envs[index+1]);
+                        promoteBtn.style.display = '';
+                    }else{
+                        promoteBtn.style.display = 'none';
+                    }
+
+                }catch(e){
+                    console.log(e);
+                }
+                $.config.connectionstrings.ini_dataOld.call(this,data);
             };
             var btn = document.createElement('input');
             btn.type = 'button';
@@ -109,68 +146,97 @@
             var index = location.hash.lastIndexOf('-');
             var service = location.hash.substring(1,index);
             var env = location.hash.substring(index+1);
-            var arr = $('#service-list>li').toArray();
-            for(var i=0;i<arr.length;i++){
-                if(arr[i].innerText.toLowerCase()==service.toLowerCase()){
-                    $('#service-list').scrollTop(arr[i].offsetTop);
-                    arr[i].click();
-                    var envArr = $('#inst-list>li').toArray();
-                    break;
+            var loadServiceFun = async function(){
+                $('.modal-backdrop.fade').remove();
+                while(!$('#service-list>li').length){
+                    await sleep(100);
                 }
-            }
-            for(var i=0;i<envArr.length;i++){
-                if(envArr[i].innerText.toLowerCase()==(service+'-'+env).toLowerCase()){
-                    envArr[i].click();
-                    $('#comp-list>li:eq(0)').click();
-                    break;
+                while($('#loading').is(':visible')){
+                    await sleep(100);
                 }
+                var arr = $('#service-list>li').toArray();
+                for(var i=0;i<arr.length;i++){
+                    if(arr[i].innerText.toLowerCase()==service.toLowerCase()){
+                        $('#service-list').scrollTop(arr[i].offsetTop);
+                        arr[i].click();
+                        break;
+                    }
+                }
+                $('.modal-backdrop.fade').remove();
+                while(!$('#inst-list>li').length){
+                    await sleep(100);
+                }
+                while($('#loading').is(':visible')){
+                    await sleep(100);
+                }
+                var envArr = $('#inst-list>li').toArray();
+                for(var i=0;i<envArr.length;i++){
+                    if(envArr[i].innerText.toLowerCase()==(service+'-'+env).toLowerCase()){
+                        envArr[i].click();
+                        break;
+                    }
+                }
+                $('.modal-backdrop.fade').remove();
+                while(!$('#comp-list>li:eq(0)').length){
+                    await sleep(100);
+                }
+                while($('#loading').is(':visible')){
+                    await sleep(100);
+                }
+                $('#comp-list>li:eq(0)').click();
+                $('.modal-backdrop.fade').remove();
+                var curText = service;
+                var browse = 'WebApiHost/Web.config';
+                switch(curText){
+                    case 'DriveViolationService':
+                        break;
+                    case 'PaymentService':
+                        curText = 'PaymentGateway';
+                        browse = 'PaymentService/Web.config';
+                        break;
+                    case 'OrderFulfillmentFrontEnd':
+                        browse = 'OrderService/Web.config';
+                        break;
+                    case 'BTCAPIServer':
+                        curText = 'bmwgateway';
+                        browse = 'BTCAPIServer/Web.config';
+                        break;
+                    case 'EnterprisePortal':
+                        curText = 'EnterprisePortal';
+                        browse = 'WebHost/Web.config';
+                        break;
+                    case 'PremiumAirportDPService':
+                        curText = 'PremiumAirportDPService';
+                        browse = 'PremiumAirportService/Web.config';
+                        break;
+                    default:
+                        return;
+                        break;
+                }
+                var configLink = document.createElement('a');
+                configLink.innerHTML = 'Get Config From Git';
+                configLink.style.color = 'red';
+                configLink.style.marginLeft = '40px';
+                configLink.style.textDecoration = 'underline';
+                configLink.style.fontSize = '20px';
+                configLink.style.marginBottom = '10px';
+                configLink.href = 'javascript:void(0);';
+                configLink.target = '_blank';
+                configLink.onclick = () => {
+                    window.open('http://suus0003.w10:7990/projects/CNB/repos/' + curText +'/browse/'+ browse+'?at=ChinaDev#ad', null, "height=11,width=11,status=no,toolbar=no,scrollbars=no,menubar=no,location=no,top=" + (window.screenTop + 200) + ",left=" + (window.screenLeft + 600));
+                    configLink.innerHTML = 'Starting Task';
+                    configLink.style.color = 'pink';
+                    setTimeout(function () {
+                        configLink.innerHTML = 'Get Config From Git';
+                        configLink.style.color = 'red';
+                    }, 1000);
+                };
+                $('h1').append(configLink);
+                window.onmessage = function (e) {
+                    ds(null,e.data);
+                };
             }
-            var curText = service;
-            var browse = 'WebApiHost/Web.config';
-            switch(curText){
-                case 'DriveViolationService':
-                    break;
-                case 'PaymentService':
-                    curText = 'PaymentGateway';
-                    browse = 'PaymentService/Web.config';
-                    break;
-                case 'OrderFulfillmentFrontEnd':
-                    browse = 'OrderService/Web.config';
-                    break;
-                case 'BTCAPIServer':
-                    curText = 'bmwgateway';
-                    browse = 'BTCAPIServer/Web.config';
-                    break;
-                case 'EnterprisePortal':
-                    curText = 'EnterprisePortal';
-                    browse = 'WebHost/Web.config';
-                    break;
-                default:
-                    return;
-                    break;
-            }
-            var configLink = document.createElement('a');
-            configLink.innerHTML = 'Get Config From Git';
-            configLink.style.color = 'red';
-            configLink.style.marginLeft = '40px';
-            configLink.style.textDecoration = 'underline';
-            configLink.style.fontSize = '20px';
-            configLink.style.marginBottom = '10px';
-            configLink.href = 'javascript:void(0);';
-            configLink.target = '_blank';
-            configLink.onclick = () => {
-                window.open('http://suus0003.w10:7990/projects/CNB/repos/' + curText +'/browse/'+ browse+'?at=ChinaDev#ad', null, "height=11,width=11,status=no,toolbar=no,scrollbars=no,menubar=no,location=no,top=" + (window.screenTop + 200) + ",left=" + (window.screenLeft + 600));
-                configLink.innerHTML = 'Starting Task';
-                configLink.style.color = 'pink';
-                setTimeout(function () {
-                    configLink.innerHTML = 'Get Config From Git';
-                    configLink.style.color = 'red';
-                }, 1000);
-            };
-            $('h1').append(configLink);
-            window.onmessage = function (e) {
-                ds(null,e.data);
-            };
+            loadServiceFun();
             window.alertOld = window.alert;
             window.alert = function (a) {
                 if (a!==true) {
@@ -236,13 +302,6 @@
             console.warn("多余的配置：");
             console.log(cj1str);
         }
-        var sleep = function (time) {
-            return new Promise(function (resolve, reject) {
-                setTimeout(function () {
-                    resolve();
-                }, time);
-            });
-        };
         var divTitle = document.createElement('div');
         var update = function(){
             $('#new-config-modal .modal-body').one("DOMSubtreeModified",update);
