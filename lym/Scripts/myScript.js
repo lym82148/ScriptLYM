@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         CheckConfig
 // @namespace    http://tampermonkey.net/
-// @version      4.0
+// @version      4.1
 // @description  try to take over the world!
 // @author       You
 // @match        https://portal.azure.cn/*
@@ -66,12 +66,28 @@
             promoteBtn.style.display = 'none';
             promoteBtn.onclick = function(){
                 var env = this.getAttribute('data-env');
-                if($.inst.obj.find('li:contains(-'+env+')').length){
-                    var oldConfig= $.config.omcObj;
-                    $.inst.obj.find('li:contains(-'+env+')').click();
-                    $('#comp-list>li:eq(0)').click();
-                    ds(oldConfig);
+                var compFun = async function(){
+                    if($.inst.obj.find('li:contains(-'+env+')').length){
+                        var oldConfig= $.config.omcObj;
+                        $('#comp-list>li').remove();
+                        $.inst.obj.find('li:contains(-'+env+')').click();
+                        while(!$('#comp-list>li').length){
+                            await sleep(100);
+                        }
+                        while($('body.modal-open').length){
+                            await sleep(100);
+                        }
+                        $('#comp-list>li:eq(0)').click();
+                        while(!$('#config-list>li').length){
+                            await sleep(100);
+                        }
+                        while($('body.modal-open').length){
+                            await sleep(100);
+                        }
+                        ds(oldConfig);
+                    }
                 }
+                compFun();
             };
             paDiv.append(promoteBtn);
             paDiv.append(jsonDiv);
@@ -147,11 +163,10 @@
             var service = location.hash.substring(1,index);
             var env = location.hash.substring(index+1);
             var loadServiceFun = async function(){
-                $('.modal-backdrop.fade').remove();
                 while(!$('#service-list>li').length){
                     await sleep(100);
                 }
-                while($('#loading').is(':visible')){
+                while($('body.modal-open').length){
                     await sleep(100);
                 }
                 var arr = $('#service-list>li').toArray();
@@ -162,11 +177,10 @@
                         break;
                     }
                 }
-                $('.modal-backdrop.fade').remove();
                 while(!$('#inst-list>li').length){
                     await sleep(100);
                 }
-                while($('#loading').is(':visible')){
+                while($('body.modal-open').length){
                     await sleep(100);
                 }
                 var envArr = $('#inst-list>li').toArray();
@@ -176,15 +190,13 @@
                         break;
                     }
                 }
-                $('.modal-backdrop.fade').remove();
                 while(!$('#comp-list>li:eq(0)').length){
                     await sleep(100);
                 }
-                while($('#loading').is(':visible')){
+                while($('body.modal-open').length){
                     await sleep(100);
                 }
                 $('#comp-list>li:eq(0)').click();
-                $('.modal-backdrop.fade').remove();
                 var curText = service;
                 var browse = 'WebApiHost/Web.config';
                 switch(curText){
