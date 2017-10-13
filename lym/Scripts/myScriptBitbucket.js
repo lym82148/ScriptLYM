@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         BitbucketReviewer
 // @namespace    http://tampermonkey.net/
-// @version      3.4
+// @version      3.5
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0003.w10:7990/projects/cnb/repos/*
@@ -45,6 +45,17 @@
         setTimeout(startFun,0);
         return;
     }
+    var getBranchName = function(serviceName){
+        var branchName = 'ChinaDev';
+        switch(serviceName){
+            case 'OrderFulfillmentWorker':
+            case 'OrderFulfillmentFrontEnd':
+            case 'PaymentGateway':
+                branchName = 'CN-v6.1-q4-release';
+                break;
+        }
+        return branchName;
+    };
     if(jQuery('#branch-type-menu').length){
         jQuery('#branch-type-menu ul li[data-id=FEATURE]').click();
         var newName = curUserName;
@@ -61,19 +72,23 @@
         }
         jQuery('#branch-name').val(newName+'/'+jQuery('#branch-name').val()).css({"min-width":'340px'});
         var branchDiv = jQuery('#branch-from-selector').click().parent();
+        var branchName = getBranchName(jQuery('#repository-selector span.name').text());
         var chooseDev = document.createElement('a');
         chooseDev.href='javascript:void(0);';
         chooseDev.style.marginLeft = '10px';
         chooseDev.style.color = '#ff2424';
-        chooseDev.innerHTML = 'Choose ChinaDev';
+        chooseDev.innerHTML = 'Choose Default Branch';
         branchDiv.append(chooseDev);
         var startFun = async function(){
             while(!jQuery('#branch-from-selector-dialog-tab-pane-0>ul>li').length){
                 await sleep(100);
             }
-            if(jQuery('#branch-from-selector-dialog-tab-pane-0>ul>li>a[data-id*="/ChinaDev"]:eq(0)').length){
+            if(jQuery('#branch-from-selector-dialog-tab-pane-0>ul>li>a[data-id*="/'+branchName+'"]:eq(0)').length){
+                jQuery('#branch-from-selector-dialog-tab-pane-0>ul>li>a[data-id*="/'+branchName+'"]:eq(0)').click();
+            }else if(jQuery('#branch-from-selector-dialog-tab-pane-0>ul>li>a[data-id*="/ChinaDev"]:eq(0)').length){
                 jQuery('#branch-from-selector-dialog-tab-pane-0>ul>li>a[data-id*="/ChinaDev"]:eq(0)').click();
-            }else{
+            }
+            else{
                 jQuery('#branch-from-selector-dialog-tab-pane-0>ul>li>a[data-id*="/dev"]:eq(0)').click();
             }
         };
@@ -308,23 +323,26 @@ class="select2-search-choice-close" tabindex="-1"></a></li>';
     };
     var title = jQuery('h2:eq(0)');
     if (title.text().startsWith( 'Create pull request')){
+        var serviceName = jQuery('#content').data('reponame');
+        var branchName = getBranchName(serviceName);
         var btn = document.createElement('a');
-        btn.innerHTML = 'Change To ChinaDev';
+        btn.innerHTML = 'Change To '+branchName;
         btn.style.color = 'red';
         btn.style.marginLeft = '20px';
-
-        btn.href = location.href.replace(/targetBranch=/i, 'targetBranch=ChinaDev&targetBranchOld=');
+        btn.href = location.href.replace(/targetBranch=/i, 'targetBranch='+branchName+'&targetBranchOld=');
         if (btn.href.indexOf('targetBranch=') < 0) {
-            btn.href += '&targetBranch=ChinaDev';
+            btn.href += '&targetBranch='+branchName;
         }
         title.children(':first').before(btn);
     }
     if (location.href == 'http://suus0003.w10:7990/dashboard') {
         var arr = jQuery('a').filter(function (a, b) { return b.innerHTML == 'Create pull request'; });
         for (var i = 0; i < arr.length; i++) {
-            arr[i].href = arr[i].href.replace(/targetBranch=/i, 'targetBranch=ChinaDev&targetBranchOld=');
+            var serviceName = jQuery(arr[i]).closest('tr').find('span.name').text();
+            var branchName = getBranchName(serviceName);
+            arr[i].href = arr[i].href.replace(/targetBranch=/i, 'targetBranch='+branchName+'&targetBranchOld=');
             if (arr[i].href.indexOf('targetBranch=') < 0) {
-                arr[i].href += '&targetBranch=ChinaDev';
+                arr[i].href += '&targetBranch='+branchName;
             }
         }
     }
@@ -337,12 +355,11 @@ class="select2-search-choice-close" tabindex="-1"></a></li>';
     jenkins.style.textDecoration='underline';
     var opsName = service;
     var jenkinsService = service;
-    var until = 'ChinaDev';
+    var until = getBranchName(service);
     switch(service){
         case 'BmwGateway':
             jenkinsService = 'gateway';
             opsName = 'BTCAPIServer';
-            until = 'ChinaDev';
             break;
         case 'PaymentGateway':
             jenkinsService = 'payment';
