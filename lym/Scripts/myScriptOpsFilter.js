@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         OpsFilter
 // @namespace    http://tampermonkey.net/
-// @version      3.0
+// @version      3.1
 // @description  try to take over the world!
 // @author       You
 // @match        xxxhttps://omcops.bmw.com.cn/Configuration/DeployConfiguration/NewChange*
@@ -46,7 +46,7 @@
         comAlert.find('.modal-body').html(content);
         comAlert.modal('show');
     };
-a=comAlertAction;
+    a=comAlertAction;
     var sleep = function (time) {
         return new Promise(function (resolve, reject) {
             setTimeout(function () {
@@ -363,7 +363,8 @@ a=comAlertAction;
                 for(var i=0;i<envs.length;i++){
                     if(envs[i] == curEnv){
                         if(curEnv == 'Prod' && !$('ul[name=mEnvList]>li>[name=Prod]').length){
-                            $('ul[name=mEnvList]').append($('<li><a href="#" name="Prod">上 Prod</a></li>'));
+                            $('ul[name=mEnvList]').closest('div.btn-group').remove();
+                            //$('ul[name=mEnvList]').append($('<li><a href="#" name="Prod">上 Prod</a></li>'));
                         }
                         break;
                     }else{
