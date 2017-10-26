@@ -14,6 +14,9 @@
         $('select#Priority').val(1);
         $('#Comments').val($('#GitRepoTag').val());
         if (location.hash == '#ap') {
+            if ($('#ProductOwner').val() == null) {
+                $('#ProductOwner>option[value="vincent.yin@bmw.com"]').prop('selected', true);
+            }
             $('#btnSubmit')[0].click();
         }
         return;
