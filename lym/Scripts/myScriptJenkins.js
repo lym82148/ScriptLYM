@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Jenkins
 // @namespace    http://tampermonkey.net/
-// @version      2.7
+// @version      2.8
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0006.w10:8080/
@@ -218,8 +218,9 @@
                     ele.target = '_blank';
                     ele.style.fontWeight = 'bolder';
                     ele.style.textDecoration = 'underline';
-                    ele.style.fontSize = '15px';
+                    ele.style.fontSize = '9px';
                     deployArr[dei].parentElement.parentElement.parentElement.next(0).append(ele);
+                    $(ele).previous().style.paddingRight='5px';
                 } else {
                     ele = deployArr[dei].parentElement.parentElement.parentElement.next(0).children[1];
                 }
