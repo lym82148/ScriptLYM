@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         OpsFilter
 // @namespace    http://tampermonkey.net/
-// @version      3.1
+// @version      3.2
 // @description  try to take over the world!
 // @author       You
 // @match        xxxhttps://omcops.bmw.com.cn/Configuration/DeployConfiguration/NewChange*
@@ -434,6 +434,11 @@
                             var waitAlert = function () {
                                 var alertId = $('#mdPlanId').val();
                                 if (alertId == content.planId) {
+                                    // debugger;
+                                    var mo = $('#inst-list ul>li>a:first')[0];
+                                    if(mo){
+                                        mo.click();
+                                    }
                                     $('#createJobModal button.btn-primary')[0].click();
                                     //sessionStorage.removeItem('OpsDeployContent');
                                 } else {
