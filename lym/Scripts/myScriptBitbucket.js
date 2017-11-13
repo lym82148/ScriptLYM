@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         BitbucketReviewer
 // @namespace    http://tampermonkey.net/
-// @version      3.5
+// @version      3.6
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0003.w10:7990/projects/cnb/repos/*
@@ -361,13 +361,21 @@ class="select2-search-choice-close" tabindex="-1"></a></li>';
             jenkinsService = 'gateway';
             opsName = 'BTCAPIServer';
             break;
-        case 'PaymentGateway':
+        case 'PaymentCenter':
             jenkinsService = 'payment';
             opsName = 'PaymentService';
             break;
         case 'OrderFulfillmentWorker':
             jenkinsService = 'orderfullfilmentworker';
             opsName = 'OrderFullfilmentWorker';
+            break;
+        case 'PartnerGateway':
+            jenkinsService = 'enterpriseportal';
+            opsName = 'EnterprisePortal';
+            break;
+        case 'PremiumAirportService':
+            jenkinsService = 'premiumairportdpservice';
+            opsName = 'PremiumAirportDPService';
             break;
     }
     jenkins.href = 'http://suus0006.w10:8080/#'+jenkinsService.toLowerCase();

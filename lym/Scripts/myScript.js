@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         CheckConfig
 // @namespace    http://tampermonkey.net/
-// @version      4.1
+// @version      4.2
 // @description  try to take over the world!
 // @author       You
 // @match        https://portal.azure.cn/*
@@ -203,7 +203,7 @@
                     case 'DriveViolationService':
                         break;
                     case 'PaymentService':
-                        curText = 'PaymentGateway';
+                        curText = 'PaymentCenter';
                         browse = 'PaymentService/Web.config';
                         break;
                     case 'OrderFulfillmentFrontEnd':
@@ -214,11 +214,11 @@
                         browse = 'BTCAPIServer/Web.config';
                         break;
                     case 'EnterprisePortal':
-                        curText = 'EnterprisePortal';
+                        curText = 'PartnerGateway';
                         browse = 'WebHost/Web.config';
                         break;
                     case 'PremiumAirportDPService':
-                        curText = 'PremiumAirportDPService';
+                        curText = 'PremiumAirportService';
                         browse = 'PremiumAirportService/Web.config';
                         break;
                     default:
@@ -350,6 +350,9 @@
                     model.find('.def-rule') .val(' ');
                     model.find('.def-dvalue') .val(' ');
                     model.find('.inst-value').val(keyArr[i + 1].replace(rep, ''));
+                    if(oldJsonConfig && model.find('.inst-value').val()=='******'){
+                        model.find('.inst-value').val('');
+                    }
                     continue;
                 }else{
                     var oldV = keyArr[i + 1].replace(rep, '');
