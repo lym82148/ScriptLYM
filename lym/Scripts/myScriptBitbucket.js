@@ -276,7 +276,7 @@
     var defaultUserList = [{ userName: 'shi', displayName: 'Baoyu SHI' },
                            { userName: 'han', displayName: 'Guoguang Han' },
                            { userName: 'xyang', displayName: 'Yuqi Zhao' },
-                           { userName: 'xia', displayName: 'Yongming Xia' },
+                           //{ userName: 'xia', displayName: 'Yongming Xia' },
                            { userName: 'yliu', displayName: 'Yiming SH Liu' }];
     var filterUserList = defaultUserList.filter(function (a) { return a.userName != curUserName; });
     var ul = jQuery('#s2id_reviewers ul:eq(0)');
