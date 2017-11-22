@@ -51,7 +51,7 @@
             case 'OrderFulfillmentWorker':
             case 'OrderFulfillmentFrontEnd':
             case 'PaymentGateway':
-                branchName = 'CN-v6.1-q4-release';
+                //branchName = 'CN-v6.1-q4-release';
                 break;
         }
         return branchName;
