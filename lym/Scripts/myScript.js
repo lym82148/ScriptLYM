@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         CheckConfig
 // @namespace    http://tampermonkey.net/
-// @version      4.2
+// @version      4.3
 // @description  try to take over the world!
 // @author       You
 // @match        https://portal.azure.cn/*
@@ -77,7 +77,7 @@
                         while($('body.modal-open').length){
                             await sleep(100);
                         }
-                        $('#comp-list>li:eq(0)').click();
+                        $('#comp-list>li:not(:contains("New Item")):eq(0)').click();
                         while(!$('#config-list>li').length){
                             await sleep(100);
                         }
@@ -196,7 +196,7 @@
                 while($('body.modal-open').length){
                     await sleep(100);
                 }
-                $('#comp-list>li:eq(0)').click();
+                $('#comp-list>li:not(:contains("New Item")):eq(0)').click();
                 var curText = service;
                 var browse = 'WebApiHost/Web.config';
                 switch(curText){
