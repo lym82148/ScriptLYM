@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         JiraModule
 // @namespace    http://tampermonkey.net/
-// @version      1.6
+// @version      1.7
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0002.w10:8080/browse/*
@@ -49,5 +49,20 @@
             setTimeout(setModuleOps, 100);
         }
     };
+    var omc = 'omc.cn.support <omc.cn.support@bmwgroup.com>; ';
+    var cc = 'DL-bmwconnected-bumper <bmwconnected-bumper@list.bmw.com>';
+    var content = $('#description-val').text().trim().replace(/\r\n/g, "\n").replace(/\n/g, "\r\n\t");
+    var subject = $('#summary-val').text().trim();
+    var body = 'Hi ops team:\r\n\r\n\t';
+    body += subject + "\r\n\r\n\t";
+    body += "Jira任务\r\n\t" + location.href + "\r\n\r\n\t";
+    body += content;
+    body = encodeURIComponent(body);
+    subject = encodeURIComponent(subject);
+    var template = '<ul class="toolbar-group pluggable-ops"><li class="toolbar-item"><a id="auto-mail" class="toolbar-trigger"  href="mailto:' + omc + '&cc=' + cc + '&subject=' + subject + '&body=' + body + '"><span class="trigger-label" style="color:rgb(255, 76, 76);">Mail To Ops</span></a></li></ul>';
+    if ($('#customfield_10300-val').text().trim() == "Clutch") {
+        $('.toolbar-split-left').append(template);
+    }
+
 
 })();
