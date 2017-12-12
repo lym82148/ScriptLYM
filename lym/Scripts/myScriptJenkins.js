@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Jenkins
 // @namespace    http://tampermonkey.net/
-// @version      2.8
+// @version      2.9
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0006.w10:8080/
@@ -163,7 +163,7 @@
                         lastTd.getElementsByTagName('select')[0].setAttribute('build-id', id);
                         lastTd.getElementsByTagName('select')[0].onchange = function () {
                             if (this.value != 'Deploy') {
-                                if (confirm('确认发布 ' + curText + ' ' + id + ' 到 ' + this.value + ' 环境？')) {
+                                if (confirm('确认发布 ' + curText + ' ' + this.getAttribute('build-id') + ' 到 ' + this.value + ' 环境？')) {
                                     location.href = 'https://omcops.bmw.com.cn/Operation/Release/ReleasePlanIndex/Build-' + curText + "#" + this.getAttribute('build-id') + '-' + this.value;
                                 } else {
                                     this.value = 'Deploy';
@@ -220,7 +220,7 @@
                     ele.style.textDecoration = 'underline';
                     ele.style.fontSize = '9px';
                     deployArr[dei].parentElement.parentElement.parentElement.next(0).append(ele);
-                    $(ele).previous().style.paddingRight='5px';
+                    $(ele).previous().style.paddingRight = '5px';
                 } else {
                     ele = deployArr[dei].parentElement.parentElement.parentElement.next(0).children[1];
                 }
