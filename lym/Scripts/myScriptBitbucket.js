@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         BitbucketReviewer
 // @namespace    http://tampermonkey.net/
-// @version      3.8
+// @version      3.9
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0003.w10:7990/projects/cnb/repos/*
@@ -49,9 +49,12 @@
         var branchName = 'ChinaDev';
         switch(serviceName){
             case 'OrderFulfillmentWorker':
-            case 'OrderFulfillmentFrontEnd':
             case 'PaymentGateway':
                 //branchName = 'CN-v6.1-q4-release';
+                break;
+            case 'OrderFulfillmentFrontEnd':
+            case 'PartnerGateway':
+                branchName = 'CN-RLS-iOS-v7.0.1-Q1Release';
                 break;
         }
         return branchName;
@@ -72,7 +75,7 @@
         }
         jQuery('#branch-name').val(newName+'/'+jQuery('#branch-name').val()).css({"min-width":'340px'});
         var branchDiv = jQuery('#branch-from-selector').click().parent();
-        var branchName = getBranchName(jQuery('#repository-selector span.name').text());
+        
         var chooseDev = document.createElement('a');
         chooseDev.href='javascript:void(0);';
         chooseDev.style.marginLeft = '10px';
@@ -80,6 +83,7 @@
         chooseDev.innerHTML = 'Choose Default Branch';
         branchDiv.append(chooseDev);
         var startFun = async function(){
+            var branchName = getBranchName(jQuery('#repository-selector span.name').text());
             while(!jQuery('#branch-from-selector-dialog-tab-pane-0>ul>li').length){
                 await sleep(100);
             }
