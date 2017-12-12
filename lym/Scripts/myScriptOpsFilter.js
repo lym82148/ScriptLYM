@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         OpsFilter
 // @namespace    http://tampermonkey.net/
-// @version      3.2
+// @version      3.3
 // @description  try to take over the world!
 // @author       You
 // @match        xxxhttps://omcops.bmw.com.cn/Configuration/DeployConfiguration/NewChange*
@@ -421,8 +421,8 @@
             }
         };
         var waitMain = function () {
-            if ($('#tbPlanList tr').length > 1) {
-                var trs = $('#tbPlanList>tbody>tr');
+            if ($('#tb-plan-list tr').length > 1) {
+                var trs = $('#tb-plan-list>tbody>tr');
                 var content = JSON.parse( sessionStorage.getItem('OpsDeployContent'));
                 if (content) {
                     for (var i = 0; i < trs.length; i++) {
@@ -451,7 +451,7 @@
                     }
                     // if (!pageLengthFlag) {
                     //     pageLengthFlag = true;
-                    //     $('[name=tbPlanList_length]').val(100).change();
+                    //     $('[name=tb-plan-list_length]').val(100).change();
                     //     setTimeout(waitMain, 100);
                     // }
                 }
