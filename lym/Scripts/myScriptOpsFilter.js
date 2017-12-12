@@ -388,6 +388,21 @@
                     });
                     $('td>a.btn[href*=ReleasePlanPromote]')[i].after(promoteNow);
                     $(promoteNow).addClass('btn-sm').prev().addClass('btn-sm');
+                    if(content){
+                        if(envs.indexOf(content.env)>=curEnvIndex){
+                            var tr = $('td>a.btn[href*=ReleasePlanPromote]').eq(i).closest('tr');
+                            if(content.id == tr.find('td>a[href*="/job/"]').text()&& content.service == tr.find('td>a[href*="/ReleasePlanDetails/"]').text()){
+                                //content.planId = tr.find('td>a.btn[href*=ReleasePlanPromote]')[0].href.split('/').pop();
+                                //sessionStorage.setItem('OpsDeployContent',JSON.stringify(content));
+                                tr.css('backgroundColor', 'rgba(0, 55, 255, 0.18)');
+                                tr.find('a:not(.btn):not(.pull-right)').css({ 'color': 'red', 'font-weight': 'bolder' });
+                                promoteNow.click();
+                            }
+                        }else{
+                            sessionStorage.removeItem('OpsDeployContent');
+                            comAlertAction(content.service+' '+content.id+' 已成功发布到 '+content.env+' 环境');
+                        }
+                    }
                 }
                 for (var i = 0; i < $('td>a[href*=ReleasePlanEdit]').length; i++) {
                     if ($('td>a[href*=ReleasePlanEdit]').eq(i).next('a').length) {
@@ -462,18 +477,27 @@
         };
         setTimeout(waitMain, 100);
         var curEnv = $('.nav.nav-tabs>.active>a').text();
+        var needJumpCheck = false;
         setInterval(function () {
             var promoteNow;
             var content = JSON.parse(sessionStorage.getItem('OpsDeployContent'));
+            var needJump = true;
             for (var i = 0; i < $('td>a[href*=ReleaseJobDetails]').length; i++) {
                 var tr = $('td>a[href*=ReleaseJobDetails]').eq(i).closest('tr');
                 var service = tr.find('td>a[href*="/ReleaseJobDetails/"]').text();
+                var time = tr.find('td:eq(3)').text().replace(' S','');
+                time = +time;
+                if(time>3600){
+                    continue;
+                }
                 var promoteBtn = tr.find('td>a.btn[href*=ReleasePlanPromote]');
                 if (promoteBtn.length && promoteBtn.next('a').length) {
                     continue;
                 }
                 if (content) {
                     if(content.service == service){
+                        needJumpCheck = true;
+                        needJump = false;
                         tr.css('backgroundColor', 'rgba(0, 55, 255, 0.18)');
                         tr.find('a:not(.btn):not(.pull-right)').css({ 'color': 'red', 'font-weight': 'bolder' });
                         if(promoteBtn.length){
@@ -498,6 +522,18 @@
                 promoteBtn.after(promoteNow);
                 $(promoteNow).addClass('btn-sm').prev().addClass('btn-sm');
             }
+
+            if(needJumpCheck && needJump){
+                var jumpUrl = $('.release-more:eq(0)').attr('href').replace('All',content.service);
+                if(curEnv!='Stg' && curEnv!='Prod'){
+                    location.href = jumpUrl;
+                }else{
+                    sessionStorage.removeItem('OpsDeployContent');
+                    comAlertAction(content.service+' '+content.id+' 已成功发布到 '+content.env+' 环境');
+                }
+
+            }
+
         }, 300);
 
     }
