@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         JiraModule
 // @namespace    http://tampermonkey.net/
-// @version      1.7
+// @version      1.8
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0002.w10:8080/browse/*
@@ -52,6 +52,9 @@
     var omc = 'omc.cn.support <omc.cn.support@bmwgroup.com>; ';
     var cc = 'DL-bmwconnected-bumper <bmwconnected-bumper@list.bmw.com>';
     var content = $('#description-val').text().trim().replace(/\r\n/g, "\n").replace(/\n/g, "\r\n\t");
+    if (content == 'Click to add description') {
+        content = '';
+    }
     var subject = $('#summary-val').text().trim();
     var body = 'Hi ops team:\r\n\r\n\t';
     body += subject + "\r\n\r\n\t";
