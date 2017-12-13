@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         OpsAutoEmail
 // @namespace    http://tampermonkey.net/
-// @version      1.9
+// @version      2.0
 // @description  try to take over the world!
 // @author       You
 // @match        https://omcops.bmw.com.cn/Operation/Release/ReleasePlanDetails/*
@@ -52,13 +52,14 @@
         cFun(copyModel);
     };
     var serviceName = $("input#Service").val() || '';
+    var buildNo = $('div:contains(Jenkins Build Number):last').next().text().trim() || '';
     var releaseEnv = $("input#ReleaseEnv").val() || '';
     var title = 'deploy ' + serviceName + ' to ' + releaseEnv;
     var cc = 'DL-bmwconnected-bumper <bmwconnected-bumper@list.bmw.com>';
     var mailto = 'Wang Bonnie, US-CN <Bonnie.Wang@bmw.com>; Shao Zach, US-CN <Zach.Shao@bmw.com>; Yin Vincent, US-CN <Vincent.Yin@bmw.com>;';
     var omc = 'omc.cn.support <omc.cn.support@bmwgroup.com>; ';
-    var content = 'Hi All\r\n\r\n' + serviceName + ' 申请发' + releaseEnv + ' 环境，需要ops上approve。\r\n\r\n\r\n\r\n';
-    var omcContent = 'Hi All \r\n\r\n' + serviceName + ' 申请发' + releaseEnv + ' 环境，需要ops上approve。\r\n\r\n\r\n\r\n';
+    var content = 'Hi All\r\n\r\n' + serviceName + ' 申请发' + releaseEnv + ' 环境，需要ops上approve。\r\n\r\nhttps://omcops.bmw.com.cn/Operation/Release/ReleasePlanIndex/Stg-' + serviceName + '\r\n\r\nBuild No: ' + buildNo + '\r\n\r\n\r\n\r\n';
+    var omcContent = 'Hi All \r\n\r\n' + serviceName + ' 申请发' + releaseEnv + ' 环境，需要ops上approve。\r\n\r\nhttps://omcops.bmw.com.cn/Operation/Release/ReleasePlanIndex/Stg-' + serviceName + '\r\n\r\nBuild No: ' + buildNo + '\r\n\r\n\r\n\r\n';
 
     //mailto = 'Liu Yiming, (Yiming.SH.Liu@partner.bmw.com)';
     //cc = mailto;
@@ -119,7 +120,7 @@
         if (type == "noconfig" || $(this).data('res') == 'no') {
             configRecord = '无';
             if (releaseEnv == 'Prod') {
-                mailTo.href = 'mailto:' + mailto +omc + '&cc=' + cc + '&subject=' + title + '&body=' + content;
+                mailTo.href = 'mailto:' + mailto + omc + '&cc=' + cc + '&subject=' + title + '&body=' + content;
             } else {
                 mailTo.href = 'mailto:' + mailto + '&cc=' + cc + '&subject=' + title + '&body=' + content;
             }
