@@ -75,7 +75,7 @@
         }
         jQuery('#branch-name').val(newName+'/'+jQuery('#branch-name').val()).css({"min-width":'340px'});
         var branchDiv = jQuery('#branch-from-selector').click().parent();
-        
+
         var chooseDev = document.createElement('a');
         chooseDev.href='javascript:void(0);';
         chooseDev.style.marginLeft = '10px';
@@ -417,29 +417,32 @@ class="select2-search-choice-close" tabindex="-1"></a></li>';
     window.onmessage = function (e) {
         var arr = e.data.Data;
         console.log(e.data);
+        var gitCommitId;
         var gitRepoTag;
         for (var i = 0; i < arr.length; i++) {
-            if (arr[i].Status != 5 && arr[i].Status != 7) { continue; }
-            gitRepoTag = arr[i].GitRepoTag.replace(/[^\d]*/i,'');
+            if (arr[i].Status != 'Deployed') { continue; }
+            gitCommitId = arr[i].GitRepoCommitId;
             break;
         }
-        if(jQuery('span.tag[data-names*='+gitRepoTag+']').length){
-            if(jQuery('span.tag[data-names*='+gitRepoTag+']').closest('tr').find('td.commit>span.ops>a').length){
-                var ele =jQuery('span.tag[data-names*='+gitRepoTag+']').closest('tr').find('td.commit>span.ops>a')[0];
-            }else{
-                var span =document.createElement('span');
-                span.className='ops';
-                var ele = document.createElement('a');
-                ele.style.color = 'red';
-                ele.style.fontWeight = 'bolder';
-                ele.style.fontSize = '18px'  ;
-                ele.style.marginLeft='5px';
-                span.append(ele);
-                jQuery('span.tag[data-names*='+gitRepoTag+']').closest('tr').find('td.commit').append(span);
-            }
-            if (envArr.indexOf(ele.innerHTML) < envArr.indexOf(e.data.Environment)) {
-                ele.innerHTML = e.data.Environment;
-                ele.href = 'https://omcops.bmw.com.cn/Operation/Release/ReleasePlanIndex/' + e.data.Environment + '-' + opsName;
+        // if(jQuery('span.tag[data-names*='+gitRepoTag+']').length){
+        if( jQuery('td.commit>a.commitid[data-commit-message*='+gitCommitId+']')){
+            // if(jQuery('span.tag[data-names*='+gitRepoTag+']').closest('tr').find('td.commit>span.ops>a').length){
+            //     var ele =jQuery('span.tag[data-names*='+gitRepoTag+']').closest('tr').find('td.commit>span.ops>a')[0];
+            // }else{
+            var span =document.createElement('span');
+            span.className='ops';
+            var ele = document.createElement('a');
+            ele.style.color = 'red';
+            ele.style.fontWeight = 'bolder';
+            ele.style.fontSize = '18px'  ;
+            ele.style.marginLeft='5px';
+            span.append(ele);
+            // jQuery('span.tag[data-names*='+gitRepoTag+']').closest('tr').find('td.commit').append(span);
+            jQuery('td.commit>a.commitid[data-commit-message*='+gitCommitId+']').closest('td').append(span);
+            // }
+            if (envArr.indexOf(ele.innerHTML) < envArr.indexOf(e.data.Env)) {
+                ele.innerHTML = e.data.Env;
+                ele.href = 'https://omcops.bmw.com.cn/Operation/Release/ReleaseManagement/' + e.data.Env + '-' + opsName;
             }
         }
     };

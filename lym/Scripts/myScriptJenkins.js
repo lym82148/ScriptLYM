@@ -34,7 +34,7 @@
                 }
                 var divLinkConfig = document.createElement('div');
                 divLinkConfig.style.height = '50px';
-                var divs = ['Build', 'Dev', 'Int', 'Stg', 'Prod '];
+                var divs = ['Build', 'Dev', 'Int', 'Stg', 'Prod'];
                 for (var di = 0; di < divs.length; di++) {
                     var divTmp = document.createElement('a');
                     divTmp.style.color = 'blue';
@@ -64,7 +64,7 @@
                     divTmp.style.fontSize = '26px';
                     divTmp.innerHTML = divs[di];
                     divTmp.target = '_blank';
-                    divTmp.href = 'https://omcops.bmw.com.cn/Operation/Release/ReleasePlanIndex/' + divs[di] + '-' + curText;
+                    divTmp.href = 'https://omcops.bmw.com.cn/Operation/Release/ReleaseManagement/' + divs[di] + '-' + curText;
                     divTmp.style.marginLeft = '0px';
                     divTmp.style.marginRight = '32px';
                     divTmp.style.textDecoration = 'underline';
@@ -147,7 +147,7 @@
             var deployArr = document.getElementsBySelector('#buildHistory tr .icon-blue');
             if (deployArr.length > 0) {
                 var cli = function (obj) {
-                    window.open('https://omcops.bmw.com.cn/Operation/Release/ReleasePlanIndex/Build-' + curText + "#" + obj.num);
+                    window.open('https://omcops.bmw.com.cn/Operation/Release/ReleaseManagement/Build-' + curText + "#" + obj.num);
                     obj.blur();
                 };
                 for (var dei = 0 ; dei < deployArr.length; dei++) {
@@ -164,7 +164,7 @@
                         lastTd.getElementsByTagName('select')[0].onchange = function () {
                             if (this.value != 'Deploy') {
                                 if (confirm('确认发布 ' + curText + ' ' + this.getAttribute('build-id') + ' 到 ' + this.value + ' 环境？')) {
-                                    location.href = 'https://omcops.bmw.com.cn/Operation/Release/ReleasePlanIndex/Build-' + curText + "#" + this.getAttribute('build-id') + '-' + this.value;
+                                    location.href = 'https://omcops.bmw.com.cn/Operation/Release/ReleaseManagement/Build-' + curText + "#" + this.getAttribute('build-id') + '-' + this.value;
                                 } else {
                                     this.value = 'Deploy';
                                 }
@@ -226,7 +226,7 @@
                 }
                 if (envArr.indexOf(ele.innerHTML) < envArr.indexOf(e.data.Environment)) {
                     ele.innerHTML = e.data.Environment;
-                    ele.href = 'https://omcops.bmw.com.cn/Operation/Release/ReleasePlanIndex/' + e.data.Environment + '-' + curText;
+                    ele.href = 'https://omcops.bmw.com.cn/Operation/Release/ReleaseManagement/' + e.data.Environment + '-' + curText;
                 }
                 break;
             }
