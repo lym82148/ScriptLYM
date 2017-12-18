@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         BitbucketReviewer
 // @namespace    http://tampermonkey.net/
-// @version      3.9
+// @version      4.0
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0003.w10:7990/projects/cnb/repos/*
@@ -420,7 +420,7 @@ class="select2-search-choice-close" tabindex="-1"></a></li>';
         var gitCommitId;
         var gitRepoTag;
         for (var i = 0; i < arr.length; i++) {
-            if (arr[i].Status != 'Deployed') { continue; }
+            if (arr[i].Status != 'Deployed'&&arr[i].Status != 'Promoted') { continue; }
             gitCommitId = arr[i].GitRepoCommitId;
             break;
         }

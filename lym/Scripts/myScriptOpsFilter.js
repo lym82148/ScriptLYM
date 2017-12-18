@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         OpsFilter
 // @namespace    http://tampermonkey.net/
-// @version      3.3
+// @version      3.4
 // @description  try to take over the world!
 // @author       You
 // @match        xxxhttps://omcops.bmw.com.cn/Configuration/DeployConfiguration/NewChange*
@@ -26,7 +26,7 @@
             var envs = ['Dev','Int','Stg','Prod'];
             var tasks = [];
             envs.forEach(function(a){
-                var link =  'https://omcops.bmw.com.cn/Operation/Release/ReleasePlanAsync?limit=10&start=0&page=1&serviceName='+service+'&environment='+a;
+                var link =  'https://omcops.bmw.com.cn/Operation/Release/ReleasePlanAsync?limit=10&start=0&length=20&page=1&serviceName='+service+'&Env='+a;
                 tasks.push($.ajax(link).then(function(data){
                     opener.postMessage(data,'*');
                 }));
@@ -35,6 +35,10 @@
         };
         setTimeout( startFun,0);
         return;
+    }
+    var releaseCon = JSON.parse(sessionStorage.getItem('OpsDeployContent'));
+    if(releaseCon){
+        $('h1>small').html('Releasing：'+releaseCon.service +' To '+releaseCon.env).css({'color':'#ff6c6c','font-weight':'bold'})
     }
     var comAlert = '<div class="modal fade" data-show="true"><div class="modal-dialog" style="left:0px"><div class="modal-content"><div class="modal-header"><h4 class="modal-title">提示</h4></div><div class="modal-body">' + '' + '</div><div style="padding-left:42%;padding-right:40%;padding-bottom:20px"><button type="button" class="btn btn-primary" data-dismiss="modal" aria-hidden="true" style="width:100px" data-res="yes">确认</button></div></div></div></div>';
     comAlert = $(comAlert);
@@ -60,14 +64,14 @@
     div.style.fontSize = '32px';
     div.innerHTML = 'Filter: ';
     var isAll = location.href.toLowerCase().startsWith('https://omcops.bmw.com.cn/Operation/Release/ReleaseManagement'.toLowerCase());
-    if (!isAll) {
-        $('h1').append(div);
-    }
+    //if (!isAll) {
+    $('h1').append(div);
+    //}
     var isDeloy = location.href.toLowerCase().startsWith('https://omcops.bmw.com.cn/Operation/Release/ReleasePlanIndex/Dev-'.toLowerCase())
     || location.href.toLowerCase().startsWith('https://omcops.bmw.com.cn/Operation/Release/ReleasePlanIndex/Int-'.toLowerCase())
     || location.href.toLowerCase().startsWith('https://omcops.bmw.com.cn/Operation/Release/ReleasePlanIndex/Prod-'.toLowerCase());
     var services = $('.input-group-addon:eq(0)').next();
-    var res = services.find('li');
+    var res = $('.dt-button-collection[role=menu]').find('a');
     var dropdown = services.find('button[data-toggle=dropdown]');
     for (var i = 0; i < res.length; i++) {
         res[i].lText = res[i].innerText.toLowerCase();
@@ -75,14 +79,15 @@
     var str = '';
     var ignoreKey = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
     var curList = [];
-    var lineColor = 'lightgrey';
+    var lineColor = 'lightblue';
     var moveFun = function (a) {
         if (curList.length == 0) { return; }
         var nextIndex;
-        var x = Math.floor(curList.curIndex / 3);
-        var y = curList.curIndex % 3;
-        var xList = Math.floor((curList.length - 1) / 3);
-        var yList = (curList.length - 1) % 3;;
+        var widMax = 5;
+        var x = Math.floor(curList.curIndex / widMax);
+        var y = curList.curIndex % widMax;
+        var xList = Math.floor((curList.length - 1) / widMax);
+        var yList = (curList.length - 1) % widMax;
         function checkHasError() {
             if (nextIndex >= curList.length) {
                 return true;
@@ -93,39 +98,39 @@
         }
         switch (a) {
             case 0:
-                nextIndex = Math.round((x - 1) * 3 + y);
+                nextIndex = Math.round((x - 1) * widMax + y);
                 if (checkHasError()) {
                     if (yList < y) {
-                        nextIndex = (xList - 1) * 3 + y;
+                        nextIndex = (xList - 1) * widMax + y;
                     } else {
-                        nextIndex = (xList) * 3 + y;
+                        nextIndex = (xList) * widMax + y;
                     }
                 }
                 break;
             case 1:
-                nextIndex = Math.round((x + 1) * 3 + y);
+                nextIndex = Math.round((x + 1) * widMax + y);
                 if (checkHasError()) {
-                    nextIndex = y;
+                    nextIndex = widMax;
                 }
                 break;
             case 2:
                 if (y > 0) {
                     nextIndex = curList.curIndex - 1;
                 } else {
-                    nextIndex = curList.curIndex + 2;
+                    nextIndex = curList.curIndex - 1 + widMax;
                 }
                 if (checkHasError()) {
-                    nextIndex -= 3;
+                    nextIndex -= widMax;
                 }
                 break;
             case 3:
-                if (y == 2) {
-                    nextIndex = curList.curIndex - 2;
+                if (y == widMax - 1) {
+                    nextIndex = curList.curIndex + 1 - widMax;
                 } else {
                     nextIndex = curList.curIndex + 1;
                 }
                 if (checkHasError()) {
-                    nextIndex -= 3;
+                    nextIndex -= widMax;
                 }
                 break;
         }
@@ -136,21 +141,26 @@
             nextIndex = 0;
         }
         curList[curList.curIndex].style.backgroundColor = '';
+        curList[curList.curIndex].style.backgroundImage = '';
         curList[nextIndex].style.backgroundColor = lineColor;
+        curList[nextIndex].style.backgroundImage = 'none';
         curList.curIndex = nextIndex;
     };
     var filterFun = function () {
         div.innerHTML = 'Filter: ' + str;
         var first = true;
         curList = [];
+        res = $('.dt-button-collection[role=menu]').find('a');
         for (var i = 0; i < res.length; i++) {
-            if (res[i].lText.indexOf(str) >= 0) {
+            if (res[i].text.toLowerCase().indexOf(str) >= 0) {
                 if (first) {
                     res[i].style.backgroundColor = lineColor;
+                    res[i].style.backgroundImage = 'none';
                     first = false;
                     curList.curIndex = 0;
                 } else {
                     res[i].style.backgroundColor = '';
+                    res[i].style.backgroundImage = '';
                 }
                 res[i].style.display = '';
                 curList.push(res[i]);
@@ -159,9 +169,10 @@
             }
         }
     };
+
     onkeydown = function (e) {
         if (isAll) {
-            return;
+            //return;
         }
         if (e.target.tagName == 'INPUT') {
             return;
@@ -169,10 +180,22 @@
         if (e.ctrlKey) {
             return;
         }
-        if (dropdown.attr('aria-expanded') != 'true') {
-            dropdown[0].click();
-            dropdown.blur();
+        if($('.dt-buttons:eq(0)>a').is(':visible')){
+            if(!$('.dt-button-collection[role=menu]').is(':visible')) {
+                $('.dt-buttons:eq(0)>a').click();
+            }
+        }else{
+            if(JSON.parse( sessionStorage.getItem('OpsDeployContent'))){
+
+            }else{
+                $('a[refreash-table=plan_list]').click();
+                $('.dt-buttons:eq(0)>a').click();
+            }
         }
+        // if (dropdown.attr('aria-expanded') != 'true') {
+        //     dropdown[0].click();
+        //     dropdown.blur();
+        // }
         if (!auto) { return; }
         var arrow;
         if (e.key.length > 1) {
@@ -190,18 +213,19 @@
             }
             else if (e.key == 'Enter') {
                 if (curList.length) {
-                    curList[curList.curIndex].getElementsByTagName('a')[0].click();
-                    if ($('.btn-search').length) {
-                        $('.btn-search').click();
-                    }
+                    curList[curList.curIndex].click();
+                    str = '';
                 }
                 return;
             }
             else if (e.key == 'Escape') {
-                if (dropdown.attr('aria-expanded') == 'true') {
-                    dropdown[0].click();
-                    dropdown.blur();
+                if($('.dt-button-collection[role=menu]').is(':visible')){
+                    $('.dt-button-collection[role=menu]').prev().click();
                 }
+                // if (dropdown.attr('aria-expanded') == 'true') {
+                //     dropdown[0].click();
+                //     dropdown.blur();
+                // }
                 str = '';
             }
             else {
@@ -250,12 +274,38 @@
             return res;
         }
     });
-    var reg = /^https:\/\/omcops.bmw.com.cn\/Operation\/Release\/ReleasePlanIndex.*/i;
-    if (reg.test(location.href)) {
+
+    var cParams = location.pathname.split('/').pop().split('-');
+    var cEnv = cParams[0];
+    var cService = cParams[1];
+    $('#nav-tabs-env>li:contains('+cEnv+'):eq(0)').click();
+    if(cParams.length>1&&cService!='All'){
+        $('a[refreash-table=plan_list]').click();
+        str = cService.toLowerCase();
+        $('.dt-buttons:eq(0)>a').click();
+        filterFun();
+        if (curList.length) {
+            curList[curList.curIndex].click();
+            str = '';
+        }
+        var okFun = async function(){
+            while(!$('button:contains(Ok):visible').length){
+                await sleep(100);
+            }
+            // $('button:contains(Ok):visible').click();
+            location.href ="https://omcops.bmw.com.cn/Operation/Release/ReleaseManagement";
+        }
+        var okFunJump = async function(url){
+            while(!$('button:contains(Ok):visible').length){
+                await sleep(100);
+            }
+            // $('button:contains(Ok):visible').click();
+            location.href =url;
+        }
         if (location.hash != '') {
             var cont = location.hash.replace('#', '').split('-');
             var find = function () {
-                var idLinks = $('#tbList>tbody>tr>td>a[href*="/job/"]');
+                var idLinks = $('#tb-plan-list>tbody>tr>td>a[href*="/job/"]');
                 if (idLinks.length) {
                     for (var i = 0; i < idLinks.length; i++) {
                         if (idLinks[i].text == cont[0]) {
@@ -263,20 +313,37 @@
                             if (tr.length) {
                                 tr.css('backgroundColor', 'rgba(0, 55, 255, 0.18)');
                                 tr.find('a:not(.btn):not(.pull-right)').css({ 'color': 'red', 'font-weight': 'bolder' });
-                                if(tr.find('td>a.btn[href*="/ReleasePlanSchedule/"]').length){
-                                    var planId = tr.find('td>a.btn[href*="/ReleasePlanSchedule/"]')[0].href.split('/').pop();
-                                    var service = tr.find('td>a[href*="/ReleasePlanDetails/"]').text();
+                                if(tr.find('a:contains(Deploy)').length){
+                                    var jsonData = JSON.parse(tr.attr('data'));
+                                    var planId = jsonData.Id;
+                                    var service = jsonData.Service;
                                     sessionStorage.setItem('OpsDeployContent',JSON.stringify({service:service,id:cont[0],planId:planId,env:cont[1]}));
-                                    tr.find('td>a.btn[href*="/ReleasePlanSchedule/"]')[0].click();
+                                    if(tr.find('a:contains(Deploy)')[0].clicked){
+
+                                    }else{
+                                        tr.find('a:contains(Deploy)')[0].clicked = true;
+                                        tr.find('a:contains(Deploy)').click();
+                                        var deployFun = async function(){
+                                            while(!$('button[data-id='+planId+']').length){
+                                                await sleep(100);
+                                            }
+                                            $('button[data-id='+planId+']').click();
+                                            okFun();
+                                        }
+                                        deployFun();
+                                    }
+                                    return;
                                 }
                             }
                         }
                     }
+                    setTimeout(find, 100);
                 } else {
                     setTimeout(find, 100);
                 }
             };
             setTimeout(find, 100);
+            return;
         }
         var divAlert = '<div class="modal fade" data-show="true"><div class="modal-dialog" style="left:0px"><div class="modal-content"><div class="modal-header"><h4 class="modal-title">确认</h4></div><div class="modal-body">' + '' + '</div><div style="padding-left:25%;padding-right:25%;padding-bottom:20px"><button type="button" class="btn btn-primary" data-dismiss="modal" aria-hidden="true" style="width:100px" data-res="yes">是</button><button type="button" data-res="no"  class="pull-right btn btn-danger" data-dismiss="modal"style="width:100px" aria-hidden="true">否</button></div></div></div></div>';
         divAlert = $(divAlert);
@@ -300,12 +367,12 @@
             console.log(content);
         };
         var waitTable = function () {
-            var idLinks = $('#tbList>tbody>tr>td>a[href*="/job/"]');
+            var idLinks = $('#tb-plan-list>tbody>tr>td>a[href*="/job/"]');
             if (idLinks.length) {
                 var deployNow, promoteNow, config;
                 /*jshint multistr:true */
                 var dropdownHtml = '<div class="btn-group" style="margin-left:10px">\
-<button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown">More \
+<button type="button" class="btn btn-info btn-sm dropdown-toggle" data-toggle="dropdown">More \
 <span class="caret"></span>\
 </button>\
 <ul class="dropdown-menu" role="menu" name="mEnvList">\
@@ -319,22 +386,37 @@
                 var envs = ['Build','Dev','Int','Stg','Prod'];
                 var curEnvIndex = envs.indexOf(curEnv);
                 var content =JSON.parse( sessionStorage.getItem('OpsDeployContent'));
-                for (var i = 0; i < $('td>a.btn[href*="/ReleasePlanSchedule/"]').length; i++) {
-                    if ($('td>a.btn[href*="/ReleasePlanSchedule/"]').eq(i).next('div').length) {
+                for (var i = 0; i < $('td>a.btn:contains(Deploy)').length; i++) {
+                    if ($('td>a.btn:contains(Deploy)').eq(i).next('div').length) {
                         continue;
                     }
                     if(content){
                         if(envs.indexOf(content.env)>=curEnvIndex){
-                            var tr = $('td>a.btn[href*="/ReleasePlanSchedule/"]').eq(i).closest('tr');
-                            if(content.id == tr.find('td>a[href*="/job/"]').text()&& content.service == tr.find('td>a[href*="/ReleasePlanDetails/"]').text()){
-                                content.planId = tr.find('td>a.btn[href*="/ReleasePlanSchedule/"]')[0].href.split('/').pop();
+                            var tr = $('td>a.btn:contains(Deploy)').eq(i).closest('tr');
+                            var jsonData = JSON.parse(tr.attr('data'));
+                            if(content.id == jsonData.JenkinsBuildNo&& content.service == jsonData.Service){
+                                content.planId = jsonData.planId;
                                 sessionStorage.setItem('OpsDeployContent',JSON.stringify(content));
                                 tr.css('backgroundColor', 'rgba(0, 55, 255, 0.18)');
                                 tr.find('a:not(.btn):not(.pull-right)').css({ 'color': 'red', 'font-weight': 'bolder' });
-                                tr.find('td>a.btn[href*="/ReleasePlanSchedule/"]')[0].click();
+                                if(tr.find('a:contains(Deploy)')[0].clicked){
+
+                                }else{
+                                    tr.find('a:contains(Deploy)')[0].clicked = true;
+                                    tr.find('a:contains(Deploy)').click();
+                                    var deployFun = async function(){
+                                        while(!$('button[data-id='+jsonData.planId+']').length){
+                                            await sleep(100);
+                                        }
+                                        $('button[data-id='+jsonData.planId+']').click();
+                                        okFun();
+                                    }
+                                    deployFun();
+                                }
                             }
                         }else{
                             sessionStorage.removeItem('OpsDeployContent');
+                            $('h1>small').html('');
                             comAlertAction(content.service+' '+content.id+' 已成功发布到 '+content.env+' 环境');
                         }
                     }
@@ -351,11 +433,11 @@
                     //     $(this).prev().addClass('disabled');
                     // });
                     // $('td>a.btn[href*=ReleasePlanSchedule]')[i].after(deployNow);
-                    $('td>a.btn[href*="/ReleasePlanSchedule/"]:eq('+i+')').after($(dropdownHtml)).next('div').find('ul>li>a[name]').click(function(){
+                    $('td>a.btn:contains(Deploy):eq('+i+')').addClass('btn-sm').after($(dropdownHtml)).next('div').find('ul>li>a[name]').click(function(){
                         var tr = $(this).closest('tr');
                         var id = tr.find('td>a[href*="/job/"]').text();
-                        var service = tr.find('td>a[href*="/ReleasePlanDetails/"]').text();
-                        var deBtn = tr.find('td>a.btn[href*="/ReleasePlanSchedule/"]')[0];
+                        var service = tr.find('td:first').text();
+                        var deBtn = tr.find('td>a.btn:contains(Deploy)')[0];
                         confirmBox({service:service,id:id,planId:deBtn.href.split('/').pop(),env:this.name,btn:deBtn});
                     });
                     // $(deployNow).addClass('btn-sm').prev().addClass('btn-sm');
@@ -372,40 +454,46 @@
                     }
                 }
 
-                for (var i = 0; i < $('td>a.btn[href*=ReleasePlanPromote]').length; i++) {
-                    if ($('td>a.btn[href*=ReleasePlanPromote]').eq(i).next('a').length) {
-                        continue;
-                    }
-                    promoteNow = document.createElement('a');
-                    promoteNow.className = 'btn btn-info';
-                    promoteNow.innerHTML = 'Now';
-                    promoteNow.style.marginLeft = '10px';
-                    $(promoteNow).click(function () {
-                        var id = $(this).closest('tr').find('td>a[href*="/job/"]').text();
-                        var href = $(this).prev()[0].href;
-                        location.href = href + '#ap';
-                        // $(this)[0].click();
-                    });
-                    $('td>a.btn[href*=ReleasePlanPromote]')[i].after(promoteNow);
-                    $(promoteNow).addClass('btn-sm').prev().addClass('btn-sm');
+                for (var i = 0; i < $('td>a.btn:contains(Promote)').length; i++) {
                     if(content){
                         if(envs.indexOf(content.env)>=curEnvIndex){
-                            var tr = $('td>a.btn[href*=ReleasePlanPromote]').eq(i).closest('tr');
-                            if(content.id == tr.find('td>a[href*="/job/"]').text()&& content.service == tr.find('td>a[href*="/ReleasePlanDetails/"]').text()){
+                            var tr = $('td>a.btn:contains(Promote)').eq(i).closest('tr');
+                            var jsonData = JSON.parse(tr.attr('data'));
+                            if(content.id == jsonData.JenkinsBuildNo&& content.service == jsonData.Service){
                                 //content.planId = tr.find('td>a.btn[href*=ReleasePlanPromote]')[0].href.split('/').pop();
                                 //sessionStorage.setItem('OpsDeployContent',JSON.stringify(content));
                                 tr.css('backgroundColor', 'rgba(0, 55, 255, 0.18)');
                                 tr.find('a:not(.btn):not(.pull-right)').css({ 'color': 'red', 'font-weight': 'bolder' });
-                                promoteNow.click();
+                                if(tr.find('a:contains(Promote)')[0].clicked){
+
+                                }else{
+                                    tr.find('a:contains(Promote)')[0].clicked = true;
+                                    tr.find('a:contains(Promote)').click();
+                                    var deployFun = async function(){
+                                        while(!$('input.valid.plan-id').length || $('input.valid.plan-id').val()!=jsonData.Id){
+                                            await sleep(100);
+                                        }
+                                        $('.product-owner').val('vincent.yin@bmw.com');
+                                        $('input.valid.comments').val('deploy');
+                                        $('.btn-promote').click();
+                                        //$('button[data-id='+jsonData.planId+']').click();
+                                        var url = "https://omcops.bmw.com.cn/Operation/Release/ReleaseManagement/";
+                                        url += envs[curEnvIndex+1]+'-'+content.service;
+                                        okFunJump(url);
+                                    }
+                                    deployFun();
+                                }
                             }
                         }else{
                             sessionStorage.removeItem('OpsDeployContent');
+                            $('h1>small').html('');
                             comAlertAction(content.service+' '+content.id+' 已成功发布到 '+content.env+' 环境');
                         }
                     }
                 }
-                for (var i = 0; i < $('td>a[href*=ReleasePlanEdit]').length; i++) {
-                    if ($('td>a[href*=ReleasePlanEdit]').eq(i).next('a').length) {
+
+                for (var i = 0; i < $('#tb-plan-list tr').find('td:eq(-2)').length; i++) {
+                    if ($('#tb-plan-list tr').find('td:eq(-2)').eq(i).children().length >=2) {
                         continue;
                     }
                     config = document.createElement('a');
@@ -415,9 +503,9 @@
                     config.innerHTML = 'Config';
                     config.style.marginLeft = '10px';
                     config.target = '_blank';
-                    var name = $('td>a[href*=ReleasePlanEdit]:eq(' + i + ')').closest('tr').find('td>a[href*="ReleasePlanDetails"]').text();
+                    var name = $('#tb-plan-list tr').find('td:eq(-2)').eq(2).siblings().eq(0).text();
                     config.href = 'https://omcops.bmw.com.cn/Configuration/DeployConfiguration/NewChange' + '#' + name + '-' + $('ul.nav>li.active').text();
-                    $('td>a[href*=ReleasePlanEdit]')[i].after(config);
+                    $('#tb-plan-list tr').find('td:eq(-2)').eq(i).find('a').after(config);
                 }
             }
             // else {
@@ -429,32 +517,40 @@
     var regMain = /^https:\/\/omcops.bmw.com.cn\/Operation\/Release\/ReleaseManagement.*/i;
     var pageLengthFlag = false;
     if (regMain.test(location.href)) {
-        window.alertOld = window.alert;
-        window.alert = function (a) {
-            if (!a.startsWith('Success')) {
-                window.alertOld(a);
+        // window.alertOld = window.alert;
+        // window.alert = function (a) {
+        //     if (!a.startsWith('Success')) {
+        //         window.alertOld(a);
+        //     }
+        // };
+        var okNotJumpFun = async function(){
+            while(!$('button:contains(Ok):visible').length){
+                await sleep(100);
             }
-        };
+            $('button:contains(Ok):visible').click();
+        }
         var waitMain = function () {
-            if ($('#tb-plan-list tr').length > 1) {
-                var trs = $('#tb-plan-list>tbody>tr');
+            if ($('#tb-plan-queue tr').length > 1) {
+                var trs = $('#tb-plan-queue>tbody>tr');
                 var content = JSON.parse( sessionStorage.getItem('OpsDeployContent'));
                 if (content) {
                     for (var i = 0; i < trs.length; i++) {
-                        if (trs[i].getAttribute('planid') == content.planId) {
+                        var jsonData =JSON.parse(trs[i].getAttribute('data'));
+                        if (jsonData.Id == content.planId) {
                             trs.eq(i).css('backgroundColor', 'rgba(0, 55, 255, 0.18)');
                             trs.eq(i).find('a:not(.btn):not(.pull-right)').css({ 'color': 'red', 'font-weight': 'bolder' });
                             pageLengthFlag = true;
                             var schedule = $(trs[i]).find('.btn.btn-primary');
                             var waitAlert = function () {
-                                var alertId = $('#mdPlanId').val();
+                                var alertId = $('.plan-id').val();
                                 if (alertId == content.planId) {
                                     // debugger;
-                                    var mo = $('#inst-list ul>li>a:first')[0];
+                                    var mo = $('.inst-list ul>li>a:first')[0];
                                     if(mo){
                                         mo.click();
                                     }
-                                    $('#createJobModal button.btn-primary')[0].click();
+                                    $('button.btn-primary.btn-create')[0].click();
+                                    okNotJumpFun();
                                     //sessionStorage.removeItem('OpsDeployContent');
                                 } else {
                                     setTimeout(waitAlert, 100);
@@ -505,6 +601,7 @@
                                 location.href = promoteBtn[0].href + '#ap';
                             }else{
                                 sessionStorage.removeItem('OpsDeployContent');
+                                $('h1>small').html('');
                                 comAlertAction(content.service+' '+content.id+' 已成功发布到 '+content.env+' 环境');
                             }
                         }
@@ -524,9 +621,8 @@
             }
 
             if(needJumpCheck && needJump){
-                var jumpUrl = $('.release-more:eq(0)').attr('href').replace('All',content.service);
                 if(curEnv!='Stg' && curEnv!='Prod'){
-                    location.href = jumpUrl;
+                    location.href ="https://omcops.bmw.com.cn/Operation/Release/ReleaseManagement/"+curEnv+'-'+content.service;
                 }else{
                     sessionStorage.removeItem('OpsDeployContent');
                     comAlertAction(content.service+' '+content.id+' 已成功发布到 '+content.env+' 环境');
@@ -544,8 +640,8 @@
         // var interval;
         // autoRefresh.onchange = function () {
         //     if (autoRefresh.checked) {
-        //         $('#tbList').dataTable().fnDraw();
-        //         interval = setInterval("$('#tbList').dataTable().fnDraw();", 60000);
+        //         $('#tb-plan-list').dataTable().fnDraw();
+        //         interval = setInterval("$('#tb-plan-list').dataTable().fnDraw();", 60000);
         //     } else {
         //         clearInterval(interval);
         //     }

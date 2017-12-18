@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Jenkins
 // @namespace    http://tampermonkey.net/
-// @version      2.9
+// @version      3.0
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0006.w10:8080/
@@ -202,9 +202,10 @@
         var envArr = ["", "Build", "Dev", 'Int', 'Stg', 'Prod'];
         window.onmessage = function (e) {
             var arr = e.data.Data;
+            console.log(e.data)
             var jenkinsBuildNo;
             for (var i = 0; i < arr.length; i++) {
-                if (arr[i].Status != 5 && arr[i].Status != 7) { continue; }
+                if (arr[i].Status != 'Deployed'&&arr[i].Status != 'Promoted') { continue; }
                 jenkinsBuildNo = arr[i].JenkinsBuildNo;
                 break;
             }
@@ -224,9 +225,9 @@
                 } else {
                     ele = deployArr[dei].parentElement.parentElement.parentElement.next(0).children[1];
                 }
-                if (envArr.indexOf(ele.innerHTML) < envArr.indexOf(e.data.Environment)) {
-                    ele.innerHTML = e.data.Environment;
-                    ele.href = 'https://omcops.bmw.com.cn/Operation/Release/ReleaseManagement/' + e.data.Environment + '-' + curText;
+                if (envArr.indexOf(ele.innerHTML) < envArr.indexOf(e.data.Env)) {
+                    ele.innerHTML = e.data.Env;
+                    ele.href = 'https://omcops.bmw.com.cn/Operation/Release/ReleaseManagement/' + e.data.Env + '-' + curText;
                 }
                 break;
             }
