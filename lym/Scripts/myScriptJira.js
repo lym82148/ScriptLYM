@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         JiraModule
 // @namespace    http://tampermonkey.net/
-// @version      1.8
+// @version      1.9
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0002.w10:8080/browse/*
@@ -25,10 +25,22 @@
     var setModuleOps = function n() {
         if ($('#summary').length) {
             // $('#issuetype-field').val('Story');
-            $('#issuetype-field').next().find('a:contains("Story")').click();
-            $('#summary').val('申请');
-            $('#customfield_10300').val('13329');
-            $('#customfield_11200').val('11305');
+            if ($('#issuetype-field')[0].clicked) {
+
+            } else {
+                $('#issuetype-field')[0].clicked = true;
+                $('#issuetype-field').click();
+            }
+            if (!$('#issuetype-field').next().find('a:contains("Story")').length) {
+                $('#issuetype-field').next().find('a:contains("Story")').click();
+                $('#summary').val('申请');
+                $('#customfield_10300').val('13329');
+                $('#customfield_11200').val('11305');
+            }
+
+            else {
+                setTimeout(n, 100);
+            }
         } else {
             setTimeout(n, 100);
         }
