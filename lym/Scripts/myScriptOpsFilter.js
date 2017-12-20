@@ -13,6 +13,7 @@
 // ==/UserScript==
 
 (function () {
+    // 获取发布情况
     if(location.href.startsWith('https://omcops.bmw.com.cn/#')){
         for(var i=0;i<document.body.children.length;){
             document.body.children[i].remove();
@@ -55,6 +56,7 @@
             }, time);
         });
     };
+    // 发布提示文字
     var releaseCon = JSON.parse(sessionStorage.getItem('OpsDeployContent'));
     if(releaseCon){
         $('h1>small').html('<B style="color:#ff6c6c">'+releaseCon.service +'</B> BuildNo:<B style="color:#ff6c6c">'+releaseCon.id+'</B> To <B style="color:#ff6c6c">'+releaseCon.env+'</B>');
@@ -287,7 +289,9 @@
     var cEnv = cParams[0];
     var cService = cParams[1];
 
+    // 立即切换tab
     $('#nav-tabs-env>li:contains('+cEnv+'):eq(0)').addClass('active').siblings().removeClass('active');
+    // 延迟点击
     setTimeout(function(){
         $('#nav-tabs-env>li:contains('+cEnv+'):eq(0)').click();
         if(cParams.length>1&&cService!='All'){
@@ -305,6 +309,7 @@
             }
         }
     },300);
+    // 切换tab 立即清空数据
     $('#nav-tabs-env li').click(()=>{
         $('#tb-plan-list tr>td').remove();
         $('#tb-job-queue tr>td').remove();
@@ -324,7 +329,7 @@
         // $('button:contains(Ok):visible').click();
         location.href =url;
     }
-
+    // 来自jenkins的自动发布
     if (location.hash != '') {
         var cont = location.hash.replace('#', '').split('-');
         var find = function () {
@@ -404,6 +409,7 @@
         divAlert.modal('show');
         console.log(content);
     };
+    // 发布计划列表页的操作
     var promoteFlag = false;
     var waitTable = function () {
         var idLinks = $('#tb-plan-list>tbody>tr>td>a[href*="/job/"]:visible');
@@ -590,6 +596,7 @@
             }
             $('button:contains(Ok):visible').click();
         }
+        // 发布任务列表页的操作
         var waitMain = function () {
             if ($('#tb-plan-queue tr').length > 1) {
                 var trs = $('#tb-plan-queue>tbody>tr');
