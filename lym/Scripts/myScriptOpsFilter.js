@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         OpsFilter
 // @namespace    http://tampermonkey.net/
-// @version      3.4
+// @version      3.5
 // @description  try to take over the world!
 // @author       You
 // @match        xxxhttps://omcops.bmw.com.cn/Configuration/DeployConfiguration/NewChange*
@@ -597,6 +597,7 @@
             $('button:contains(Ok):visible').click();
         }
         // 发布任务列表页的操作
+        var scheduleClicked =false;
         var waitMain = function () {
             if ($('#tb-plan-queue tr').length > 1) {
                 var trs = $('#tb-plan-queue>tbody>tr');
@@ -609,11 +610,11 @@
                             trs.eq(i).find('a:not(.btn):not(.pull-right)').css({ 'color': 'red', 'font-weight': 'bolder' });
                             pageLengthFlag = true;
                             var schedule = $(trs[i]).find('.btn.btn-primary');
-                            if(schedule[0].clicked){
+                            if(scheduleClicked){
 
                             }else{
                                 schedule[0].click();
-                                schedule[0].clicked=true;
+                                scheduleClicked=true;
                                 var waitAlert = function () {
                                     var alertId = $('.plan-id').val();
                                     if (alertId == content.planId) {
