@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         OpsFilter
 // @namespace    http://tampermonkey.net/
-// @version      3.5
+// @version      3.6
 // @description  try to take over the world!
 // @author       You
 // @match        xxxhttps://omcops.bmw.com.cn/Configuration/DeployConfiguration/NewChange*
@@ -705,13 +705,17 @@
             }
 
             if(needJumpCheck && needJump){
-                if(curEnv!='Stg' && curEnv!='Prod'){
+                if(curEnv!='Int' &&curEnv!='Stg' && curEnv!='Prod'){
                     location.href ="https://omcops.bmw.com.cn/Operation/Release/ReleaseManagement/"+curEnv+'-'+content.service;
                 }else{
-                    sessionStorage.removeItem('OpsDeployContent');
-                    clearInterval(fadeInterval);
-                    $('a.more:contains(More):eq(0)').css('display','');
-                    comAlertAction(content.service+' '+content.id+' 已成功发布到 '+content.env+' 环境');
+                    if(curEnv=='Int'&& content.env=='Stg'){
+                        location.href ="https://omcops.bmw.com.cn/Operation/Release/ReleaseManagement/"+curEnv+'-'+content.service;
+                    }else{
+                        sessionStorage.removeItem('OpsDeployContent');
+                        clearInterval(fadeInterval);
+                        $('a.more:contains(More):eq(0)').css('display','');
+                        comAlertAction(content.service+' '+content.id+' 已成功发布到 '+content.env+' 环境');
+                    }
                 }
 
             }
