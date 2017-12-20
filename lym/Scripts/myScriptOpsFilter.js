@@ -36,10 +36,7 @@
         setTimeout( startFun,0);
         return;
     }
-    var releaseCon = JSON.parse(sessionStorage.getItem('OpsDeployContent'));
-    if(releaseCon){
-        $('h1>small').html('Releasing：'+releaseCon.service +' To '+releaseCon.env).css({'color':'#ff6c6c','font-weight':'bold'});
-    }
+
     var comAlert = '<div class="modal fade" data-show="true"><div class="modal-dialog" style="left:0px"><div class="modal-content"><div class="modal-header"><h4 class="modal-title">提示</h4></div><div class="modal-body">' + '' + '</div><div style="padding-left:42%;padding-right:40%;padding-bottom:20px"><button type="button" class="btn btn-primary" data-dismiss="modal" aria-hidden="true" style="width:100px" data-res="yes">确认</button></div></div></div></div>';
     comAlert = $(comAlert);
     var comClose = function (type) {
@@ -58,6 +55,17 @@
             }, time);
         });
     };
+    var releaseCon = JSON.parse(sessionStorage.getItem('OpsDeployContent'));
+    if(releaseCon){
+        $('h1>small').html('<B style="color:#ff6c6c">'+releaseCon.service +'</B> BuildNo:<B style="color:#ff6c6c">'+releaseCon.id+'</B> To <B style="color:#ff6c6c">'+releaseCon.env+'</B>');
+        var fadeFun = async function(){
+            $('h1>small').fadeOut();
+            await sleep(100);
+            $('h1>small').fadeIn();
+        };
+        var fadeInterval = setInterval(fadeFun,1500);
+    }
+
     console.log('输入 c 切换筛选');
     var div = document.createElement('div');
     div.style.color = 'red';
@@ -180,18 +188,6 @@
         if (e.ctrlKey) {
             return;
         }
-        if($('.dt-buttons:eq(0)>a').is(':visible')){
-            if(!$('.dt-button-collection[role=menu]').is(':visible')) {
-                $('.dt-buttons:eq(0)>a').click();
-            }
-        }else{
-            if(JSON.parse( sessionStorage.getItem('OpsDeployContent'))){
-
-            }else{
-                $('a.more:contains(More):eq(0)').click();
-                $('.dt-buttons:eq(0)>a').click();
-            }
-        }
         // if (dropdown.attr('aria-expanded') != 'true') {
         //     dropdown[0].click();
         //     dropdown.blur();
@@ -232,6 +228,18 @@
                 str = '';
             }
         } else {
+            if($('.dt-buttons:eq(0)>a').is(':visible')){
+                if(!$('.dt-button-collection[role=menu]').is(':visible')) {
+                    $('.dt-buttons:eq(0)>a').click();
+                }
+            }else{
+                if(JSON.parse( sessionStorage.getItem('OpsDeployContent'))){
+
+                }else{
+                    $('a.more:contains(More):eq(0)').click();
+                    $('.dt-buttons:eq(0)>a').click();
+                }
+            }
             if (e.key == 'v' && e.ctrlKey) {
                 return;
             }
@@ -278,37 +286,41 @@
     var cParams = location.pathname.split('/').pop().split('-');
     var cEnv = cParams[0];
     var cService = cParams[1];
-    $('#nav-tabs-env>li:contains('+cEnv+'):eq(0)').click();
-    if(cParams.length>1&&cService!='All'){
-        if(sessionStorage.getItem('OpsDeployContent')!=null){
-            $('a.more:contains(More):eq(0)').attr("refreash-table",'plan_queue').click().css('display','none');
+
+    $('#nav-tabs-env>li:contains('+cEnv+'):eq(0)').addClass('active').siblings().removeClass('active');
+    setTimeout(function(){
+        $('#nav-tabs-env>li:contains('+cEnv+'):eq(0)').click();
+        if(cParams.length>1&&cService!='All'){
+            if(sessionStorage.getItem('OpsDeployContent')!=null){
+                $('a.more:contains(More):eq(0)').attr("refreash-table",'plan_queue').click().css('display','none');
+            }else{
+                $('a.more:contains(More):eq(0)').click();
+            }
+            str = cService.toLowerCase();
+            $('.dt-buttons:eq(0)>a').click();
+            filterFun();
+            if (curList.length) {
+                curList[curList.curIndex].click();
+                str = '';
+            }
         }
-        str = cService.toLowerCase();
-        $('.dt-buttons:eq(0)>a').click();
-        filterFun();
-        if (curList.length) {
-            curList[curList.curIndex].click();
-            str = '';
-        }
-    }
+    },300);
     $('#nav-tabs-env li').click(()=>{
         $('#tb-plan-list tr>td').remove();
         $('#tb-job-queue tr>td').remove();
         $('#tb-plan-queue tr>td').remove();
     })
     var okFun = async function(){
-        while(!$('button:contains(Ok):visible').length){
+        while($('#tb-plan-list:visible').length){
             await sleep(100);
         }
         // $('button:contains(Ok):visible').click();
-        await sleep(2000);
         location.href ="https://omcops.bmw.com.cn/Operation/Release/ReleaseManagement";
     }
     var okFunJump = async function(url){
-        while(!$('button:contains(Ok):visible').length){
+        while($('#tb-plan-list:visible').length){
             await sleep(100);
         }
-        await sleep(2000);
         // $('button:contains(Ok):visible').click();
         location.href =url;
     }
@@ -378,7 +390,7 @@
                         await sleep(100);
                     }
                     $('button[data-id='+content.planId+']').click();
-                    var url = 'https://omcops.bmw.com.cn/Operation/Release/ReleaseManagement/'+content.env;
+                    var url = 'https://omcops.bmw.com.cn/Operation/Release/ReleaseManagement/'+content.curEnv;
                     okFunJump(url);
                 }
                 deployFun();
@@ -443,8 +455,9 @@
                             }
                         }
                     }else{
-                        debugger;
                         sessionStorage.removeItem('OpsDeployContent');
+                        $('a.more:contains(More):eq(0)').css('display','');
+                        clearInterval(fadeInterval);
                         $('h1>small').html('');
                         comAlertAction(content.service+' '+content.id+' 已成功发布到 '+content.env+' 环境');
                     }
@@ -468,7 +481,7 @@
                     var id = jsonData.JenkinsBuildNo;
                     var service = jsonData.Service;
                     var deBtn = tr.find('td>a.btn:contains(Deploy)')[0];
-                    confirmBox({service:service,id:id,planId:jsonData.Id,env:this.name,btn:deBtn});
+                    confirmBox({service:service,id:id,planId:jsonData.Id,env:this.name,btn:deBtn,curEnv:curEnv});
                 });
                 // $(deployNow).addClass('btn-sm').prev().addClass('btn-sm');
             }
@@ -503,22 +516,36 @@
                                     while(!$('input.valid.plan-id').length || $('input.valid.plan-id').val()!=jsonData.Id){
                                         await sleep(100);
                                     }
-                                    console.log(4)
+
                                     $('.product-owner').val('vincent.yin@bmw.com');
                                     $('input.valid.comments').val('deploy');
                                     $('.btn-promote').click();
-                                    console.log(5)
-                                    //$('button[data-id='+jsonData.planId+']').click();
-                                    var url = "https://omcops.bmw.com.cn/Operation/Release/ReleaseManagement/";
-                                    url += envs[curEnvIndex+1]+'-'+content.service;
-                                    $("#nav-tabs-env").find(".active").next().click(()=>{location.href=url;});
+                                    var content = JSON.parse( sessionStorage.getItem('OpsDeployContent'));
+                                    if(content.promoted){
+                                        console.log(4);
+                                    }else{
+                                        content.promoted = true;
+                                        sessionStorage.setItem('OpsDeployContent',JSON.stringify(content));
+                                        console.log(5);
+                                        //$('button[data-id='+jsonData.planId+']').click();
+                                        var url = "https://omcops.bmw.com.cn/Operation/Release/ReleaseManagement/";
+                                        url += envs[curEnvIndex+1]+'-'+content.service;
+                                        $("#nav-tabs-env").find(".active").next().click(()=>{
+                                            var content = JSON.parse( sessionStorage.getItem('OpsDeployContent'));
+                                            content.promoted = false;
+                                            sessionStorage.setItem('OpsDeployContent',JSON.stringify(content));
+                                            location.href=url;
+                                        });
+                                    }
+
                                 }
                                 deployFun();
                             }
                         }
                     }else{
-                        debugger;
                         sessionStorage.removeItem('OpsDeployContent');
+                        $('a.more:contains(More):eq(0)').css('display','');
+                        clearInterval(fadeInterval);
                         $('h1>small').html('');
                         comAlertAction(content.service+' '+content.id+' 已成功发布到 '+content.env+' 环境');
                     }
@@ -647,8 +674,9 @@
                             if(curEnv!='Stg'){
                                 location.href = promoteBtn[0].href + '#ap';
                             }else{
-                                debugger;
                                 sessionStorage.removeItem('OpsDeployContent');
+                                clearInterval(fadeInterval);
+                                $('a.more:contains(More):eq(0)').css('display','');
                                 $('h1>small').html('');
                                 comAlertAction(content.service+' '+content.id+' 已成功发布到 '+content.env+' 环境');
                             }
@@ -672,8 +700,9 @@
                 if(curEnv!='Stg' && curEnv!='Prod'){
                     location.href ="https://omcops.bmw.com.cn/Operation/Release/ReleaseManagement/"+curEnv+'-'+content.service;
                 }else{
-                    debugger;
                     sessionStorage.removeItem('OpsDeployContent');
+                    clearInterval(fadeInterval);
+                    $('a.more:contains(More):eq(0)').css('display','');
                     comAlertAction(content.service+' '+content.id+' 已成功发布到 '+content.env+' 环境');
                 }
 
