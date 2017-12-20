@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         OpsFilter
 // @namespace    http://tampermonkey.net/
-// @version      3.6
+// @version      3.5
 // @description  try to take over the world!
 // @author       You
 // @match        xxxhttps://omcops.bmw.com.cn/Configuration/DeployConfiguration/NewChange*
@@ -659,7 +659,7 @@
                 var jsonData = JSON.parse(tr.attr('data'));
                 var service = jsonData.ServiceName;
                 var time = tr.find('td:eq(3)').text().replace(' S','');
-                var status = $('#tb-job-queue tr:eq(1)').find('td:eq(2)').text();
+                var status = tr.find('td:eq(2)').text();
                 time = +time;
                 if(time>3600){
                     continue;
