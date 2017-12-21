@@ -54,7 +54,7 @@
                 break;
             case 'OrderFulfillmentFrontEnd':
             case 'PartnerGateway':
-                branchName = 'CN-RLS-iOS-v7.0.1-Q1Release';
+                // branchName = 'CN-RLS-iOS-v7.0.1-Q1Release';
                 break;
         }
         return branchName;
