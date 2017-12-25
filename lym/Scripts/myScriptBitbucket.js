@@ -421,25 +421,25 @@ class="select2-search-choice-close" tabindex="-1"></a></li>';
         var gitRepoTag;
         for (var i = 0; i < arr.length; i++) {
             if (arr[i].Status != 'Deployed'&&arr[i].Status != 'Promoted') { continue; }
-            gitCommitId = arr[i].GitRepoCommitId;
+            gitCommitId = arr[i].GitRepoCommitId.split(',').pop();
             break;
         }
         // if(jQuery('span.tag[data-names*='+gitRepoTag+']').length){
         if( jQuery('td.commit>a.commitid[data-commit-message*='+gitCommitId+']')){
-            // if(jQuery('span.tag[data-names*='+gitRepoTag+']').closest('tr').find('td.commit>span.ops>a').length){
-            //     var ele =jQuery('span.tag[data-names*='+gitRepoTag+']').closest('tr').find('td.commit>span.ops>a')[0];
-            // }else{
-            var span =document.createElement('span');
-            span.className='ops';
-            var ele = document.createElement('a');
-            ele.style.color = 'red';
-            ele.style.fontWeight = 'bolder';
-            ele.style.fontSize = '18px'  ;
-            ele.style.marginLeft='5px';
-            span.append(ele);
-            // jQuery('span.tag[data-names*='+gitRepoTag+']').closest('tr').find('td.commit').append(span);
-            jQuery('td.commit>a.commitid[data-commit-message*='+gitCommitId+']').closest('td').append(span);
-            // }
+            if(jQuery('td.commit>a.commitid[data-commit-message*='+gitCommitId+']').closest('td').find('span.ops>a').length){
+                var ele =jQuery('td.commit>a.commitid[data-commit-message*='+gitCommitId+']').closest('td').find('span.ops>a')[0];
+            }else{
+                var span =document.createElement('span');
+                span.className='ops';
+                var ele = document.createElement('a');
+                ele.style.color = 'red';
+                ele.style.fontWeight = 'bolder';
+                ele.style.fontSize = '18px'  ;
+                ele.style.marginLeft='5px';
+                span.append(ele);
+                // jQuery('span.tag[data-names*='+gitRepoTag+']').closest('tr').find('td.commit').append(span);
+                jQuery('td.commit>a.commitid[data-commit-message*='+gitCommitId+']').closest('td').append(span);
+            }
             if (envArr.indexOf(ele.innerHTML) < envArr.indexOf(e.data.Env)) {
                 ele.innerHTML = e.data.Env;
                 ele.href = 'https://omcops.bmw.com.cn/Operation/Release/ReleaseManagement/' + e.data.Env + '-' + opsName;
