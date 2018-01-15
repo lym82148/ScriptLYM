@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         BitbucketReviewer
 // @namespace    http://tampermonkey.net/
-// @version      4.0
+// @version      4.1
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0003.w10:7990/projects/cnb/repos/*
@@ -425,9 +425,9 @@ class="select2-search-choice-close" tabindex="-1"></a></li>';
             break;
         }
         // if(jQuery('span.tag[data-names*='+gitRepoTag+']').length){
-        if( jQuery('td.commit>a.commitid[data-commit-message*='+gitCommitId+']')){
-            if(jQuery('td.commit>a.commitid[data-commit-message*='+gitCommitId+']').closest('td').find('span.ops>a').length){
-                var ele =jQuery('td.commit>a.commitid[data-commit-message*='+gitCommitId+']').closest('td').find('span.ops>a')[0];
+        if( jQuery('td.commit>a.commitid[data-commitid*='+gitCommitId+']')){
+            if(jQuery('td.commit>a.commitid[data-commitid*='+gitCommitId+']').closest('td').find('span.ops>a').length){
+                var ele =jQuery('td.commit>a.commitid[data-commitid*='+gitCommitId+']').closest('td').find('span.ops>a')[0];
             }else{
                 var span =document.createElement('span');
                 span.className='ops';
@@ -438,7 +438,7 @@ class="select2-search-choice-close" tabindex="-1"></a></li>';
                 ele.style.marginLeft='5px';
                 span.append(ele);
                 // jQuery('span.tag[data-names*='+gitRepoTag+']').closest('tr').find('td.commit').append(span);
-                jQuery('td.commit>a.commitid[data-commit-message*='+gitCommitId+']').closest('td').append(span);
+                jQuery('td.commit>a.commitid[data-commitid*='+gitCommitId+']').closest('td').append(span);
             }
             if (envArr.indexOf(ele.innerHTML) < envArr.indexOf(e.data.Env)) {
                 ele.innerHTML = e.data.Env;
