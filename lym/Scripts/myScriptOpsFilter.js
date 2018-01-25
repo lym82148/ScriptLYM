@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         OpsFilter
 // @namespace    http://tampermonkey.net/
-// @version      3.6
+// @version      3.7
 // @description  try to take over the world!
 // @author       You
 // @match        xxxhttps://omcops.bmw.com.cn/Configuration/DeployConfiguration/NewChange*
@@ -718,6 +718,7 @@
                         sessionStorage.removeItem('OpsDeployContent');
                         clearInterval(fadeInterval);
                         $('a.more:contains(More):eq(0)').css('display','');
+                        $('h1>small').html('');
                         comAlertAction(content.service+' '+content.id+' 已成功发布到 '+content.env+' 环境');
                     }
                 }
