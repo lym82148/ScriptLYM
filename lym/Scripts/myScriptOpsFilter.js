@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         OpsFilter
 // @namespace    http://tampermonkey.net/
-// @version      3.5
+// @version      3.6
 // @description  try to take over the world!
 // @author       You
 // @match        xxxhttps://omcops.bmw.com.cn/Configuration/DeployConfiguration/NewChange*
@@ -605,6 +605,10 @@
                 if (content) {
                     for (var i = 0; i < trs.length; i++) {
                         var jsonData =JSON.parse(trs[i].getAttribute('data'));
+                        if(jsonData === null && trs.length ==1){
+                            setTimeout(waitMain, 100);
+                            break;
+                        }
                         if (jsonData.Id == content.planId) {
                             trs.eq(i).css('backgroundColor', 'rgba(0, 55, 255, 0.18)');
                             trs.eq(i).find('a:not(.btn):not(.pull-right)').css({ 'color': 'red', 'font-weight': 'bolder' });
