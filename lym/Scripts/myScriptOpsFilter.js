@@ -506,7 +506,7 @@
                 if ($('td>span.label:contains(Promoted)').eq(i).closest('td').siblings().last().find('.btn:contains(Repromote)').length) {
                     continue;
                 }
-                $('td>span.label:contains(Promoted)').eq(i).closest('td').siblings().last().append('<a class="btn btn-success btn-sm" href="javascript:;">Repromote</a>');
+                $('td>span.label:contains(Promoted)').eq(i).closest('td').siblings().last().append('<a class="btn btn-success" href="javascript:;">Repromote</a>');
                 $('td>span.label:contains(Promoted)').eq(i).closest('td').siblings().last().find('.btn:contains(Repromote)').on("click", $.promote, $.promote);
             }
             for (var i = 0; i < $('td>a.btn:contains(Promote)').length; i++) {
@@ -531,11 +531,12 @@
 
                                     $('.product-owner').val('vincent.yin@bmw.com');
                                     $('input.valid.comments').val('deploy');
-                                    $('.btn-promote').click();
+                                    
                                     var content = JSON.parse( sessionStorage.getItem('OpsDeployContent'));
                                     if(content.promoted){
-                                        console.log(4);
+                                        console.log("already promoted");
                                     }else{
+                                        $('.btn-promote').click();
                                         content.promoted = true;
                                         sessionStorage.setItem('OpsDeployContent',JSON.stringify(content));
                                         console.log(5);
