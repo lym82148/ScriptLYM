@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         OpsFilter
 // @namespace    http://tampermonkey.net/
-// @version      3.7
+// @version      3.8
 // @description  try to take over the world!
 // @author       You
 // @match        xxxhttps://omcops.bmw.com.cn/Configuration/DeployConfiguration/NewChange*
@@ -502,7 +502,13 @@
                     $('ul[name=mEnvList]>li>[name='+envs[i]+']').parent().remove();
                 }
             }
-
+            for(var i=0;i<$('td>span.label:contains(Promoted)').length;i++){
+                if ($('td>span.label:contains(Promoted)').eq(i).closest('td').siblings().last().find('.btn:contains(Repromote)').length) {
+                    continue;
+                }
+                $('td>span.label:contains(Promoted)').eq(i).closest('td').siblings().last().append('<a class="btn btn-success btn-sm" href="javascript:;">Repromote</a>');
+                $('td>span.label:contains(Promoted)').eq(i).closest('td').siblings().last().find('.btn:contains(Repromote)').on("click", $.promote, $.promote);
+            }
             for (var i = 0; i < $('td>a.btn:contains(Promote)').length; i++) {
                 if(content){
                     if(envs.indexOf(content.env)>=curEnvIndex){
