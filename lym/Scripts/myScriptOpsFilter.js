@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         OpsFilter
 // @namespace    http://tampermonkey.net/
-// @version      3.8
+// @version      3.9
 // @description  try to take over the world!
 // @author       You
 // @match        xxxhttps://omcops.bmw.com.cn/Configuration/DeployConfiguration/NewChange*
@@ -9,6 +9,7 @@
 // @match        https://omcops.bmw.com.cn/Operation/Release/ReleaseJobIndex*
 // @match        https://omcops.bmw.com.cn/Operation/Release/ReleaseManagement*
 // @match        https://omcops.bmw.com.cn/
+// @match        https://omcops.bmw.com.cn/Operation/ServiceOperation*
 // @grant        none
 // ==/UserScript==
 
@@ -53,7 +54,7 @@
         return new Promise(function (resolve, reject) {
             setTimeout(function () {
                 resolve();
-            }, time);
+            }, time*10);
         });
     };
     // 发布提示文字
@@ -74,6 +75,7 @@
     div.style.fontSize = '32px';
     div.innerHTML = 'Filter: ';
     var isAll = location.href.toLowerCase().startsWith('https://omcops.bmw.com.cn/Operation/Release/ReleaseManagement'.toLowerCase());
+    var isOperation = location.href.toLowerCase().startsWith('https://omcops.bmw.com.cn/Operation/ServiceOperation'.toLowerCase());
     //if (!isAll) {
     $('h1').append(div);
     //}
@@ -784,7 +786,7 @@
         $('.nav.nav-tabs:last').find('a:gt(0)').css({color:'#ff6a6a'});
 
     };
-    if(!isAll){
+    if(!isAll && !isOperation){
         hrefFun();
     }
 })();
