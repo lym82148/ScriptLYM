@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         BitbucketReviewer
 // @namespace    http://tampermonkey.net/
-// @version      4.1
+// @version      4.2
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0003.w10:7990/projects/cnb/repos/*
@@ -267,9 +267,8 @@
         filterInit();
     }
     else{
-        jQuery.ajax('http://suus0003.w10:7990/projects/CNB').then(function(data){
-            var links = jQuery(data).find('tbody a[data-repository-id]');
-            var linksObj =  links.toArray().map(function(b){return {href:b.href,name:b.innerHTML,lid:b.innerHTML.toLowerCase()};});
+        jQuery.ajax('http://suus0003.w10:7990/rest/api/latest/projects/CNB/repos?start=0&limit=200').then(function(data){
+            var linksObj =  data.values.map(function(b){return {href:b.links.self[0].href,name:b.name,lid:b.name.toLowerCase()};});
             var json =JSON.stringify({ links:linksObj,expireTime:new Date(+new Date()+86400e3)});
             localStorage.setItem('bitRepoList',json);
             filterInit();
