@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         CheckConfig
 // @namespace    http://tampermonkey.net/
-// @version      4.3
+// @version      4.4
 // @description  try to take over the world!
 // @author       You
 // @match        https://portal.azure.cn/*
@@ -66,11 +66,13 @@
             promoteBtn.style.display = 'none';
             promoteBtn.onclick = function(){
                 var env = this.getAttribute('data-env');
+                var envOther = env[0].toUpperCase()+env.substr(1);
                 var compFun = async function(){
-                    if($.inst.obj.find('li:contains(-'+env+')').length){
+                    if($.inst.obj.find('li:contains(-'+env+')').length||$.inst.obj.find('li:contains(-'+envOther+')').length){
                         var oldConfig= $.config.omcObj;
                         $('#comp-list>li').remove();
                         $.inst.obj.find('li:contains(-'+env+')').click();
+                        $.inst.obj.find('li:contains(-'+envOther+')').click();
                         while(!$('#comp-list>li').length){
                             await sleep(100);
                         }
@@ -94,6 +96,7 @@
             $('.row.clearfix').append(paDiv);
             $.config.appsettings.ini_dataOld = $.config.appsettings.ini_data;
             $.config.connectionstrings.ini_dataOld = $.config.connectionstrings.ini_data;
+            $.config.cscfgcloudservice.ini_dataOld = $.config.cscfgcloudservice.ini_data;
 
             $.config.appsettings.ini_data = function(data){
                 try{
@@ -152,6 +155,49 @@
                     console.log(e);
                 }
                 $.config.connectionstrings.ini_dataOld.call(this,data);
+            };
+            $.config.cscfgcloudservice.ini_data = function(data){
+                try{
+                    console.log(data)
+                    $.config.omcArr = [];
+                    var tempOmcUserArr= data.map((a)=>{if(a.ParentToName=="Setting"&&a.Name!="name"&&a.Name!="value")return {Value:a.Value,Name:a.Name};}).filter((a)=>a!=null?a:undefined);
+                    var userArr = tempOmcUserArr.map((a)=>a.Name);
+
+                    var tempOmcArr= data.map(function(a){if(a.ParentToName=="Setting"&&(a.Name=="name"||a.Name=="value")&&userArr.indexOf(a.Value)==-1) return {Value:a.Value,ParentId:a.ParentId};}).filter((a)=>a!=null?a:undefined);
+
+                    console.log(tempOmcArr)
+                    $.config.omcValueArr = [];
+                    var obj = {};
+
+                    for(var i=0;i<tempOmcArr.length/2;i++){
+                        // if(tempOmcArr[i].ParentId ==tempOmcArr[i+tempOmcArr.length/2].ParentId ){
+                        obj[tempOmcArr[i].Value]= tempOmcArr[i+tempOmcArr.length/2].Value;
+                        $.config.omcArr.push(tempOmcArr[i].Value);
+                        $.config.omcValueArr.push(tempOmcArr[i+tempOmcArr.length/2].Value);
+                        // }
+                    }
+                    for(var i=0;i<tempOmcUserArr.length;i++){
+                        obj[tempOmcUserArr[i].Name]= tempOmcUserArr[i].Value;
+                        $.config.omcArr.push(tempOmcUserArr[i].Name);
+                        $.config.omcValueArr.push(tempOmcUserArr[i].Value);
+                    }
+                    $.config.omcObj= obj;
+                    jsonDiv.innerHTML = format_json(JSON.stringify( $.config.omcObj));
+                    paTitle.innerHTML = $.inst.obj.find('li.active').text().split('-').pop();
+                    var index = envs.indexOf(paTitle.innerHTML.toLowerCase());
+                    if(index>= 0 && index < envs.length - 1){
+                        var newEnv = envs.indexOf(paTitle.innerHTML);
+                        promoteBtn.innerHTML = 'Promote To '+envs[index+1];
+                        promoteBtn.setAttribute('data-env',envs[index+1]);
+                        promoteBtn.style.display = '';
+                    }else{
+                        promoteBtn.style.display = 'none';
+                    }
+
+                }catch(e){
+                    console.log(e);
+                }
+                $.config.cscfgcloudservice.ini_dataOld.call(this,data);
             };
             var btn = document.createElement('input');
             btn.type = 'button';
