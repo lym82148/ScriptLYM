@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         BitbucketReviewer
 // @namespace    http://tampermonkey.net/
-// @version      4.4
+// @version      4.5
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0003.w10:7990/projects/cnb/repos/*
@@ -73,6 +73,9 @@
                 break;
             case 'yliu':
                 newName='yiming';
+                break;
+            case 'tang':
+                newName='dingyou';
                 break;
         }
         jQuery('#branch-name').val(newName+'/'+jQuery('#branch-name').val()).css({"min-width":'340px'});
@@ -281,6 +284,7 @@
     var defaultUserList = [{ userName: 'shi', displayName: 'Baoyu SHI' },
                            { userName: 'han', displayName: 'Guoguang Han' },
                            { userName: 'xyang', displayName: 'Yuqi Zhao' },
+                           { userName: 'tang', displayName: 'Dingyou Tang' },
                            //{ userName: 'xia', displayName: 'Yongming Xia' },
                            { userName: 'yliu', displayName: 'Yiming SH Liu' }];
     var filterUserList = defaultUserList.filter(function (a) { return a.userName != curUserName; });
