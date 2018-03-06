@@ -246,7 +246,7 @@
         var columns = [];
         for (var i = 0; i < columnsRow.length; i++) {
             var tds = columnsRow.eq(i).find('td');
-            if (tds.eq(0).text().trim() == 'id') { continue; }
+            if (tds.eq(0).text().trim() == 'Id') { continue; }
             columns.push({
                 name: tds.eq(0).text().trim(),
                 code: changeName(tds.eq(0).text().trim()),
@@ -278,6 +278,7 @@
             }, 400);
             var data = { tableName: tableName, tableNameCode: tableNameCode, serviceName: serviceName, columns: "", columnsScript: "" };
             var stringDefault = ' = string.Empty;';
+            var statusDefault = ' = 1;'
             var dateDefault = ' = DateTime.UtcNow;';
             for (var i = 0; i < columns.length; i++) {
                 var type = 'string';
@@ -288,6 +289,9 @@
                     case 'int':
                     case 'tinyint':
                         type = 'int';
+                        if (columns[i].code == 'Status') {
+                            defaultValue = statusDefault;
+                        }
                         break;
                     case 'string':
                     case 'nvarchar':
