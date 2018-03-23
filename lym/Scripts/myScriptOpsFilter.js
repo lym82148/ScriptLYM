@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         OpsFilter
 // @namespace    http://tampermonkey.net/
-// @version      4.0
+// @version      4.1
 // @description  try to take over the world!
 // @author       You
 // @match        xxxhttps://omcops.bmw.com.cn/Configuration/DeployConfiguration/NewChange*
@@ -629,7 +629,7 @@
                             }
                             mailToJq = $(that).next();
                             if (!!configContent) {
-                                confirmBox('' + configContent);
+                                confirmBoxMail('' + configContent);
                             } else {
                                 confirmCopy("noconfig");
                             }
@@ -688,7 +688,7 @@
         mailTo.click();
     };
     div2.find('button').click(confirmCopy);
-    var confirmBox = function (content) {
+    var confirmBoxMail = function (content) {
         div2.find('.modal-body').html(content);
         div2.modal('show');
     };
