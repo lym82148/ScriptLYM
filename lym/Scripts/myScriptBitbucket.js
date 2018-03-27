@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         BitbucketReviewer
 // @namespace    http://tampermonkey.net/
-// @version      4.7
+// @version      4.8
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0003.w10:7990/projects/cnb/repos/*
@@ -393,6 +393,10 @@ class="select2-search-choice-close" tabindex="-1"></a></li>';
         case 'PremiumAirportService':
             jenkinsService = 'premiumairportdpservice';
             opsName = 'PremiumAirportDPService';
+            break;
+        case 'CDPreActivationService':
+            jenkinsService = 'cdpreactivation';
+            opsName = 'cdpreactivation';
             break;
     }
     jenkins.href = 'http://suus0006.w10:8080/#'+jenkinsService.toLowerCase();
