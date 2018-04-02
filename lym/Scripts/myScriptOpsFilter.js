@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         OpsFilter
 // @namespace    http://tampermonkey.net/
-// @version      4.1
+// @version      4.2
 // @description  try to take over the world!
 // @author       You
 // @match        xxxhttps://omcops.bmw.com.cn/Configuration/DeployConfiguration/NewChange*
@@ -693,15 +693,15 @@
         div2.modal('show');
     };
     $('body').append('<style>.hideForCopy{display:none;}</style>');
-    var div = document.createElement('div');
+    var div3 = document.createElement('div');
     var cFun = function (tmp) {
-        div.innerHTML = tmp;
+        div3.innerHTML = tmp;
         $('body').children().addClass('hideForCopy');
-        document.body.appendChild(div);
+        document.body.appendChild(div3);
         document.execCommand('SelectAll');
         document.execCommand('Copy');
         document.execCommand('UnSelect');
-        document.body.removeChild(div);
+        document.body.removeChild(div3);
         $('body').children().removeClass('hideForCopy');
         return true;
     };
