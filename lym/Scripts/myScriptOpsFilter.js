@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         OpsFilter
 // @namespace    http://tampermonkey.net/
-// @version      4.2
+// @version      4.3
 // @description  try to take over the world!
 // @author       You
 // @match        xxxhttps://omcops.bmw.com.cn/Configuration/DeployConfiguration/NewChange*
@@ -578,7 +578,7 @@
                 config.innerHTML = 'Config';
                 config.style.marginLeft = '10px';
                 config.target = '_blank';
-                var name = $('#tb-plan-list tr').find('td:eq(-2)').eq(2).siblings().eq(0).text();
+                var name = $('#tb-plan-list tr').find('td:eq(-2)').eq(i).siblings().eq(0).text();
                 config.href = 'https://omcops.bmw.com.cn/Configuration/DeployConfiguration/NewChange' + '#' + name + '-' + $('ul.nav>li.active').text();
                 $('#tb-plan-list tr').find('td:eq(-2)').eq(i).find('a').after(config);
             }
