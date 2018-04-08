@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         CheckConfig
 // @namespace    http://tampermonkey.net/
-// @version      4.4
+// @version      4.5
 // @description  try to take over the world!
 // @author       You
 // @match        https://portal.azure.cn/*
@@ -168,7 +168,14 @@
                     console.log(tempOmcArr)
                     $.config.omcValueArr = [];
                     var obj = {};
-
+                    var sss = "";
+                    for(var i=0;i<tempOmcArr.length;i++){
+                        sss+=tempOmcArr[i].Value+"\r\n";
+                    }
+                    console.log(sss);
+                    for(var i=0;i<tempOmcUserArr.length;i++){
+                        sss+=tempOmcUserArr[i].Value+"\r\n";
+                    }
                     for(var i=0;i<tempOmcArr.length/2;i++){
                         // if(tempOmcArr[i].ParentId ==tempOmcArr[i+tempOmcArr.length/2].ParentId ){
                         obj[tempOmcArr[i].Value]= tempOmcArr[i+tempOmcArr.length/2].Value;
