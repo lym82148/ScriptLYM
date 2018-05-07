@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         BitbucketReviewer
 // @namespace    http://tampermonkey.net/
-// @version      4.9
+// @version      5.0
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0003.w10:7990/projects/cnb/repos/*
@@ -64,7 +64,7 @@
                 // branchName = 'CN-RLS-iOS-v7.0.1-Q1Release';
                 break;
             case 'PremiumAirportService':
-                branchName ='CN-v8.0-q2-release';
+                //branchName ='CN-v8.0-q2-release';
                 break;
         }
         return branchName;
