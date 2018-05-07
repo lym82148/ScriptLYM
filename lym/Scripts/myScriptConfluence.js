@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Confluence
 // @namespace    http://tampermonkey.net/
-// @version      1.9
+// @version      2.0
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0001.w10:8090/*
@@ -246,7 +246,7 @@
         var columns = [];
         for (var i = 0; i < columnsRow.length; i++) {
             var tds = columnsRow.eq(i).find('td');
-            if (tds.eq(0).text().trim() == 'Id') { continue; }
+            if (tds.eq(0).text().trim() == 'Id' || tds.eq(0).text().trim() == '') { continue; }
             columns.push({
                 name: tds.eq(0).text().trim(),
                 code: changeName(tds.eq(0).text().trim()),
