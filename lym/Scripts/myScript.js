@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         CheckConfig
 // @namespace    http://tampermonkey.net/
-// @version      4.6
+// @version      4.7
 // @description  try to take over the world!
 // @author       You
 // @match        https://portal.azure.cn/*
@@ -112,7 +112,7 @@
                     $.config.omcObj= obj;
                     jsonDiv.innerHTML = format_json(JSON.stringify( $.config.omcObj));
                     paTitle.innerHTML = $.inst.obj.find('li.active').text().split('-').pop();
-                    var index = envs.indexOf(paTitle.innerHTML);
+                    var index = envs.indexOf(paTitle.innerHTML.toLowerCase());
                     if(index>= 0 && index < envs.length - 1){
                         var newEnv = envs.indexOf(paTitle.innerHTML);
                         promoteBtn.innerHTML = 'Promote To '+envs[index+1];
