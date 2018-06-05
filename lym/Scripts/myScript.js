@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         CheckConfig
 // @namespace    http://tampermonkey.net/
-// @version      4.7
+// @version      4.8
 // @description  try to take over the world!
 // @author       You
 // @match        https://portal.azure.cn/*
@@ -286,6 +286,10 @@
                             break;
                         case 'RechargeService':
                             curText = 'fuelcardservice';
+                            browse = 'WebApiHost/Web.config';
+                            break;
+                        case 'ChargingStation':
+                            curText = 'chargingnowservice';
                             browse = 'WebApiHost/Web.config';
                             break;
                         default:
