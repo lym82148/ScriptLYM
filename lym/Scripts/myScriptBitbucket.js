@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         BitbucketReviewer
 // @namespace    http://tampermonkey.net/
-// @version      5.4
+// @version      5.5
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0003.w10:7990/projects/cnb/repos/*
@@ -410,7 +410,10 @@ class="select2-search-choice-close" tabindex="-1"></a></li>';
             jenkinsService = 'apphub';
             opsName = 'btcservicemanager';
             break;
-
+        case 'VehicleCenter':
+            jenkinsService = 'vehicle';
+            opsName = 'vehicleservice';
+            break;
     }
     jenkins.href = 'http://suus0006.w10:8080/#'+jenkinsService.toLowerCase();
     var commitLink = document.createElement('a');
