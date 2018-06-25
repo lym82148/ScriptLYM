@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         BitbucketReviewer
 // @namespace    http://tampermonkey.net/
-// @version      5.5
+// @version      5.6
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0003.w10:7990/projects/cnb/repos/*
@@ -413,6 +413,10 @@ class="select2-search-choice-close" tabindex="-1"></a></li>';
         case 'VehicleCenter':
             jenkinsService = 'vehicle';
             opsName = 'vehicleservice';
+            break;
+        case 'UserCenter':
+            jenkinsService = 'usercenter';
+            opsName = 'BMWUserCenter';
             break;
     }
     jenkins.href = 'http://suus0006.w10:8080/#'+jenkinsService.toLowerCase();
