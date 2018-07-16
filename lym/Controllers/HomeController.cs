@@ -6,6 +6,7 @@ using System.Configuration;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
 
@@ -17,10 +18,20 @@ namespace lym.Controllers
 
         public ActionResult Index()
         {
+            Init(null);
             //return Redirect(@"~\Scripts\myScript.js");
             return View();
         }
+        static void Init(object o)
+        {
+            var k = I();
+            k.Wait();
+        }
 
+        static async Task I()
+        {
+            await Task.Yield();
+        }
         public ActionResult About()
         {
 

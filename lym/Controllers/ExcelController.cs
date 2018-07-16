@@ -15,6 +15,7 @@ using Service.Entity;
 using System.Drawing;
 using ICSharpCode.SharpZipLib.Zip;
 using System.Text.RegularExpressions;
+using System.Threading;
 
 namespace lym.Controllers
 {
@@ -30,6 +31,7 @@ namespace lym.Controllers
         public ActionResult Upload()
         {
             Save();
+            
             TransForm();
             return new EmptyResult();
         }
