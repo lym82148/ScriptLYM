@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         OpsAutoEmail
 // @namespace    http://tampermonkey.net/
-// @version      2.1
+// @version      2.2
 // @description  try to take over the world!
 // @author       You
 // @match        https://omcops.bmw.com.cn/Operation/Release/ReleasePlanDetails/*
@@ -56,7 +56,7 @@
     var releaseEnv = $("input#ReleaseEnv").val() || '';
     var title = 'deploy ' + serviceName + ' to ' + releaseEnv;
     var cc = 'DL-bmwconnected-bumper <bmwconnected-bumper@list.bmw.com>';
-    var mailto = 'Zhang Lei<Lei.SH.Zhang@partner.bmw.com>; Shao Zach, US-CN <Zach.Shao@bmw.com>; Yin Vincent, US-CN <Vincent.Yin@bmw.com>;';
+    var mailto = 'Zhang Lei<Lei.SH.Zhang@partner.bmw.com>; Shao Zach, US-CN <Zach.Shao@bmw.com>; Xu Jianlin, (Jianlin.Xu@partner.bmw.com);';
     var omc = 'omc.cn.support <omc.cn.support@bmwgroup.com>; ';
     var content = 'Hi All\r\n\r\n' + serviceName + ' 申请发' + releaseEnv + ' 环境，需要ops上approve。\r\n\r\nhttps://omcops.bmw.com.cn/Operation/Release/ReleasePlanIndex/Stg-' + serviceName + '\r\n\r\nBuild No: ' + buildNo + '\r\n\r\n\r\n\r\n';
     var omcContent = 'Hi All \r\n\r\n' + serviceName + ' 申请发' + releaseEnv + ' 环境，需要ops上approve。\r\n\r\nhttps://omcops.bmw.com.cn/Operation/Release/ReleasePlanIndex/Stg-' + serviceName + '\r\n\r\nBuild No: ' + buildNo + '\r\n\r\n\r\n\r\n';
