@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         OpsAutoEmail
 // @namespace    http://tampermonkey.net/
-// @version      2.2
+// @version      2.3
 // @description  try to take over the world!
 // @author       You
 // @match        https://omcops.bmw.com.cn/Operation/Release/ReleasePlanDetails/*
@@ -15,7 +15,7 @@
         $('#Comments').val($('#GitRepoTag').val());
         if (location.hash == '#ap') {
             if ($('#ProductOwner').val() == null) {
-                $('#ProductOwner>option[value="vincent.yin@bmw.com"]').prop('selected', true);
+                $('#ProductOwner>option[value="jianlin.xu@partner.bmw.com"]').prop('selected', true);
             }
             $('#btnSubmit')[0].click();
         }
