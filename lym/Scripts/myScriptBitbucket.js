@@ -289,7 +289,7 @@
     }
 
 
-    var defaultUserList = [{ userName: 'shi', displayName: 'Baoyu SHI' },
+    var defaultUserList = [//{ userName: 'shi', displayName: 'Baoyu SHI' },
                            { userName: 'han', displayName: 'Guoguang Han' },
                            { userName: 'xyang', displayName: 'Yuqi Zhao' },
                            { userName: 'tang', displayName: 'Dingyou Tang' },
