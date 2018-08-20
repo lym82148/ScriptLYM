@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         CheckConfig
 // @namespace    http://tampermonkey.net/
-// @version      4.9
+// @version      5.0
 // @description  try to take over the world!
 // @author       You
 // @match        https://portal.azure.cn/*
@@ -297,6 +297,11 @@
                             curText = 'annualinspectionservice';
                             browse = 'AnnualInspectService/Web.config';
                             branchName = 'release/ChinaDev';
+                            break;
+                        case 'SurveyCenter':
+                            curText = 'surveycenter';
+                            browse = 'WebApiHost/Web.config';
+                            branchName = 'ChinaDev';
                             break;
                         default:
                             alert("请联系作者配置git路径");
