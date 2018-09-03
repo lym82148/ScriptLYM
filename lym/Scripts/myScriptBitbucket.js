@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         BitbucketReviewer
 // @namespace    http://tampermonkey.net/
-// @version      5.8
+// @version      5.9
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0003.w10:7990/projects/cnb/repos/*
@@ -291,8 +291,10 @@
 
     var defaultUserList = [//{ userName: 'shi', displayName: 'Baoyu SHI' },
                            { userName: 'han', displayName: 'Guoguang Han' },
-                           { userName: 'xyang', displayName: 'Yuqi Zhao' },
+                           //{ userName: 'xyang', displayName: 'Yuqi Zhao' },
                            { userName: 'tang', displayName: 'Dingyou Tang' },
+                           { userName: 'yazhou', displayName: 'Yazhou Zhao' },
+                           { userName: 'Liang.Fan', displayName: 'Liang.Fan' },
                            //{ userName: 'xia', displayName: 'Yongming Xia' },
                            { userName: 'yliu', displayName: 'Yiming SH Liu' }];
     var filterUserList = defaultUserList.filter(function (a) { return a.userName != curUserName; });
