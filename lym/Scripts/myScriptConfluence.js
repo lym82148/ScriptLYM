@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Confluence
 // @namespace    http://tampermonkey.net/
-// @version      2.0
+// @version      2.1
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0001.w10:8090/*
@@ -379,7 +379,7 @@ public class {{tableNameCode}}Configuration : EntityTypeConfiguration<{{tableNam
 public {{tableNameCode}}Configuration()\r\n\
 {\r\n\
 ToTable(\"{{tableName}}\", {{serviceName}}ServiceContext.SchemaName);\r\n\
-HasKey(p => p.Id).Property(p => p.Id).HasColumnName(\"id\").HasDatabaseGeneratedOption(DatabaseGeneratedOption.Identity);\r\n\
+HasKey(p => p.Id).Property(p => p.Id).HasColumnName(\"Id\").HasDatabaseGeneratedOption(DatabaseGeneratedOption.Identity);\r\n\
 {{columnsScript}}\r\n\
 }\r\n\
 }\r\n\
