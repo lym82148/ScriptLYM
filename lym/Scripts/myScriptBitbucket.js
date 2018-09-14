@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         BitbucketReviewer
 // @namespace    http://tampermonkey.net/
-// @version      5.9
+// @version      6.0
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0003.w10:7990/projects/cnb/repos/*
@@ -454,7 +454,7 @@ class="select2-search-choice-close" tabindex="-1"></a></li>';
     }
     var envArr = ["", "Build", "Dev", 'Int', 'Stg', 'Prod'];
     window.onmessage = function (e) {
-        var arr = e.data.Data;
+        var arr = e.data.result.data;
         console.log(e.data);
         var gitCommitId;
         var gitRepoTag;
@@ -479,9 +479,9 @@ class="select2-search-choice-close" tabindex="-1"></a></li>';
                 // jQuery('span.tag[data-names*='+gitRepoTag+']').closest('tr').find('td.commit').append(span);
                 jQuery('td.commit>a.commitid[data-commitid*='+gitCommitId+']').closest('td').append(span);
             }
-            if (envArr.indexOf(ele.innerHTML) < envArr.indexOf(e.data.Env)) {
-                ele.innerHTML = e.data.Env;
-                ele.href = 'https://omcops.bmw.com.cn/Operation/Release/ReleaseManagement/' + e.data.Env + '-' + opsName;
+            if (envArr.indexOf(ele.innerHTML) < envArr.indexOf(e.data.result.env)) {
+                ele.innerHTML = e.data.result.env;
+                ele.href = 'https://omcops.bmw.com.cn/Operation/Release/ReleaseManagement/' + e.data.result.env + '-' + opsName;
             }
         }
     };
