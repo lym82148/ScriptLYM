@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         CheckConfig
 // @namespace    http://tampermonkey.net/
-// @version      5.0
+// @version      5.1
 // @description  try to take over the world!
 // @author       You
 // @match        https://portal.azure.cn/*
@@ -100,13 +100,13 @@
 
             $.config.appsettings.ini_data = function(data){
                 try{
-                    $.config.omcArr = data.map(function(a){return a.Name.replace(/-instance$/,'');});
-                    $.config.omcValueArr = data.map(function(a){return a.Value;});
+                    $.config.omcArr = data.map(function(a){return a.name.replace(/-instance$/,'');});
+                    $.config.omcValueArr = data.map(function(a){return a.value;});
                     var obj = {};
                     data.forEach(function(a){
-                        if(a.ParentToName =="properties" ){
-                            var key = a.Name.replace(/-instance$/,'');
-                            obj[key]= a.Value;
+                        if(a.parentToName =="properties" ){
+                            var key = a.name.replace(/-instance$/,'');
+                            obj[key]= a.value;
                         }
                     });
                     $.config.omcObj= obj;
@@ -129,13 +129,13 @@
             };
             $.config.connectionstrings.ini_data = function(data){
                 try{
-                    $.config.omcArr = data.map(function(a){return a.Name.replace(/-instance$/,'');});
-                    $.config.omcValueArr = data.map(function(a){return a.Value;});
+                    $.config.omcArr = data.map(function(a){return a.name.replace(/-instance$/,'');});
+                    $.config.omcValueArr = data.map(function(a){return a.value;});
                     var obj = {};
                     data.forEach(function(a){
-                        if(a.ParentToName =="properties" ){
-                            var key = a.Name.replace(/-instance$/,'');
-                            obj[key]= a.Value;
+                        if(a.parentToName =="properties" ){
+                            var key = a.name.replace(/-instance$/,'');
+                            obj[key]= a.value;
                         }
                     });
                     $.config.omcObj= obj;
@@ -160,10 +160,10 @@
                 try{
                     console.log(data)
                     $.config.omcArr = [];
-                    var tempOmcUserArr= data.map((a)=>{if(a.ParentToName=="Setting"&&a.Name!="name"&&a.Name!="value")return {Value:a.Value,Name:a.Name};}).filter((a)=>a!=null?a:undefined);
+                    var tempOmcUserArr= data.map((a)=>{if(a.parentToName=="Setting"&&a.name!="name"&&a.name!="value")return {Value:a.value,Name:a.name};}).filter((a)=>a!=null?a:undefined);
                     var userArr = tempOmcUserArr.map((a)=>a.Name);
 
-                    var tempOmcArr= data.map(function(a){if(a.ParentToName=="Setting"&&(a.Name=="name"||a.Name=="value")&&userArr.indexOf(a.Value)==-1) return {Value:a.Value,ParentId:a.ParentId};}).filter((a)=>a!=null?a:undefined);
+                    var tempOmcArr= data.map(function(a){if(a.parentToName=="Setting"&&(a.name=="name"||a.name=="value")&&userArr.indexOf(a.value)==-1) return {Value:a.value,ParentId:a.parentId};}).filter((a)=>a!=null?a:undefined);
 
                     console.log(tempOmcArr)
                     $.config.omcValueArr = [];
