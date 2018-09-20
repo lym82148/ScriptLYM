@@ -52,7 +52,7 @@
                 branchName ='CN-v8.0-q2-release';
                 break;
             case 'OrderFulfillmentWorker':
-                branchName ='CN-refactor';
+                branchName ='CN-Refactor';
                 break;
             case 'PaymentGateway':
                 //branchName = 'CN-v6.1-q4-release';
