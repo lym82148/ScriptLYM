@@ -53,7 +53,7 @@
         var branchName = 'ChinaDev';
         switch(serviceName){
             case 'DriveViolationService':
-                //branchName ='CN-v8.0-q2-release';
+                branchName ='CN-Q4-Release';
                 break;
             case 'OrderFulfillmentWorker':
                 branchName ='CN-Refactor';
