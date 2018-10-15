@@ -5,9 +5,13 @@
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0003.w10:7990/projects/cnb/repos/*
+// @match        http://suus0003.w10:7990/projects/cnp/repos/*
 // @match        http://suus0003.w10:7990/projects/CNB/repos/*
+// @match        http://suus0003.w10:7990/projects/CNP/repos/*
 // @match        http://suus0003.w10:7990//projects/CNB/repos/*
+// @match        http://suus0003.w10:7990//projects/CNP/repos/*
 // @match        http://suus0003.w10:7990//projects/cnb/repos/*
+// @match        http://suus0003.w10:7990//projects/cnp/repos/*
 // @match        http://suus0003.w10:7990/dashboard
 // @match        http://suus0003.w10:7990/plugins/servlet/create-branch*
 // @grant        none
@@ -125,7 +129,7 @@
         var listDiv = document.createElement('div');
         listDiv.id = 'listDivFilterRes';
         var res = obj.links;
-        var regK = /\/repos\/[^\/]*/i;
+        var regK = /\/[^\/]*\/repos\/[^\/]*/i;
         for (var i = 0; i < res.length; i++) {
             var item = res[i];
             var divItem = document.createElement('div');
@@ -138,7 +142,7 @@
             if(location.href.toLowerCase().startsWith('http://suus0003.w10:7990/dashboard') ||location.href.indexOf('pull-requests/')>0 ){
                 a.href = item.href + '?at=ChinaDev';
             }else{
-                a.href = location.href.replace(regK,'/repos/'+item.lid);
+                a.href = location.href.replace(regK,'/'+item.location+'/repos/'+item.lid);
             }
             a.innerHTML = item.name;
             a.style.display = 'none';
@@ -280,8 +284,12 @@
         filterInit();
     }
     else{
-        jQuery.ajax('http://suus0003.w10:7990/rest/api/latest/projects/CNB/repos?start=0&limit=200').then(function(data){
-            var linksObj =  data.values.map(function(b){return {href:b.links.self[0].href,name:b.name,lid:b.name.toLowerCase()};});
+        var ajax1 = jQuery.ajax('http://suus0003.w10:7990/rest/api/latest/projects/CNB/repos?start=0&limit=200');
+        var ajax2 = jQuery.ajax('http://suus0003.w10:7990/rest/api/latest/projects/CNP/repos?start=0&limit=200');
+        jQuery.when(ajax1,ajax2).then(function(data1,data2){
+            var linksObj1 =  data1[0].values.map(function(b){return {href:b.links.self[0].href,name:b.name,lid:b.name.toLowerCase(),location:'CNB'};});
+            var linksObj2 =  data2[0].values.map(function(b){return {href:b.links.self[0].href,name:b.name,lid:b.name.toLowerCase(),location:'CNP'};});
+            var linksObj = linksObj1.concat(linksObj2);
             var json =JSON.stringify({ links:linksObj,expireTime:new Date(+new Date()+86400e3)});
             localStorage.setItem('bitRepoList',json);
             filterInit();
