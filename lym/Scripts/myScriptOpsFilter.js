@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         OpsFilter
 // @namespace    http://tampermonkey.net/
-// @version      4.7
+// @version      4.8
 // @description  try to take over the world!
 // @author       You
 // @match        xxxhttps://omcops.bmw.com.cn/Configuration/DeployConfiguration/NewChange*
@@ -332,7 +332,7 @@
         location.href =url;
     }
     // 来自jenkins的自动发布
-    if (location.hash != '') {
+    if (location.hash != ''&& sessionStorage.getItem('OpsDeployContent')!=null) {
         var cont = location.hash.replace('#', '').split('-');
         var find = function () {
             var idLinks = $('#tb-plan-list>tbody>tr>td>a[href*="/job/"]');
