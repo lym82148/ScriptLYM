@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         JiraModule
 // @namespace    http://tampermonkey.net/
-// @version      1.9
+// @version      2.0
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0002.w10:8080/browse/*
@@ -12,53 +12,91 @@
 (function () {
     var setModule = function m() {
         if ($('#summary').length) {
+            if ($('#issuetype-suggestions').find('a:contains("Sub-task")').length || $('#issuetype-field').val() == 'Sub-task') {
+                if ($('#issuetype-field').val() == 'Story') {
+
+                } else {
+                    $('#issuetype-suggestions').find('a:contains("Sub-task")').closest('li').addClass('active').siblings().removeClass('active').click();
+                    setTimeout(changeToSubTask, 100);
+                }
+                $('#summary').val('[Server]');
+                $('#customfield_10300').val('13773');
+                $('#customfield_11200').val('11305');
+                $('#timetracking_originalestimate').val('1d');
+                $('#timetracking_remainingestimate').val('1d');
+            }
+            else {
+                $('#issuetype-field').click();
+                setTimeout(m, 100);
+            }
+        } else {
+            setTimeout(m, 100);
+        }
+    };
+    var changeToSubTask = function m() {
+        if ($('#summary').val() == '') {
             $('#summary').val('[Server]');
             $('#customfield_10300').val('13773');
             $('#customfield_11200').val('11305');
             $('#timetracking_originalestimate').val('1d');
             $('#timetracking_remainingestimate').val('1d');
-            //$('#qf-create-another').prop('checked', true);
+        } else {
+            setTimeout(m, 100);
+        }
+    };
+    var changeToStory = function m() {
+        if ($('#summary').val() == '') {
+            $('#summary').val('申请');
+            $('#customfield_10300').val('13329');
+            $('#customfield_11200').val('11305');
         } else {
             setTimeout(m, 100);
         }
     };
     var setModuleOps = function n() {
         if ($('#summary').length) {
-            // $('#issuetype-field').val('Story');
-            if ($('#issuetype-field')[0].clicked) {
 
-            } else {
-                $('#issuetype-field')[0].clicked = true;
-                $('#issuetype-field').click();
-            }
-            if (!$('#issuetype-field').next().find('a:contains("Story")').length) {
-                $('#issuetype-field').next().find('a:contains("Story")').click();
+            if ($('#issuetype-suggestions').find('a:contains("Story")').length || $('#issuetype-field').val() == 'Story') {
+                if ($('#issuetype-field').val() == 'Story') {
+
+                } else {
+                    $('#issuetype-suggestions').find('a:contains("Story")').closest('li').addClass('active').siblings().removeClass('active').click();
+                    setTimeout(changeToStory, 100);
+                }
                 $('#summary').val('申请');
                 $('#customfield_10300').val('13329');
                 $('#customfield_11200').val('11305');
             }
 
             else {
+                $('#issuetype-field').click();
                 setTimeout(n, 100);
             }
         } else {
             setTimeout(n, 100);
         }
     };
+    var cSubTask = function () {
+        if (!$('#summary').length) {
+            if ($('#create-subtask').length) {
+                $('#create-subtask').click();
+                setTimeout(setModule, 100);
+            } else {
+                alert("无法创建子任务");
+            }
+        }
+    }
+    var cOps = function () {
+        $('#create_link').click();
+        setTimeout(setModuleOps, 100);
+    }
+
     $('#create-subtask').click(function () { setTimeout(setModule, 100); });
     onkeydown = function (e) {
         if (e.key == 'b' && (e.target.tagName == 'BODY' || e.target.tagName == 'A')) {
-            if (!$('#summary').length) {
-                if ($('#create-subtask').length) {
-                    $('#create-subtask').click();
-                    setTimeout(setModule, 100);
-                } else {
-                    alert("无法创建子任务");
-                }
-            }
+            cSubTask();
         } else if (e.key == 'n' && (e.target.tagName == 'BODY' || e.target.tagName == 'A')) {
-            $('#create_link').click();
-            setTimeout(setModuleOps, 100);
+            cOps();
         }
     };
     var omc = 'omc.cn.support <omc.cn.support@bmwgroup.com>; ';
@@ -78,6 +116,13 @@
     if ($('#customfield_10300-val').text().trim() == "Clutch") {
         $('.toolbar-split-left').append(template);
     }
-
+    if ($('#create-menu').length) {
+        $('#create-menu').after($('#create-menu')[0].outerHTML).next().attr('id', 'slsdi').find('a').removeClass('create-issue').attr({ id: 'sldsls', href: null, accesskey: null, style: 'background-color:#e66363' }).html('Ops').click(cOps);
+        if (!$('#summary').length) {
+            if ($('#create-subtask').length) {
+                $('#create-menu').after($('#create-menu')[0].outerHTML).next().attr('id', 'slsdi').find('a').removeClass('create-issue').attr({ id: 'sldsls', href: null, accesskey: null, style: 'background-color:#4eb7b7' }).html('Sub Task').click(cSubTask);
+            }
+        }
+    }
 
 })();
