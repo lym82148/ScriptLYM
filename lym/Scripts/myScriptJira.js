@@ -13,7 +13,7 @@
     var setModule = function m() {
         if ($('#summary').length) {
             if ($('#issuetype-suggestions').find('a:contains("Sub-task")').length || $('#issuetype-field').val() == 'Sub-task') {
-                if ($('#issuetype-field').val() == 'Story') {
+                if ($('#issuetype-field').val() == 'Sub-task') {
 
                 } else {
                     $('#issuetype-suggestions').find('a:contains("Sub-task")').closest('li').addClass('active').siblings().removeClass('active').click();
