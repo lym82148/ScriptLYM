@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         CheckConfig
 // @namespace    http://tampermonkey.net/
-// @version      5.1
+// @version      5.2
 // @description  try to take over the world!
 // @author       You
 // @match        https://portal.azure.cn/*
@@ -263,6 +263,7 @@
                     var curText = $('#service-list li.active').text().trim();
                     var browse = 'WebApiHost/Web.config';
                     var branchName = 'ChinaDev';
+                    var category = 'CNB';
                     switch(curText){
                         case 'DriveViolationService':
                             break;
@@ -276,6 +277,7 @@
                         case 'BTCAPIServer':
                             curText = 'bmwgateway';
                             browse = 'BTCAPIServer/Web.config';
+                            category='CNP';
                             break;
                         case 'EnterprisePortal':
                             curText = 'PartnerGateway';
@@ -303,12 +305,18 @@
                             browse = 'WebApiHost/Web.config';
                             branchName = 'ChinaDev';
                             break;
+                        case 'MapGateway':
+                            curText = 'mapgateway';
+                            browse = 'WebHosts/Web.config';
+                            branchName = 'ChinaDev';
+                            category='CNP';
+                            break;
                         default:
                             alert("请联系作者配置git路径");
                             return;
                             break;
                     }
-                    window.open('http://suus0003.w10:7990/projects/CNB/repos/' + curText +'/browse/'+ browse+'?at='+branchName+'#ad', null, "height=11,width=11,status=no,toolbar=no,scrollbars=no,menubar=no,location=no,top=" + (window.screenTop + 200) + ",left=" + (window.screenLeft + 600));
+                    window.open('http://suus0003.w10:7990/projects/'+category+'/repos/' + curText +'/browse/'+ browse+'?at='+branchName+'#ad', null, "height=11,width=11,status=no,toolbar=no,scrollbars=no,menubar=no,location=no,top=" + (window.screenTop + 200) + ",left=" + (window.screenLeft + 600));
                     configLink.innerHTML = 'Starting Task';
                     configLink.style.color = 'pink';
                     setTimeout(function () {
@@ -350,7 +358,7 @@
     }else{
         var res = oldXmlConfig || window.prompt();
         if (!res) { return; }
-        var re = /<!--[\S\s]+?-->/g;
+        var re = /<!--[\S\s]*?-->/g;
         res = res.replace(re, '');
         var appSettings = /<appSettings>[\s\S]+<\/appSettings>/;
         var config = appSettings.exec(res);
