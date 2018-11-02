@@ -1,15 +1,22 @@
 ﻿// ==UserScript==
 // @name         Jenkins
 // @namespace    http://tampermonkey.net/
-// @version      3.0
+// @version      3.1
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0006.w10:8080/
 // @match        http://suus0006.w10:8080/job/*
+// @match        http://suus0006.w10:8080/login*
 // @grant        none
 // ==/UserScript==
 
 (function () {
+    if (location.href.startsWith('http://suus0006.w10:8080/login')) {
+        document.getElementById('j_username').value = 'dev';
+        document.getElementsByName('j_password')[0].value = 'bmw';
+        document.getElementById('remember_me').checked = true;
+        document.getElementsByName('Submit')[0].click();
+    }
     var jenkinsKey = 'jenkinsServices';
     var res = [];
     var div = document.createElement('div');
@@ -205,7 +212,7 @@
             console.log(e.data)
             var jenkinsBuildNo;
             for (var i = 0; i < arr.length; i++) {
-                if (arr[i].Status != 'Deployed'&&arr[i].Status != 'Promoted') { continue; }
+                if (arr[i].Status != 'Deployed' && arr[i].Status != 'Promoted') { continue; }
                 jenkinsBuildNo = arr[i].JenkinsBuildNo;
                 break;
             }
