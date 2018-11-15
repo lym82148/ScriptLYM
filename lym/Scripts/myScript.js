@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         CheckConfig
 // @namespace    http://tampermonkey.net/
-// @version      5.2
+// @version      5.3
 // @description  try to take over the world!
 // @author       You
 // @match        https://portal.azure.cn/*
@@ -160,7 +160,7 @@
                 try{
                     console.log(data)
                     $.config.omcArr = [];
-                    var tempOmcUserArr= data.map((a)=>{if(a.parentToName=="Setting"&&a.name!="name"&&a.name!="value")return {Value:a.value,Name:a.name};}).filter((a)=>a!=null?a:undefined);
+                    var tempOmcUserArr= data.map((a)=>{if(a.parentToName=="Setting"&&a.name!="name"&&a.name!="value")return {Value:a.value,Name:a.name,ParentId:a.parentId};}).filter((a)=>a!=null?a:undefined);
                     var userArr = tempOmcUserArr.map((a)=>a.Name);
 
                     var tempOmcArr= data.map(function(a){if(a.parentToName=="Setting"&&(a.name=="name"||a.name=="value")&&userArr.indexOf(a.value)==-1) return {Value:a.value,ParentId:a.parentId};}).filter((a)=>a!=null?a:undefined);
@@ -173,21 +173,34 @@
                         sss+=tempOmcArr[i].Value+"\r\n";
                     }
                     console.log(sss);
+                    for(var i = 0; i < tempOmcUserArr.length; i ++) {
+                        var temp = tempOmcUserArr[i];
+                        for(var j = 0; j < tempOmcArr.length; j ++) {
+                            if(temp.ParentId === tempOmcArr[j].ParentId) {
+                                temp.Name=tempOmcArr[j].Value;
+                                tempOmcArr.splice(j,1);
+                                j--;
+                                break;
+                            }
+                        }
+                    }
                     for(var i=0;i<tempOmcUserArr.length;i++){
                         sss+=tempOmcUserArr[i].Value+"\r\n";
+                    }
+                    for(var i=0;i<tempOmcUserArr.length;i++){
+                        obj[tempOmcUserArr[i].Name]= tempOmcUserArr[i].Value;
                     }
                     for(var i=0;i<tempOmcArr.length/2;i++){
                         // if(tempOmcArr[i].ParentId ==tempOmcArr[i+tempOmcArr.length/2].ParentId ){
                         obj[tempOmcArr[i].Value]= tempOmcArr[i+tempOmcArr.length/2].Value;
-                        $.config.omcArr.push(tempOmcArr[i].Value);
-                        $.config.omcValueArr.push(tempOmcArr[i+tempOmcArr.length/2].Value);
                         // }
                     }
-                    for(var i=0;i<tempOmcUserArr.length;i++){
-                        obj[tempOmcUserArr[i].Name]= tempOmcUserArr[i].Value;
-                        $.config.omcArr.push(tempOmcUserArr[i].Name);
-                        $.config.omcValueArr.push(tempOmcUserArr[i].Value);
+                    for(var a in obj){
+                        $.config.omcArr.push(a);
+                        $.config.omcValueArr.push(obj[a]);
                     }
+
+
                     $.config.omcObj= obj;
                     jsonDiv.innerHTML = format_json(JSON.stringify( $.config.omcObj));
                     paTitle.innerHTML = $.inst.obj.find('li.active').text().split('-').pop();
