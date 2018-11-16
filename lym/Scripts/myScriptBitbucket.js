@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         BitbucketReviewer
 // @namespace    http://tampermonkey.net/
-// @version      6.4
+// @version      6.5
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0003.w10:7990/projects/cnb/repos/*
@@ -56,7 +56,7 @@
                 branchName ='CN-Q4-Release';
                 break;
             case 'OrderFulfillmentWorker':
-                branchName ='CN-Refactor';
+                //branchName ='CN-Refactor';
                 break;
             case 'PaymentGateway':
                 //branchName = 'CN-v6.1-q4-release';
