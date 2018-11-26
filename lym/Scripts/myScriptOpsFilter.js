@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         OpsFilter
 // @namespace    http://tampermonkey.net/
-// @version      5.0
+// @version      5.1
 // @description  try to take over the world!
 // @author       You
 // @match        xxxhttps://omcops.bmw.com.cn/Configuration/DeployConfiguration/NewChange*
@@ -236,7 +236,13 @@
                 if(!$('.dt-button-collection[role=menu]').is(':visible')) {
                     $('.dt-buttons:eq(0)>a').click();
                 }
-            }else{
+            }
+            else if($('.dt-buttons:eq(1)>a').is(':visible')){
+                if(!$('.dt-button-collection[role=menu]').is(':visible')) {
+                    $('.dt-buttons:eq(1)>a').click();
+                }
+            }
+            else{
                 if(JSON.parse( sessionStorage.getItem('OpsDeployContent'))){
 
                 }else{
