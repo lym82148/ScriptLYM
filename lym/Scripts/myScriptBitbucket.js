@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         BitbucketReviewer
 // @namespace    http://tampermonkey.net/
-// @version      6.5
+// @version      6.6
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0003.w10:7990/projects/cnb/repos/*
@@ -70,6 +70,10 @@
             case 'PremiumAirportService':
                 //branchName ='CN-v8.0-q2-release';
                 break;
+            case 'CouponService':
+                branchName ='CN-CouponCenter2.0';
+                break;
+
         }
         return branchName;
     };
