@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         CheckConfig
 // @namespace    http://tampermonkey.net/
-// @version      5.4
+// @version      5.5
 // @description  try to take over the world!
 // @author       You
 // @match        https://portal.azure.cn/*
@@ -390,7 +390,12 @@
         var delList = []
         for(var a in oldJsonConfig){
             if(!isString(oldJsonConfig[a])){
-                delList.push(a);
+                if(!Number.isInteger(oldJsonConfig[a])){
+                    delList.push(a);
+                }else{
+                    oldJsonConfig[a] = oldJsonConfig[a].toString();
+                }
+                
             }
         }
         for(var a in delList){
