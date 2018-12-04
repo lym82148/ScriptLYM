@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         BitbucketReviewer
 // @namespace    http://tampermonkey.net/
-// @version      6.6
+// @version      6.7
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0003.w10:7990/projects/cnb/repos/*
@@ -39,7 +39,11 @@
         var startFun = function(){
             var rawUrl = location.href.replace('/browse/','/raw/');
             jQuery.ajax(rawUrl).done(function(data){
-                opener.postMessage(data.documentElement.outerHTML,'*');
+                if(data.documentElement){
+                    opener.postMessage(data.documentElement.outerHTML,'*');
+                }else{
+                    opener.postMessage(data,'*');
+                }
                 close();
             }).fail(function(e){
                 alert(e.status);

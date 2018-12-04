@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         CheckConfig
 // @namespace    http://tampermonkey.net/
-// @version      5.3
+// @version      5.4
 // @description  try to take over the world!
 // @author       You
 // @match        https://portal.azure.cn/*
@@ -324,6 +324,11 @@
                             branchName = 'ChinaDev';
                             category='CNP';
                             break;
+                        case 'ETCService':
+                            curText = 'etcservice';
+                            browse = 'ETCService/ETCService.Host/appsettings.json';
+                            branchName = 'dev';
+                            break;
                         default:
                             alert("请联系作者配置git路径");
                             return;
@@ -359,6 +364,38 @@
             setTimeout('console.log("输入 r 更新配置");', 5000);
         }
         return;
+    }
+    function isJSON(str) {
+        if (typeof str == 'string') {
+            try {
+                var obj=JSON.parse(str);
+                if(typeof obj == 'object' && obj ){
+                    return true;
+                }else{
+                    return false;
+                }
+
+            } catch(e) {
+                console.log('error：'+str+'!!!'+e);
+                return false;
+            }
+        }
+        console.log('It is not a string!')
+    }
+    function isString(obj){ //判断对象是否是字符串
+        return Object.prototype.toString.call(obj) === "[object String]";
+    }
+    if(isJSON(oldXmlConfig)){
+        oldJsonConfig = JSON.parse(oldXmlConfig);
+        var delList = []
+        for(var a in oldJsonConfig){
+            if(!isString(oldJsonConfig[a])){
+                delList.push(a);
+            }
+        }
+        for(var a in delList){
+            delete oldJsonConfig[delList[a]]
+        }
     }
     if(oldJsonConfig){
         var okeys = Object.keys(oldJsonConfig);
