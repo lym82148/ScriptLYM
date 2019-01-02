@@ -1,19 +1,19 @@
 ﻿// ==UserScript==
 // @name         BitbucketReviewer
 // @namespace    http://tampermonkey.net/
-// @version      6.8
+// @version      6.9
 // @description  try to take over the world!
 // @author       You
-// @match        http://suus0003.w10:7990/projects/cnb/repos/*
-// @match        http://suus0003.w10:7990/projects/cnp/repos/*
-// @match        http://suus0003.w10:7990/projects/CNB/repos/*
-// @match        http://suus0003.w10:7990/projects/CNP/repos/*
-// @match        http://suus0003.w10:7990//projects/CNB/repos/*
-// @match        http://suus0003.w10:7990//projects/CNP/repos/*
-// @match        http://suus0003.w10:7990//projects/cnb/repos/*
-// @match        http://suus0003.w10:7990//projects/cnp/repos/*
-// @match        http://suus0003.w10:7990/dashboard
-// @match        http://suus0003.w10:7990/plugins/servlet/create-branch*
+// @match        https://suus0003.w10:7990/projects/cnb/repos/*
+// @match        https://suus0003.w10:7990/projects/cnp/repos/*
+// @match        https://suus0003.w10:7990/projects/CNB/repos/*
+// @match        https://suus0003.w10:7990/projects/CNP/repos/*
+// @match        https://suus0003.w10:7990//projects/CNB/repos/*
+// @match        https://suus0003.w10:7990//projects/CNP/repos/*
+// @match        https://suus0003.w10:7990//projects/cnb/repos/*
+// @match        https://suus0003.w10:7990//projects/cnp/repos/*
+// @match        https://suus0003.w10:7990/dashboard
+// @match        https://suus0003.w10:7990/plugins/servlet/create-branch*
 // @grant        none
 // ==/UserScript==
 
@@ -147,7 +147,7 @@
             a.style.fontSize = '18px';
             a.style.margin = '5px';
             a.style.padding = '2px';
-            if(location.href.toLowerCase().startsWith('http://suus0003.w10:7990/dashboard') ||location.href.indexOf('pull-requests/')>0 ){
+            if(location.href.toLowerCase().startsWith('https://suus0003.w10:7990/dashboard') ||location.href.indexOf('pull-requests/')>0 ){
                 a.href = item.href + '?at=ChinaDev';
             }else{
                 a.href = location.href.replace(regK,'/'+item.location+'/repos/'+item.lid);
@@ -159,7 +159,7 @@
             item.a = a;
         }
         res = res.map(function (a) { return a.a; });
-        if(location.href.toLowerCase().startsWith('http://suus0003.w10:7990/dashboard')){
+        if(location.href.toLowerCase().startsWith('https://suus0003.w10:7990/dashboard')){
             jQuery('h3:first').append(div);
         }else{
             jQuery('h2:first').append(div);
@@ -292,8 +292,8 @@
         filterInit();
     }
     else{
-        var ajax1 = jQuery.ajax('http://suus0003.w10:7990/rest/api/latest/projects/CNB/repos?start=0&limit=200');
-        var ajax2 = jQuery.ajax('http://suus0003.w10:7990/rest/api/latest/projects/CNP/repos?start=0&limit=200');
+        var ajax1 = jQuery.ajax('https://suus0003.w10:7990/rest/api/latest/projects/CNB/repos?start=0&limit=200');
+        var ajax2 = jQuery.ajax('https://suus0003.w10:7990/rest/api/latest/projects/CNP/repos?start=0&limit=200');
         jQuery.when(ajax1,ajax2).then(function(data1,data2){
             var linksObj1 =  data1[0].values.map(function(b){return {href:b.links.self[0].href,name:b.name,lid:b.name.toLowerCase(),location:'CNB'};});
             var linksObj2 =  data2[0].values.map(function(b){return {href:b.links.self[0].href,name:b.name,lid:b.name.toLowerCase(),location:'CNP'};});
@@ -372,7 +372,7 @@ class="select2-search-choice-close" tabindex="-1"></a></li>';
         }
         title.children(':first').before(btn);
     }
-    if (location.href == 'http://suus0003.w10:7990/dashboard') {
+    if (location.href == 'https://suus0003.w10:7990/dashboard') {
         var arr = jQuery('a').filter(function (a, b) { return b.innerHTML == 'Create pull request'; });
         for (var i = 0; i < arr.length; i++) {
             var serviceName = jQuery(arr[i]).closest('tr').find('span.name').text();
@@ -457,7 +457,7 @@ class="select2-search-choice-close" tabindex="-1"></a></li>';
             commitLink.style.color = '#ff6e6e';
         }, 1000);
         if(!jQuery('h2:first').text().startsWith('Commits')){
-            commitLink.href = 'http://suus0003.w10:7990/projects/CNB/repos/'+service+'/commits?until='+until;
+            commitLink.href = 'https://suus0003.w10:7990/projects/CNB/repos/'+service+'/commits?until='+until;
         }else{
             commitLink.href = 'javascript:void(0);';
         }
