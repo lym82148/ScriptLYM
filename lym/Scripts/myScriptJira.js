@@ -4,8 +4,8 @@
 // @version      2.0
 // @description  try to take over the world!
 // @author       You
-// @match        http://suus0002.w10:8080/browse/*
-// @match        http://suus0002.w10:8080/secure/RapidBoard.jspa*
+// @match        https://suus0002.w10:8080/browse/*
+// @match        https://suus0002.w10:8080/secure/RapidBoard.jspa*
 // @grant        none
 // ==/UserScript==
 
