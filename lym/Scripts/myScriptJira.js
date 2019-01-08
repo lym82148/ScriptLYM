@@ -10,6 +10,7 @@
 // ==/UserScript==
 
 (function () {
+
     var setModule = function m() {
         if ($('#summary').length) {
             if ($('#issuetype-suggestions').find('a:contains("Sub-task")').length || $('#issuetype-field').val() == 'Sub-task') {

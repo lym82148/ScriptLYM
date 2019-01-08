@@ -17,6 +17,7 @@
 // @grant        none
 // ==/UserScript==
 
+
 (function () {
     var search = jQuery('#s2id_autogen1');
     var input = jQuery('#reviewers');
