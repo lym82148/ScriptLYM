@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         BitbucketReviewer
 // @namespace    http://tampermonkey.net/
-// @version      7.0
+// @version      7.1
 // @description  try to take over the world!
 // @author       You
 // @match        https://suus0003.w10:7990/projects/cnb/repos/*
@@ -70,7 +70,7 @@
                 break;
             case 'PartnerGateway':
                 // branchName = 'CN-RLS-iOS-v7.0.1-Q1Release';
-                branchName = 'for_coupon2.0';
+                branchName = 'release/for_coupon2.0';
 
                 break;
             case 'PremiumAirportService':
