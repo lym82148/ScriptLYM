@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         JiraModule
 // @namespace    http://tampermonkey.net/
-// @version      2.0
+// @version      2.1
 // @description  try to take over the world!
 // @author       You
 // @match        https://suus0002.w10:8080/browse/*
