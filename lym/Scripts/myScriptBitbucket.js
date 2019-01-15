@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         BitbucketReviewer
 // @namespace    http://tampermonkey.net/
-// @version      7.1
+// @version      7.2
 // @description  try to take over the world!
 // @author       You
 // @match        https://suus0003.w10:7990/projects/cnb/repos/*
@@ -58,7 +58,7 @@
         var branchName = 'ChinaDev';
         switch(serviceName){
             case 'DriveViolationService':
-                branchName ='CN-Q4-Release';
+                //branchName ='CN-Q4-Release';
                 break;
             case 'OrderFulfillmentWorker':
                 //branchName ='CN-Refactor';
