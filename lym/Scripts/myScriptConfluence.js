@@ -1,10 +1,10 @@
 ﻿// ==UserScript==
 // @name         Confluence
 // @namespace    http://tampermonkey.net/
-// @version      2.1
+// @version      2.2
 // @description  try to take over the world!
 // @author       You
-// @match        http://suus0001.w10:8090/*
+// @match        https://suus0001.w10:8090/*
 // @grant        none
 // ==/UserScript==
 
@@ -51,10 +51,10 @@
     hr = document.createElement('hr');
     hr.style.borderColor = 'pink';
     filterDiv.append(hr);
-    var ajax1 = $.ajax('http://suus0001.w10:8090/display/UC/API').then(function (data) {
+    var ajax1 = $.ajax('https://suus0001.w10:8090/display/UC/API').then(function (data) {
         getTree(data, apiDiv);
     });
-    var ajax2 = $.ajax('http://suus0001.w10:8090/display/UC/Model+%28DB%29+design').then(function (data) {
+    var ajax2 = $.ajax('https://suus0001.w10:8090/display/UC/Model+%28DB%29+design').then(function (data) {
         getTree(data, dbDiv);
     });
     var filterAction = function (div) {
@@ -221,7 +221,7 @@
     });
     $('.favourite-space-icon>button').css({ top: 'unset', "margin-top": '-18px' });
 
-    if (location.href.startsWith('http://suus0001.w10:8090/')) {
+    if (location.href.startsWith('https://suus0001.w10:8090/')) {
         var changeName = function (name) {
             var r = /(_\w|^\w)/g;
             return name.replace(r, ($1) =>$1.replace('_', '').toUpperCase());
