@@ -80,10 +80,21 @@
             case 'CouponService':
                 branchName ='CN-CouponCenter2.0';
                 break;
-
+            case 'AppInsightsService-archived':
+                branchName ='China-Dev';
+                break;
         }
         return branchName;
     };
+    var getCategory = function(){
+        if(/\/cnp\//i.test(location.href)){
+            return 'cnp';
+        }
+        if(/\/cnb\//i.test(location.href)){
+            return 'cnb';
+        }
+        return '';
+    }
     if(jQuery('#branch-type-menu').length){
         jQuery('#branch-type-menu ul li[data-id=FEATURE]').click();
         var newName = curUserName;
@@ -441,6 +452,10 @@ class="select2-search-choice-close" tabindex="-1"></a></li>';
             jenkinsService = 'usercenter';
             opsName = 'BMWUserCenter';
             break;
+        case 'AppInsightsService-archived':
+            jenkinsService = 'appinsights';
+            opsName = 'BMWAppInsightsService';
+            break;
     }
     jenkins.href = 'http://suus0006.w10:8080/#'+jenkinsService.toLowerCase();
     var commitLink = document.createElement('a');
@@ -460,7 +475,7 @@ class="select2-search-choice-close" tabindex="-1"></a></li>';
             commitLink.style.color = '#ff6e6e';
         }, 1000);
         if(!jQuery('h2:first').text().startsWith('Commits')){
-            commitLink.href = 'https://suus0003.w10:7990/projects/CNB/repos/'+service+'/commits?until='+until;
+            commitLink.href = 'https://suus0003.w10:7990/projects/'+getCategory() +'/repos/'+service+'/commits?until='+until;
         }else{
             commitLink.href = 'javascript:void(0);';
         }
