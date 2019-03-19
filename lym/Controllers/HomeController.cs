@@ -18,7 +18,8 @@ namespace lym.Controllers
 
         public ActionResult Index()
         {
-            Init(null);
+
+
             //return Redirect(@"~\Scripts\myScript.js");
             return View();
         }
