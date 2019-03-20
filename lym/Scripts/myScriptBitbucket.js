@@ -320,7 +320,7 @@
 
 
     var defaultUserList = [//{ userName: 'shi', displayName: 'Baoyu SHI' },
-                           //{ userName: 'han', displayName: 'Guoguang Han' },
+                           { userName: 'han', displayName: 'Guoguang Han' },
                            { userName: 'zhanyuan', displayName: 'Zhanyuan Feng' },
                            //{ userName: 'xyang', displayName: 'Yuqi Zhao' },
                            { userName: 'tang', displayName: 'Dingyou Tang' },
