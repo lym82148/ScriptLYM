@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         BitbucketReviewer
 // @namespace    http://tampermonkey.net/
-// @version      7.4
+// @version      7.5
 // @description  try to take over the world!
 // @author       You
 // @match        https://suus0003.w10:7990/projects/cnb/repos/*
@@ -320,7 +320,8 @@
 
 
     var defaultUserList = [//{ userName: 'shi', displayName: 'Baoyu SHI' },
-                           { userName: 'han', displayName: 'Guoguang Han' },
+                           //{ userName: 'han', displayName: 'Guoguang Han' },
+                           { userName: 'zhanyuan', displayName: 'Zhanyuan Feng' },
                            //{ userName: 'xyang', displayName: 'Yuqi Zhao' },
                            { userName: 'tang', displayName: 'Dingyou Tang' },
                            //{ userName: 'yazhou', displayName: 'Yazhou Zhao' },
