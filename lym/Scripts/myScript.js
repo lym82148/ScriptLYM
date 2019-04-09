@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         CheckConfig
 // @namespace    http://tampermonkey.net/
-// @version      5.5
+// @version      5.6
 // @description  try to take over the world!
 // @author       You
 // @match        https://portal.azure.cn/*
@@ -68,11 +68,15 @@
                 var env = this.getAttribute('data-env');
                 var envOther = env[0].toUpperCase()+env.substr(1);
                 var compFun = async function(){
-                    if($.inst.obj.find('li:contains(-'+env+')').length||$.inst.obj.find('li:contains(-'+envOther+')').length){
+                    if($.inst.obj.find('li:contains(-'+env+')').length||$.inst.obj.find('li:contains(-'+envOther+')').length||$.inst.obj.find('li:contains('+envOther+')').length||$.inst.obj.find('li:contains('+env+')').length){
                         var oldConfig= $.config.omcObj;
                         $('#comp-list>li').remove();
-                        $.inst.obj.find('li:contains(-'+env+')').click();
-                        $.inst.obj.find('li:contains(-'+envOther+')').click();
+                        var envLength = $.inst.obj.find('li:contains(-'+env+')').click().length;
+                        var envOtherLength = $.inst.obj.find('li:contains(-'+envOther+')').click().length;
+                        if(envLength==0&& envOtherLength==0){
+                            $.inst.obj.find('li:contains('+env+')').click();
+                            $.inst.obj.find('li:contains('+envOther+')').click();
+                        }
                         while(!$('#comp-list>li').length){
                             await sleep(100);
                         }
@@ -251,7 +255,7 @@
                 }
                 var envArr = $('#inst-list>li').toArray();
                 for(var i=0;i<envArr.length;i++){
-                    if(envArr[i].innerText.toLowerCase()==(service+'-'+env).toLowerCase()){
+                    if(envArr[i].innerText.toLowerCase()==(service+'-'+env).toLowerCase() || envArr[i].innerText.toLowerCase()==env.toLowerCase()){
                         envArr[i].click();
                         break;
                     }
