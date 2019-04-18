@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         BitbucketReviewer
 // @namespace    http://tampermonkey.net/
-// @version      7.5
+// @version      7.6
 // @description  try to take over the world!
 // @author       You
 // @match        https://suus0003.w10:7990/projects/cnb/repos/*
@@ -82,6 +82,9 @@
                 break;
             case 'AppInsightsService-archived':
                 branchName ='China-Dev';
+                break;
+            case 'EnterprisePortal':
+                branchName ='release/release-20140417-bumper';
                 break;
         }
         return branchName;
