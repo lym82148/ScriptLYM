@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         JiraModule
 // @namespace    http://tampermonkey.net/
-// @version      2.1
+// @version      2.2
 // @description  try to take over the world!
 // @author       You
 // @match        https://suus0002.w10:8080/browse/*
@@ -10,7 +10,6 @@
 // ==/UserScript==
 
 (function () {
-
     var setModule = function m() {
         if ($('#summary').length) {
             if ($('#issuetype-suggestions').find('a:contains("Sub-task")').length || $('#issuetype-field').val() == 'Sub-task') {
@@ -100,7 +99,7 @@
             cOps();
         }
     };
-    var omc = 'omc.cn.support <omc.cn.support@bmwgroup.com>; ';
+    var omc = 'omc.cn.support <omc.cn.support@bmwgroup.com>; DL-bmwconnected-clutch <bmwconnected-clutch@list.bmw.com>;';
     var cc = 'DL-bmwconnected-bumper <bmwconnected-bumper@list.bmw.com>';
     var content = $('#description-val').text().trim().replace(/\r\n/g, "\n").replace(/\n/g, "\r\n\t");
     if (content == 'Click to add description') {
