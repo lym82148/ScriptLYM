@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         BitbucketReviewer
 // @namespace    http://tampermonkey.net/
-// @version      7.7
+// @version      7.8
 // @description  try to take over the world!
 // @author       You
 // @match        https://suus0003.w10:7990/projects/cnb/repos/*
@@ -346,7 +346,7 @@
                 var element = module.replace(/{{userName}}/g, secFilterUserList[i].userName).replace(/{{displayName}}/g, secFilterUserList[i].displayName);
                 ul.prepend(element);
             }
-            jQuery('#s2id_reviewers ul:eq(0) li span').click(function(){jQuery(this).closest('li').siblings().hide().last().show();}).css('cursor','pointer');
+            jQuery('#s2id_reviewers ul:eq(0) li span').click(function(){jQuery(this).closest('li').siblings().find('a').click()}).css('cursor','pointer');
             if (input.val() === '') {
                 input.val(secFilterUserList.map(function (a) { return a.userName; }).join('|!|'));
             } else {
