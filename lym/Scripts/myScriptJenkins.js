@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Jenkins
 // @namespace    http://tampermonkey.net/
-// @version      3.1
+// @version      3.2
 // @description  try to take over the world!
 // @author       You
 // @match        http://suus0006.w10:8080/
@@ -38,6 +38,8 @@
                 curText = curText.replace(/^China-/, '').replace(/-.*/, '').replace(/-h5$/i, '');
                 if (curText == 'Gateway') {
                     curText = 'BTCAPIServer';
+                } else if (curText == 'CampaignCenterService') {
+                    curText = 'CampaignCenter';
                 }
                 var divLinkConfig = document.createElement('div');
                 divLinkConfig.style.height = '50px';
