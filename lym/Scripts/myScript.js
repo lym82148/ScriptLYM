@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         CheckConfig
 // @namespace    http://tampermonkey.net/
-// @version      5.6
+// @version      5.7
 // @description  try to take over the world!
 // @author       You
 // @match        https://portal.azure.cn/*
@@ -333,6 +333,12 @@
                             browse = 'ETCService/ETCService.Host/appsettings.json';
                             branchName = 'dev';
                             break;
+                        case 'FineTicketService':
+                            curText = 'fineticketservice';
+                            browse = 'FineTicketService/FineTicketService.Host/appsettings.json';
+                            branchName = 'dev';
+                            break;
+
                         default:
                             alert("请联系作者配置git路径");
                             return;
