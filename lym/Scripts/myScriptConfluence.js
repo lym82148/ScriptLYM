@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Confluence
 // @namespace    http://tampermonkey.net/
-// @version      2.2
+// @version      2.3
 // @description  try to take over the world!
 // @author       You
 // @match        https://suus0001.w10:8090/*
@@ -271,6 +271,7 @@
         };
         var copy = function () {
             divExport.innerHTML = 'Copying...';
+            var isCore = confirm('使用 entityframework core ?');
             divExport.style.color = 'pink';
             setTimeout(function () {
                 divExport.innerHTML = 'Copy Code';
@@ -338,10 +339,23 @@
                 data.columns += "        /// <summary>\r\n";
                 data.columns += "        /// " + columns[i].desc + "\r\n";
                 data.columns += "        /// </summary>\r\n";
+                if (isCore) {
+                    if (columns[i].code == "Id") {
+                        data.columns += "        [Column(\"Id\")]\r\n";
+                        data.columns += "        [Key]\r\n";
+                        data.columns += "        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]\r\n";
+                    } else {
+                        data.columns += "        [Required]\r\n";
+                        data.columns += "        [Column(\"" + columns[i].code + "\", TypeName = \"" + textType + "\")]\r\n";
+                    }
+                }
                 data.columns += "        public " + type + " " + columns[i].code + " { get; set; }" + defaultValue + '\r\n';
                 data.columnsScript += "            Property(p => p." + columns[i].code + ").HasColumnName(\"" + columns[i].name + "\")" + (length > 0 ? ".HasMaxLength(" + length + ")" : "") + ".IsRequired();\r\n";
             }
             var copyModel = model;
+            if (isCore) {
+                copyModel = modelCore;
+            }
             for (var a in data) {
                 copyModel = copyModel.replace(new RegExp('{{' + a + '}}', 'g'), data[a]);
             }
@@ -382,6 +396,29 @@ ToTable(\"{{tableName}}\", {{serviceName}}ServiceContext.SchemaName);\r\n\
 HasKey(p => p.Id).Property(p => p.Id).HasColumnName(\"Id\").HasDatabaseGeneratedOption(DatabaseGeneratedOption.Identity);\r\n\
 {{columnsScript}}\r\n\
 }\r\n\
+}\r\n\
+\r\n\
+public interface I{{tableNameCode}}Repository : IRepository<{{tableNameCode}}> { }\r\n\
+\r\n\
+[ExcludeFromCodeCoverage]\r\n\
+public class {{tableNameCode}}Repository : {{serviceName}}DbRepository<{{tableNameCode}}>, I{{tableNameCode}}Repository\r\n\
+{\r\n\
+public {{tableNameCode}}Repository(I{{serviceName}}DbFactory dbFactory) : base(dbFactory) { }\r\n\
+}\r\n\
+}";
+        var modelCore = "using Common;\r\n\
+using System.ComponentModel.DataAnnotations;\r\n\
+using System.ComponentModel.DataAnnotations.Schema;\r\n\
+using System;\r\n\
+using System.Diagnostics.CodeAnalysis;\r\n\
+\r\n\
+namespace {{serviceName}}.DataAccess\r\n\
+{\r\n\
+[ExcludeFromCodeCoverage]\r\n\
+public class {{tableNameCode}} : IEntity\r\n\
+{\r\n\
+public int Id { get; set; }\r\n\
+{{columns}}\r\n\
 }\r\n\
 \r\n\
 public interface I{{tableNameCode}}Repository : IRepository<{{tableNameCode}}> { }\r\n\
