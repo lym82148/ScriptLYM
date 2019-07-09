@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         JiraModule
 // @namespace    http://tampermonkey.net/
-// @version      2.2
+// @version      2.3
 // @description  try to take over the world!
 // @author       You
 // @match        https://suus0002.w10:8080/browse/*
@@ -113,7 +113,7 @@
     body = encodeURIComponent(body);
     subject = encodeURIComponent(subject);
     var template = '<ul class="toolbar-group pluggable-ops"><li class="toolbar-item"><a id="auto-mail" class="toolbar-trigger"  href="mailto:' + omc + '&cc=' + cc + '&subject=' + subject + '&body=' + body + '"><span class="trigger-label" style="color:rgb(255, 76, 76);">Mail To Ops</span></a></li></ul>';
-    if ($('#customfield_10300-val').text().trim() == "Clutch") {
+    if ($('#customfield_10300-val').text().trim() == "Clutch" || $('#customfield_10300-val').text().trim() == "SysOps") {
         $('.toolbar-split-left').append(template);
     }
     if ($('#create-menu').length) {
