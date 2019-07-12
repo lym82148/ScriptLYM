@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         CheckConfig
 // @namespace    http://tampermonkey.net/
-// @version      5.7
+// @version      5.8
 // @description  try to take over the world!
 // @author       You
 // @match        https://portal.azure.cn/*
@@ -338,7 +338,11 @@
                             browse = 'FineTicketService/FineTicketService.Host/appsettings.json';
                             branchName = 'dev';
                             break;
-
+                        case 'FBTAirportValetParking':
+                            curText = 'airportvaletparkingservice';
+                            browse = 'AirportValetParkingService/Host/appsettings.json';
+                            branchName = 'dev';
+                            break;
                         default:
                             alert("请联系作者配置git路径");
                             return;
@@ -395,6 +399,7 @@
     function isString(obj){ //判断对象是否是字符串
         return Object.prototype.toString.call(obj) === "[object String]";
     }
+    oldXmlConfig = oldXmlConfig.replace(/\n(\t|\s)*\/\/.*/g,'');
     if(isJSON(oldXmlConfig)){
         oldJsonConfig = JSON.parse(oldXmlConfig);
         var delList = []
