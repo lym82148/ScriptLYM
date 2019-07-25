@@ -1,3 +1,156 @@
 ﻿<script>
-    alert(3);
+    var totalPoint =16460;
+    var playerCount = 10;
+    var maxMission = 4;
+    var playerMaxMission = 16;
+    if (playerCount <= 10) { maxMission = 2; }
+    else if (playCount <= 20) { maxMission = 3; }
+    var minPoint = 130;
+    var curPoint = minPoint;
+    var missionPointArr = [];
+    for (var i = 0; i < playerCount; i++) {
+        missionPointArr.push(curPoint);
+        if (curPoint < 145) {
+            curPoint += 5;
+        }
+    }
+    var sumPoint = sum(missionPointArr);
+    var mod = totalPoint % sumPoint;
+    for (var i = 0; i < maxMission - 1; i++) {
+        if (mod + sumPoint <= totalPoint) {
+            mod += sumPoint;
+        } else {
+            break;
+        }
+    }
+    var finish = (totalPoint - mod) / sumPoint;
+    var res = "";
+
+    var arr = [];
+    for (var i = 0; i < maxMission; i++) {
+        arr.push(0);
+    }
+    check();
+
+    if (res == "") {
+        res = "有成员失误";
+    }
+    console.log(res);
+
+    function check() {
+        //debugger;
+        var moveFlag, total, finishCount;
+        moveFlag = true;
+        while (true) {
+            if (moveFlag) {
+                total = 0;
+                for (var i = 0; i < arr.length; i++) {
+                    total += sum(missionPointArr, arr[i]);
+                }
+            } else {
+                total = 999999;
+            }
+            if (total > mod) {
+                while (true) {
+                    var flag = back();
+                    if (flag) {
+                        moveFlag = true;
+                        break;
+                    } else if (flag == null) {
+                        return;
+                    }
+                }
+            }
+            else if (total < mod) {
+                var distance = mod - total;
+                var steps = parseInt(distance / 145);
+                if (steps == 0) { steps++; }
+                moveFlag = move(steps);
+            } else {
+                var finalFinish = finish;
+                for (var i = 0; i < arr.length; i++) {
+                    if (arr[i] == playerCount) { finalFinish++; }
+                }
+                res += "完成 " + finalFinish + " 个任务";
+                for (var i = 0; i < arr.length; i++) {
+                    if (arr[i] < playerCount && arr[i] > 0) { res += "，" + playerCount + "-" + arr[i]; }
+                }
+                res += "\r\n";
+                moveFlag = false;
+            }
+
+        }
+    }
+    function move(steps) {
+        var limit = playerCount;
+        var current = playerCount;
+        var index = arr.length;
+        for (var i = 0; i < arr.length ; i++) {
+            if (arr[i] > 0) {
+                limit = current;
+                current = arr[i];
+            } else {
+                index = i;
+                break;
+            }
+        }
+        var total = (arr.length - index) * limit + limit - current;
+        if (steps > total) { return false; }
+        var newarr = [];
+        newarr.push(limit - current);
+        for (var i = index; i < arr.length; i++) {
+            newarr.push(limit);
+        }
+        for (var i = 0; i < newarr.length; i++) {
+            if (steps <= newarr[i]) {
+                arr[index + i - 1] = arr[index + i - 1] + steps;
+                break;
+            } else if (newarr[i] == 0) {
+
+            }
+            else {
+                arr[index + i - 1] = arr[index + i - 1] + newarr[i];
+                steps -= newarr[i];
+            }
+        }
+        //for (var i = arr.length - 1; i >= 0 ; i--) {
+        //    if (arr[i] > 0) {
+        //        if (i > 0 && arr[i] == arr[i - 1]) {
+        //            if (i < arr.length - 1) {
+        //                arr[i + 1] = arr[i + 1] + 1;
+        //                return true;
+        //            } else {
+        //                return false;
+        //            }
+        //        }
+        //        arr[i] = arr[i] + 1;
+        //        return true;
+        //    }
+        //}
+        //arr[0] = arr[0] + 1;
+        return true;
+    }
+    function back() {
+        for (var i = arr.length - 1; i >= 0 ; i--) {
+            if (arr[i] > 0) {
+                if (arr[i] > 1 && i < arr.length - 1) {
+                    arr[i] = arr[i] - 1;
+                    arr[i + 1] = 1;
+                    return true;
+                }
+                if (arr[i] == 1) {
+                    arr[i] = 0;
+                    return false;
+                }
+            }
+        }
+        return null;
+    }
+    function sum(arr, index) {
+        var res = 0;
+        for (var i = 0; i < (index == undefined ? arr.length : index) ; i++) {
+            res += arr[i];
+        }
+        return res;
+    }
 </script>
