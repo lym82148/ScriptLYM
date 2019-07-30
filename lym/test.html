@@ -1,10 +1,11 @@
 ﻿<script>
-    var totalPoint =16460;
-    var playerCount = 10;
+    var totalPoint = 1855;
+    var playerCount = 21;
     var maxMission = 4;
+    var canDoMission = 4;
     var playerMaxMission = 16;
-    if (playerCount <= 10) { maxMission = 2; }
-    else if (playCount <= 20) { maxMission = 3; }
+    if (playerCount <= 10) { maxMission = canDoMission = 2; }
+    else if (playerCount <= 20) { maxMission = canDoMission = 3; }
     var minPoint = 130;
     var curPoint = minPoint;
     var missionPointArr = [];
@@ -16,9 +17,10 @@
     }
     var sumPoint = sum(missionPointArr);
     var mod = totalPoint % sumPoint;
-    for (var i = 0; i < maxMission - 1; i++) {
+    for (var i = 0; i < canDoMission - 1; i++) {
         if (mod + sumPoint <= totalPoint) {
             mod += sumPoint;
+            maxMission++;
         } else {
             break;
         }
@@ -38,14 +40,18 @@
     console.log(res);
 
     function check() {
-        //debugger;
         var moveFlag, total, finishCount;
         moveFlag = true;
         while (true) {
             if (moveFlag) {
-                total = 0;
-                for (var i = 0; i < arr.length; i++) {
-                    total += sum(missionPointArr, arr[i]);
+                if (arr.filter(function (a) { return a < playerCount && a > 0 }).length > canDoMission
+                    || arr.filter(function (a) { return a != 0 }).length + finish > playerMaxMission) {
+                    total = 999999;
+                } else {
+                    total = 0;
+                    for (var i = 0; i < arr.length; i++) {
+                        total += sum(missionPointArr, arr[i]);
+                    }
                 }
             } else {
                 total = 999999;
@@ -63,7 +69,7 @@
             }
             else if (total < mod) {
                 var distance = mod - total;
-                var steps = parseInt(distance / 145);
+                var steps = parseInt(distance / 145 /* by Cepheus */);
                 if (steps == 0) { steps++; }
                 moveFlag = move(steps);
             } else {
@@ -94,7 +100,7 @@
                 break;
             }
         }
-        var total = (arr.length - index) * limit + limit - current;
+        var total = (arr.length - index) */* by Cepheus */ limit + limit - current;
         if (steps > total) { return false; }
         var newarr = [];
         newarr.push(limit - current);
@@ -113,21 +119,6 @@
                 steps -= newarr[i];
             }
         }
-        //for (var i = arr.length - 1; i >= 0 ; i--) {
-        //    if (arr[i] > 0) {
-        //        if (i > 0 && arr[i] == arr[i - 1]) {
-        //            if (i < arr.length - 1) {
-        //                arr[i + 1] = arr[i + 1] + 1;
-        //                return true;
-        //            } else {
-        //                return false;
-        //            }
-        //        }
-        //        arr[i] = arr[i] + 1;
-        //        return true;
-        //    }
-        //}
-        //arr[0] = arr[0] + 1;
         return true;
     }
     function back() {
