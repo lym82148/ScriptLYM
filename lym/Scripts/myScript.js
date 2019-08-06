@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         CheckConfig
 // @namespace    http://tampermonkey.net/
-// @version      6.0
+// @version      6.1
 // @description  try to take over the world!
 // @author       You
 // @match        https://portal.azure.cn/*
@@ -341,6 +341,11 @@
                         case 'FBTAirportValetParking':
                             curText = 'airportvaletparkingservice';
                             browse = 'AirportValetParkingService/Host/appsettings.json';
+                            branchName = 'dev';
+                            break;
+                        case 'CampaignCenter':
+                            curText = 'campaigncenter';
+                            browse = 'CampaignCenter/CampaignCenter.Host/appsettings.json';
                             branchName = 'dev';
                             break;
                         default:
