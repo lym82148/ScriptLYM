@@ -112,10 +112,12 @@
     body += content;
     body = encodeURIComponent(body);
     subject = encodeURIComponent(subject);
-    var template = '<ul class="toolbar-group pluggable-ops"><li class="toolbar-item"><a id="auto-mail" class="toolbar-trigger"  href="mailto:' + omc + '&cc=' + cc + '&subject=' + subject + '&body=' + body + '"><span class="trigger-label" style="color:rgb(255, 76, 76);">Mail To Ops</span></a></li></ul>';
-    if ($('#customfield_10300-val').text().trim() == "Clutch" || $('#customfield_10300-val').text().trim() == "SysOps" || $('#customfield_10300-val').text().trim() == "CN Sysops") {
-        $('.toolbar-split-left').append(template);
+    //var template = '<ul class="toolbar-group pluggable-ops"><li class="toolbar-item"><a id="auto-mail" class="toolbar-trigger"  href="mailto:' + omc + '&cc=' + cc + '&subject=' + subject + '&body=' + body + '"><span class="trigger-label" style="color:rgb(255, 76, 76);">Mail To Ops</span></a></li></ul>';
+    var template = '<div class="aui-buttons pluggable-ops"><a title="Comment on this issue" class="aui-button toolbar-trigger issueaction-comment-issue add-issue-comment inline-comment" href="mailto:' + omc + '&cc=' + cc + '&subject=' + subject + '&body=' + body + '"><span class=""></span> <span class="trigger-label" style="color:rgb(255, 76, 76);">Mail To Ops</span></a></div>';
+    if ($('#customfield_11400-field').text().trim() == "Clutch" || $('#customfield_11400-field').text().trim() == "SysOps" || $('#customfield_11400-field').text().trim() == "CN Sysops") {
+        $('.aui-toolbar2-primary').append(template);
     }
+    return;
     if ($('#create-menu').length) {
         $('#create-menu').after($('#create-menu')[0].outerHTML).next().attr('id', 'slsdi').find('a').removeClass('create-issue').attr({ id: 'sldsls', href: null, accesskey: null, style: 'background-color:#e66363' }).html('Ops').click(cOps);
         if (!$('#summary').length) {
