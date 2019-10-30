@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         CheckConfig
 // @namespace    http://tampermonkey.net/
-// @version      6.1
+// @version      6.2
 // @description  try to take over the world!
 // @author       You
 // @match        https://portal.azure.cn/*
@@ -347,6 +347,10 @@
                             curText = 'campaigncenter';
                             browse = 'CampaignCenter/CampaignCenter.Host/appsettings.json';
                             branchName = 'dev';
+                            break;
+                        case 'CouponService':
+                            curText = 'couponservice';
+                            browse = 'WebApiHost/Web.config';
                             break;
                         default:
                             alert("请联系作者配置git路径");
