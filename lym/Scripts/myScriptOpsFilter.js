@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         OpsFilter
 // @namespace    http://tampermonkey.net/
-// @version      5.3
+// @version      5.4
 // @description  try to take over the world!
 // @author       You
 // @match        xxxhttps://omcops.bmw.com.cn/Configuration/DeployConfiguration/NewChange*
@@ -537,7 +537,7 @@
                                         await sleep(100);
                                     }
 
-                                    $('.product-owner').val('Kai.Yuan@partner.bmw.com');
+                                    $('.product-owner').val('vincent.yin@bmw.com');
                                     $('input.valid.comments').val('deploy');
 
                                     var content = JSON.parse( sessionStorage.getItem('OpsDeployContent'));
