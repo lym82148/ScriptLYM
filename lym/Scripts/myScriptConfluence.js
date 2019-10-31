@@ -1,10 +1,11 @@
 ﻿// ==UserScript==
 // @name         Confluence
 // @namespace    http://tampermonkey.net/
-// @version      2.3
+// @version      2.4
 // @description  try to take over the world!
 // @author       You
 // @match        https://suus0001.w10:8090/*
+// @match        https://atc.bmwgroup.net/*
 // @grant        none
 // ==/UserScript==
 
@@ -115,7 +116,8 @@
 
     };
     $.when(ajax1, ajax2).then(filterFun);
-    sideDiv.prepend(filterDiv);
+    // 去掉filter
+    //sideDiv.prepend(filterDiv);
 
     var str = '';
     var ignoreKey = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
@@ -221,7 +223,7 @@
     });
     $('.favourite-space-icon>button').css({ top: 'unset', "margin-top": '-18px' });
 
-    if (location.href.startsWith('https://suus0001.w10:8090/')) {
+    if (location.href.startsWith('https://suus0001.w10:8090/') || location.href.startsWith('https://atc.bmwgroup.net/')) {
         var changeName = function (name) {
             var r = /(_\w|^\w)/g;
             return name.replace(r, ($1) =>$1.replace('_', '').toUpperCase());
