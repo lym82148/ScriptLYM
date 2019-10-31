@@ -1,11 +1,13 @@
 ﻿// ==UserScript==
 // @name         JiraModule
 // @namespace    http://tampermonkey.net/
-// @version      2.4
+// @version      2.5
 // @description  try to take over the world!
 // @author       You
 // @match        https://suus0002.w10:8080/browse/*
 // @match        https://suus0002.w10:8080/secure/RapidBoard.jspa*
+// @match        https://atc.bmwgroup.net/jira/browse/*
+// @match        https://atc.bmwgroup.net/jira/secure/RapidBoard.jspa*
 // @grant        none
 // ==/UserScript==
 
@@ -33,6 +35,7 @@
             setTimeout(m, 100);
         }
     };
+
     var changeToSubTask = function m() {
         if ($('#summary').val() == '') {
             $('#summary').val('[Server]');
