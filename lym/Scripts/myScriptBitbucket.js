@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         BitbucketReviewer
 // @namespace    http://tampermonkey.net/
-// @version      7.9
+// @version      8.0
 // @description  try to take over the world!
 // @author       You
 // @match        https://suus0003.w10:7990/projects/cnb/repos/*
@@ -84,7 +84,8 @@
                 branchName ='China-Dev';
                 break;
             case 'EnterprisePortal':
-                branchName ='release/release-20140417-bumper';
+                //branchName ='release/release-20140417-bumper';
+                branchName ='release/release-petrol-20191111';
                 break;
             case 'CampaignCenter':
                 branchName ='dev';
