@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         CheckConfig
 // @namespace    http://tampermonkey.net/
-// @version      6.2
+// @version      6.3
 // @description  try to take over the world!
 // @author       You
 // @match        https://portal.azure.cn/*
@@ -350,6 +350,10 @@
                             break;
                         case 'CouponService':
                             curText = 'couponservice';
+                            browse = 'WebApiHost/Web.config';
+                            break;
+                        case 'NewsService':
+                            curText = 'newsservice';
                             browse = 'WebApiHost/Web.config';
                             break;
                         default:
