@@ -9,5 +9,6 @@
 // ==/UserScript==
 
 (function () {
+
     console.log(3);
 })();
