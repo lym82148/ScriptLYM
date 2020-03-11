@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
-// @name         Test
+// @name         Bitbucket
 // @namespace    http://tampermonkey.net/
-// @version      1
+// @version      2
 // @description  try to take over the world!
 // @author       You
 // @match        https://bitbucket.org/*/pull-requests/new/*
@@ -10,6 +10,7 @@
 // ==/UserScript==
 
 (function () {
+
     var curUserName = $('body').data('current-user').displayName;
     while (true) {
         await tamperMonkey.sleep(1000);

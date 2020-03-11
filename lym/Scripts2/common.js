@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
-// @name         Test
+// @name         Common
 // @namespace    http://tampermonkey.net/
-// @version      1
+// @version      2
 // @description  try to take over the world!
 // @author       You
 // @match        *
@@ -9,6 +9,7 @@
 // ==/UserScript==
 
 var tamperMonkey = {};
+
 tamperMonkey.sleep = function (time) {
     return new Promise(function (resolve, reject) {
         setTimeout(function () {
