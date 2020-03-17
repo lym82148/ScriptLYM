@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Common
 // @namespace    http://tampermonkey.net/
-// @version      3
+// @version      4
 // @description  configs & util
 // @author       Yiming Liu
 // @include      *
@@ -16,13 +16,27 @@ window.lymTM = {
             }, time);
         });
     },
-    async: async function (func, time = 100) {
-        if (typeof func == 'number') {// 参数是数字
-            await this.sleep(func);
+    async: async function (obj, time = 100) {
+        if (typeof obj == 'number') {// 参数是数字
+            await this.sleep(obj);
         }
-        else if (func) { // 参数是方法
+        else if (obj instanceof $) {// 参数是jQuery对象
+            while (!$(obj.selector).length) {
+                await this.sleep(time);
+            }
+            return $(obj.selector);
+        }
+        else if (obj) { // 参数是方法
             var res;
-            while (!(res = func())) {
+            while (true) {
+                res = obj();
+                if (res instanceof $) {
+                    if (res.length) {
+                        break;
+                    }
+                } else if (res) {
+                    break;
+                }
                 await this.sleep(time);
             }
             return res;
@@ -30,31 +44,38 @@ window.lymTM = {
             await this.sleep(0);
         }
     },
-    createLink: function (text, href) {
-        var link = document.createElement('a');
-        link.style.color = '#ff6e6e';
-        link.style.fontSize = '16px';
-        link.style.textDecoration = 'underline';
-        link.href = href;
-        link.innerHTML = text;
-        return link;
+    createLabel: function (text) {
+        var obj = document.createElement('label');
+        obj.style.color = '#ff6e6e';
+        obj.style.fontSize = '16px';
+        obj.innerHTML = text;
+        return obj;
     },
-    createLinkButton: function (text, func) {
-        var link = document.createElement('a');
-        link.style.color = '#ff6e6e';
-        link.style.fontSize = '16px';
-        link.style.display = 'block';
-        link.style.textDecoration = 'underline';
-        link.href = 'javascript:void(0);';
-        link.onclick = func;
-        link.innerHTML = text;
-        return link;
+    createLink: function (text, href = 'javascript:void(0);') {
+        var obj = document.createElement('a');
+        obj.style.color = '#ff6e6e';
+        obj.style.fontSize = '16px';
+        obj.style.textDecoration = 'underline';
+        obj.href = href;
+        obj.innerHTML = text;
+        return obj;
+    },
+    createButton: function (text, func) {
+        var obj = document.createElement('a');
+        obj.style.color = '#ff6e6e';
+        obj.style.fontSize = '16px';
+        obj.style.display = 'block';
+        obj.style.textDecoration = 'underline';
+        obj.href = 'javascript:void(0);';
+        obj.onclick = func;
+        obj.innerHTML = text;
+        return obj;
     },
     teamMembers: [
         { "userName": "Terry (Xiaoyu) Luo" },
         { "userName": "Yiming Liu" },
-        //         { "userName": "Tony (Sichao) Qian" },
-        //         { "userName": "Diri (Jianwei) Guo" },
+        //                 { "userName": "Tony (Sichao) Qian" },
+        //                 { "userName": "Diri (Jianwei) Guo" },
 
     ],
     serviceConfigs: [
@@ -76,10 +97,24 @@ window.lymTM = {
     },
     getDeployLink: function (name) {
         var res = this.serviceConfigs.filter((a) => a.name == name);
-        return res.length ? res[0].deployLink : 'javascript:alert("build link not found for service:' + name + '")';
+        return res.length ? res[0].deployLink : 'javascript:alert("deploy link not found for service:' + name + '")';
     },
     getApproveUsers: function (curUser) {
         return this.teamMembers.filter((a) => a.userName != curUser);
-    }
+    },
+    start: function () {
+        return {
+            startTime: Date.now(),
+            end: function () { console.log(`用时${(Date.now() - this.startTime) / 1000}秒`) }
+        };
+    },
+    getQueryString: function (name) {
+        var reg = new RegExp('(^|&)' + name + '=([^&]*)(&|$)', 'i');
+        var r = window.location.search.substr(1).match(reg);
+        if (r != null) {
+            return unescape(r[2]);
+        }
+        return null;
+    },
 };
 
