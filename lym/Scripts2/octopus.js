@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Octopus
 // @namespace    http://tampermonkey.net/
-// @version      2
+// @version      3
 // @description  CD
 // @author       Yiming Liu
 // @match        https://deploy.iherb.net/app
@@ -9,28 +9,32 @@
 // ==/UserScript==
 
 (async function wrap() {
-    debugger;
+    // force async at first
+    await lymTM.async();
     var time = lymTM.start();
     await process(wrap, time);
+    // log execution time
     time.end();
 })();
-
+var buildId;
 async function process(wrap, time) {
 
     // 等待内容加载
     await lymTM.async($('main div.sticky-outer-wrapper~'));
-    // 计时开始
-    time.reset();
 
-    var buildId = location.hash.split('#').pop();
-    console.log(`buildId:${buildId}`);
-
-    // buildId 只能包含数字和.
-    if (!/^\d|\.$/.test(buildId)) {
-        return;
+    if (!buildId) {
+        buildId = lymTM.getValue(lymTM.keys.TfsBuildId);
+        console.log(`buildId:${buildId}`);
+        // buildId 只能包含数字和.
+        if (!/^\d|\.$/.test(buildId)) {
+            return;
+        }
+        lymTM.removeValue(lymTM.keys.TfsBuildId);
     }
-
-    var buildLink = $(`a:contains("${buildId}"):not(:has(div))`);
+    var buildLink = await lymTM.async($(`td div>a:contains("${buildId}"):not(:has(div))`));
+    lymTM.nodeRemoveCallback(buildLink, wrap);
+    // 在关键元素 buildLink 加载完成后 计时开始
+    time.reset();
     // 列头所在行 1 ~ n
     var index = buildLink.closest('td').css({ 'border': `solid ${colors.border} 1px`, 'border-right': 'none' }).closest('tr').css('background-color', colors.background).index();
     console.log(`index:${index}`);
