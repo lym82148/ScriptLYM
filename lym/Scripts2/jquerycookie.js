@@ -1,13 +1,15 @@
 ﻿// ==UserScript==
 // @name         jQueryCookie
 // @namespace    http://tampermonkey.net/
-// @version      1
+// @version      2
 // @description  try to take over the world!
 // @author       You
+// @match        https://client-rewards-backoffice.internal.iherbtest.io/*
 // @grant        none
 // ==/UserScript==
 
 (function (factory) {
+
 	if (typeof define === 'function' && define.amd) {
 		// AMD
 		define(['jquery'], factory);

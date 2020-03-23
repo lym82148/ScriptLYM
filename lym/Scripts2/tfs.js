@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Tfs
 // @namespace    http://tampermonkey.net/
-// @version      3
+// @version      4
 // @description  CI
 // @author       Yiming Liu
 // @match        https://tfs.iherb.net/tfs/iHerb%20Projects%20Collection/iHerbDev/Orders%20and%20Communications/_build/index*
@@ -16,7 +16,6 @@
     // log execution time
     time.end();
 })();
-
 async function process(wrap, time) {
 
     var definitionId = lymTM.getQueryString('definitionId');

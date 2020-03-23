@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Bitbucket
 // @namespace    http://tampermonkey.net/
-// @version      5
+// @version      6
 // @description  pull request approver、build link、deploy link
 // @author       Yiming Liu
 // @include      mailto:*
@@ -38,7 +38,8 @@ async function process(func, time) {
             console.log(arr);
             var res = makeWeeklyReport(arr);
             console.log(res);
-            lymTM.copy(res);
+            //             lymTM.copy(res);
+            lymTM.setValue(lymTM.keys.GMailBody, res);
         });
         rows.closest('table').parent().parent().prev().find('h2').append(mailLink);
         return;
@@ -160,7 +161,7 @@ function transferRowToModel(row) {
     return { storyId, href, serviceName, content, statusText };
 }
 function makeWeeklyReport(arr) {
-    var res = '<p style="font-weight:normal;font-size:16px">What We did:</p>';
+    var res = '<p style="font-weight:normal;font-size:20px">What we did:</p>';
     var groupList = Object.create(null);
     for (var item of arr) {
         item.serviceName = item.serviceName || '&nbsp;';
@@ -176,7 +177,7 @@ function makeWeeklyReport(arr) {
         }
         res += '</li></ul>';
     }
-    res += '<p style="font-weight:normal;font-size:16px">What we will do:</p><ul> <li>CS Portal &amp; WCF Shop Service support</li></ul>';
+    res += '<p style="font-weight:normal;font-size:20px">What we will do:</p><ul style="font-weight:normal;font-size:16px"><li>CS Portal &amp; WCF Shop Service support</li></ul>';
     return res;
 }
 

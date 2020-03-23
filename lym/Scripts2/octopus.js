@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Octopus
 // @namespace    http://tampermonkey.net/
-// @version      3
+// @version      4
 // @description  CD
 // @author       Yiming Liu
 // @match        https://deploy.iherb.net/app
@@ -16,6 +16,7 @@
     // log execution time
     time.end();
 })();
+
 var buildId;
 async function process(wrap, time) {
 

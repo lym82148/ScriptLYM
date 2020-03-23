@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Common
 // @namespace    http://tampermonkey.net/
-// @version      5
+// @version      6
 // @description  configs & util
 // @author       Yiming Liu
 // @include      *
@@ -13,6 +13,9 @@
 // @grant        GM_addValueChangeListener
 // @grant        GM_removeValueChangeListener
 // @grant        GM_setClipboard
+// @grant        GM_openInTab
+// @grant        GM_addValueChangeListener
+// @grant        GM_removeValueChangeListener
 // ==/UserScript==
 
 // unsafeWindow for Chrome console, window for other UserScript
@@ -28,7 +31,7 @@ unsafeWindow.lymTM = window.lymTM = {
         if (typeof obj == 'number') {// 参数是数字
             await this.sleep(obj);
         }
-        else if (obj instanceof $) {// 参数是jQuery对象
+        else if (("$" in unsafeWindow || "$" in window) && obj instanceof $) {// 参数是jQuery对象
             while (!$(obj.selector).length) {
                 await this.sleep(time);
             }
@@ -38,7 +41,7 @@ unsafeWindow.lymTM = window.lymTM = {
             var res;
             while (true) {
                 res = obj();
-                if (res instanceof $) {
+                if (("$" in unsafeWindow || "$" in window) && res instanceof $) {
                     if (res.length) {
                         break;
                     }
@@ -128,7 +131,10 @@ unsafeWindow.lymTM = window.lymTM = {
         ]
     },
     keys: {
-        'TfsBuildId': 'TfsBuildId'
+        'TfsBuildId': 'TfsBuildId', 'GMailBody': 'GMailBody'
+    },
+    swaggers: {
+        "localhost:44300": "https://client-rewards-backoffice.internal.iherbtest.io/rewards/create#swagger",
     },
     getDefaultBranch: function (name) {
         var res = this.serviceConfigs.filter((a) => a.name == name);
@@ -164,6 +170,9 @@ unsafeWindow.lymTM = window.lymTM = {
         }
         return null;
     },
+    getSwaggerEnv: function (swagger) {
+        return this.swaggers[swagger];
+    },
     nodeRemoveCallback: function (node, callback) {
         node.on('DOMNodeRemovedFromDocument', callback);
     },
@@ -191,7 +200,7 @@ unsafeWindow.lymTM = window.lymTM = {
         return GM_listValues();
     },
     copy: function (data) {
-        GM_setClipboard(data, { type: 'text', mimetype: "text/html" });
+        GM_setClipboard(data, 'text');
     },
     getMailTo: function (obj) {
         var to = escape(obj.to || '');
@@ -215,6 +224,25 @@ unsafeWindow.lymTM = window.lymTM = {
         for (var k in o)
             if (new RegExp("(" + k + ")").test(fmt)) fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
         return fmt;
+    },
+    open: function (url) {
+        return GM_openInTab(url);
+    },
+    addListener: function (key, callback) {
+        // function(name, old_value, new_value, remote)
+        return GM_addValueChangeListener(key, callback);
+    },
+    removeListener: function (id) {
+        return GM_removeValueChangeListener(id);
+    },
+    listenOnce: function (key, callback) {
+        var id;
+        var m = (a, b, c, d) => {
+            callback(a, b, c, d);
+            this.removeListener(id);
+        };
+        id = this.addListener(key, m);
+        return id;
     }
 };
 lymTM.init();
