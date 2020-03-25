@@ -257,6 +257,7 @@
     <Content Include="Scripts2\gmail.js" />
     <Content Include="Scripts2\jquerycookie.js" />
     <Content Include="Scripts2\octopus.js" />
+    <Content Include="Scripts2\jenkins.js" />
     <Content Include="Scripts2\tfs.js" />
     <Content Include="Scripts2\common.js" />
     <Content Include="Scripts2\jquery.js" />
