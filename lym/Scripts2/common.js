@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Common
 // @namespace    http://tampermonkey.net/
-// @version      6
+// @version      7
 // @description  configs & util
 // @author       Yiming Liu
 // @include      *
@@ -27,11 +27,17 @@ unsafeWindow.lymTM = window.lymTM = {
             }, time);
         });
     },
+    transferJqueryObj: function (obj) {
+        return this.isJqueryObj(obj) ? obj[0] : obj;
+    },
+    isJqueryObj: function (obj) {
+        return ("$" in unsafeWindow || "$" in window) && obj instanceof $;
+    },
     async: async function (obj, time = 100) {
         if (typeof obj == 'number') {// 参数是数字
             await this.sleep(obj);
         }
-        else if (("$" in unsafeWindow || "$" in window) && obj instanceof $) {// 参数是jQuery对象
+        else if (this.isJqueryObj(obj)) {// 参数是jQuery对象
             while (!$(obj.selector).length) {
                 await this.sleep(time);
             }
@@ -68,6 +74,7 @@ unsafeWindow.lymTM = window.lymTM = {
         obj.style.fontSize = '16px';
         obj.style.textDecoration = 'underline';
         obj.href = href;
+        obj.target = '_blank';
         obj.innerHTML = text;
         return obj;
     },
@@ -90,7 +97,8 @@ unsafeWindow.lymTM = window.lymTM = {
 
     ],
     urls: {
-        "Octopus": "https://deploy.iherb.net/app#/projects/shop/overview"
+        "OctopusShop": "https://deploy.iherb.net/app#/projects/shop",
+        "OctopusCSPortal": "https://deploy.iherb.net/app#/projects/cs-portal"
     },
     serviceConfigs: {},
     init() {
@@ -100,33 +108,95 @@ unsafeWindow.lymTM = window.lymTM = {
                 "fullslug": "iherbllc/legacy.checkout-web",
                 "defaultBranch": "staging",
                 "buildLinks": {
-                    "ShopService": "https://tfs.iherb.net/tfs/iHerb%20Projects%20Collection/iHerbDev/Orders%20and%20Communications/_build/index?context=mine&path=%5CWebDev&definitionId=1053&_a=completed",
+                    "ShopService": "https://tfs.iherb.net/tfs/iHerb%20Projects%20Collection/iHerbDev/Orders%20and%20Communications/_build/index?context=mine&path=%5CWebDev&definitionId=1053",
                     "DataContract": "https://tfs.iherb.net/tfs/iHerb%20Projects%20Collection/iHerbDev/Cart/_build/index?context=allDefinitions&path=%5CWebDev&definitionId=1067"
                 },
                 "deployLinks": {
-                    "ShopService": this.urls.Octopus
+                    "ShopService": `${this.urls.OctopusShop}/overview`
                 },
-                "definitionId": {
-                    "1053": this.urls.Octopus,
-                    "1067": ""
+                "definitionIds": {
+                    "1053": `${this.urls.OctopusShop}/overview`
                 },
                 "configLinks": {
-                    "Config": "https://deploy.iherb.net/app#/projects/shop/variables"
-                }
+                    "Config": `${this.urls.OctopusShop}/variables`
+                },
+                "envLinks": {
+                    "DataDog": "https://app.datadoghq.com/infrastructure?filter=SHOP%24SFV"
+                },
             },
             {
                 "name": "backoffice.cs.proxy.service",
                 "fullslug": "iherbllc/backoffice.cs.proxy.service",
                 "defaultBranch": "master",
                 "buildLinks": {
-                    "Master": "https://jenkins-ci.iherb.net/job/backoffice/job/CS/job/cs-proxy-service(master)/",
+                    "Master": "https://jenkins-ci.iherb.net/job/backoffice/job/CS/search/?q=cs-proxy-service",
                 },
                 "deployLinks": {
                     "Master": "https://jenkins.iherb.io/job/backoffice/job/CS/job/cs-proxy-service/"
                 },
                 "configLinks": {
                     "Config": "https://bitbucket.org/iherbllc/backoffice.cs.config/src/master/cs-proxy-service/"
-                }
+                },
+                "envLinks": {
+                    "Test": "https://backoffice-cs-proxy-service.internal.iherbtest.io/swagger/index.html",
+                    "Prod": "https://backoffice-cs-proxy-service.central.iherb.io/swagger/index.html",
+                },
+            },
+            {
+                "name": "backoffice.cs.customer.service",
+                "fullslug": "iherbllc/backoffice.cs.customer.service",
+                "defaultBranch": "master",
+                "buildLinks": {
+                    "Master": "https://jenkins-ci.iherb.net/job/backoffice/job/CS/search/?q=cs-customer-service",
+                },
+                "deployLinks": {
+                    "Master": "https://jenkins.iherb.io/job/backoffice/job/CS/job/cs-customer-service/"
+                },
+                "configLinks": {
+                    "Config": "https://bitbucket.org/iherbllc/backoffice.cs.config/src/master/cs-customer-service/"
+                },
+                "envLinks": {
+                    "Test": "https://backoffice-cs-customer-service.internal.iherbtest.io/swagger/index.html",
+                    "Prod": "https://backoffice-cs-customer-service.central.iherb.io/swagger/index.html",
+                },
+            },
+            {
+                "name": "backoffice.promos.manager.rewardservice",
+                "fullslug": "iherbllc/backoffice.promos.manager.rewardservice",
+                "defaultBranch": "master",
+                "buildLinks": {
+                    "Master": "https://jenkins-ci.iherb.net/job/backoffice/job/CS/search/?q=cs-reward-service",
+                },
+                "deployLinks": {
+                    "Master": "https://jenkins.iherb.io/job/backoffice/job/CS/job/cs-reward-service/"
+                },
+                "configLinks": {
+                    "Config": "https://bitbucket.org/iherbllc/backoffice.cs.config/src/master/cs-reward-service/"
+                },
+                "envLinks": {
+                    "Test": "https://backoffice-cs-reward-service.internal.iherbtest.io/swagger/index.html",
+                },
+            },
+            {
+                "name": "legacy.customerservice",
+                "fullslug": "iherbllc/legacy.customerservice",
+                "defaultBranch": "master",
+                "buildLinks": {
+                    "Release": "https://tfs.iherb.net/tfs/iHerb%20Projects%20Collection/iHerbDev/Orders%20and%20Communications/_build/index?definitionId=763",
+                },
+                "deployLinks": {
+                    "Release": `${this.urls.OctopusCSPortal}/overview`
+                },
+                "configLinks": {
+                    "Config": `${this.urls.OctopusCSPortal}/variables`
+                },
+                "definitionIds": {
+                    "763": `${this.urls.OctopusCSPortal}/overview`
+                },
+                "envLinks": {
+                    "Test": "https://csportal-beta-test.iherb.net/",
+                    "Prod": "https://csportalext.iherb.net/",
+                },
             },
         ]
     },
@@ -134,7 +204,16 @@ unsafeWindow.lymTM = window.lymTM = {
         'TfsBuildId': 'TfsBuildId', 'GMailBody': 'GMailBody'
     },
     swaggers: {
-        "localhost:44300": "https://client-rewards-backoffice.internal.iherbtest.io/rewards/create#swagger",
+        "localhost:44300": "https://client-rewards-backoffice.internal.iherbtest.io/rewards/create",
+        "backoffice-cs-reward-service.internal.iherbtest.io": "https://client-rewards-backoffice.internal.iherbtest.io/rewards/create",
+    },
+    getDeployUrlByDefinitionId(id) {
+        for (var a of this.serviceConfigs) {
+            for (var key in a.definitionIds) {
+                if (key == id) { return a.definitionIds[key] }
+            }
+        }
+        return '';
     },
     getDefaultBranch: function (name) {
         var res = this.serviceConfigs.filter((a) => a.name == name);
@@ -151,6 +230,10 @@ unsafeWindow.lymTM = window.lymTM = {
     getConfigLinks: function (name) {
         var res = this.serviceConfigs.filter((a) => a.name == name);
         return res.length ? res[0].configLinks : { 'N/A': 'javascript:alert("config link not found for service:' + name + '")' };
+    },
+    getEnvLinks: function (name) {
+        var res = this.serviceConfigs.filter((a) => a.name == name);
+        return res.length ? res[0].envLinks : { 'N/A': 'javascript:alert("env link not found for service:' + name + '")' };
     },
     getApproveUsers: function (curUser) {
         return this.teamMembers.filter((a) => a.userName != curUser);
@@ -243,6 +326,14 @@ unsafeWindow.lymTM = window.lymTM = {
         };
         id = this.addListener(key, m);
         return id;
-    }
+    },
+    inputEvent: new Event('input', { bubbles: true }),
+    originSet: Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set,
+    // for react change input value
+    reactSet(obj, val) {
+        obj = this.transferJqueryObj(obj);
+        this.originSet.call(obj, val);
+        obj.dispatchEvent(this.inputEvent);
+    },
 };
 lymTM.init();

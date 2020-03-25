@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Bitbucket
 // @namespace    http://tampermonkey.net/
-// @version      6
+// @version      7
 // @description  pull request approver、build link、deploy link
 // @author       Yiming Liu
 // @include      mailto:*
@@ -24,7 +24,7 @@ async function process(func, time) {
         location.href = location.href.replace('https://bitbucket.org//', 'https://bitbucket.org/');
         return;
     }
-
+    createBranchThread();
     // dashboard mail link
     if (location.href.includes('//bitbucket.org/dashboard/overview')) {
         var rows = await lymTM.async($('tr[data-qa=jira-issue-row]'));
@@ -42,7 +42,8 @@ async function process(func, time) {
             lymTM.setValue(lymTM.keys.GMailBody, res);
         });
         rows.closest('table').parent().parent().prev().find('h2').append(mailLink);
-        return;
+        // 不能 return，用户点击会加载后续节点
+        //         return;
     }
 
     // "ol.aui-nav-breadcrumbs" for page pull-requests/new
@@ -68,7 +69,8 @@ async function process(func, time) {
     var buildDiv = $('<div style="margin-left:15px;font-weight:bold;display:inline">build:</div>');
     var deployDiv = $('<div style="margin-left:20px;font-weight:bold;display:inline">deploy:</div>');
     var configDiv = $('<div style="margin-left:20px;font-weight:bold;display:inline">config:</div>');
-    var wrapDiv = $('<div></div>').append(buildDiv).append(deployDiv).append(configDiv);
+    var envDiv = $('<div style="margin-left:20px;font-weight:bold;display:inline">env:</div>');
+    var wrapDiv = $('<div></div>').append(buildDiv).append(deployDiv).append(configDiv).append(envDiv);
     var buildLinks = lymTM.getBuildLinks(serviceName);
     for (var a in buildLinks) {
         $(lymTM.createLink(a, buildLinks[a])).css({ 'margin-left': '6px', 'font-weight': 'normal' }).appendTo(buildDiv);
@@ -80,6 +82,10 @@ async function process(func, time) {
     var configLinks = lymTM.getConfigLinks(serviceName);
     for (var c in configLinks) {
         $(lymTM.createLink(c, configLinks[c])).css({ 'margin-left': '6px', 'font-weight': 'normal' }).appendTo(configDiv);
+    }
+    var envLinks = lymTM.getEnvLinks(serviceName);
+    for (var d in envLinks) {
+        $(lymTM.createLink(d, envLinks[d])).css({ 'margin-left': '6px', 'font-weight': 'normal' }).appendTo(envDiv);
     }
     bread.append(wrapDiv);
 
@@ -181,7 +187,25 @@ function makeWeeklyReport(arr) {
     return res;
 }
 
+async function createBranchThread() {
+    // as a job thread,force async a at first
+    await lymTM.async();
+    var node = await lymTM.async($('#branch-name-prefix'));
+    var createBranchForm = $('#create-branch-form');
+    var userName = $('#bb-bootstrap').data('current-user').displayName.split(' ')[0];
+    var newBranchNameInput = $('input[name=branchName]');
+    lymTM.reactSet(newBranchNameInput, `${userName}/${newBranchNameInput.val()}`);
+    lymTM.nodeRemoveCallback(node, createBranchThread);
+    var currentBranchName = $('#select-branch>div').text();
+    var repoName = $('#select-repository>div').text().replace('iherbllc/', '');
+    var targetBranchName = lymTM.getDefaultBranch(repoName);
+    if (currentBranchName != targetBranchName) {
+        lymTM.reactSet($('#select-branch input'), targetBranchName);
+        var item = await lymTM.async(() => $('body>div:last div:nth-child(2):first>div').filter((a, b) => b.textContent == targetBranchName));
+        item.click();
+    }
 
+}
 
 
 
