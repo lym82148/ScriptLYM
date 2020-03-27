@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Jenkins
 // @namespace    http://tampermonkey.net/
-// @version      1
+// @version      2
 // @description  CI CD
 // @author       Yiming Liu
 // @match        https://jenkins-ci.iherb.net/*
@@ -18,5 +18,50 @@
     time.end();
 })();
 async function process(wrap, time) {
-
+    // CI job name
+    CIjobName = $('title').text().split(/\s|\(/).shift();
+    console.log(`CIjobName:${CIjobName}`);
+    if (!CIjobName) { return; }
+    // CI
+    if (location.host == 'jenkins-ci.iherb.net') {
+        setInterval(renderDeployLink, 1000);
+    } else if (location.host == 'jenkins.iherb.io') { // CD
+        var CDjobName = $('a.breadcrumbBarAnchor:last').text().split(/\s|\(/).shift();
+        console.log(CDjobName);
+        jQuery('input[value=VERSION]').next().val(lymTM.getValue(CDjobName)).change();
+        lymTM.removeValue(CDjobName);
+    }
+}
+// page has already used $
+var $ = jQuery;
+var CIjobName;
+async function renderDeployLink() {
+    $('tr.build-row div.build-controls>div.build-badge').each(async (a, b) => {
+        var $b = $(b);
+        var buildNo = $b.closest('td').find('a.display-name').text().trim();
+        var version = $b.parent().next().text().split(':').pop().trim();
+        // "".trim() return object is String {""}
+        if (!version.length) { return; }
+        var commitNode = await lymTM.async($(`div.jobName:contains(${buildNo})~div.stage-start-box>div:last`));
+        // deploy link not in left column
+        var leftNeedDeploy = !$b.find('a:contains(deploy)').length;
+        // deploy link not in right table
+        var rightNeedDeploy = !commitNode.find('a:contains(deploy)').length;
+        if (leftNeedDeploy || rightNeedDeploy) {
+            var deployLink = lymTM.createLink('deploy', lymTM.getDeployUrlByDefinitionId(CIjobName));
+            deployLink.style.float = 'left';
+            $(deployLink).click(() => lymTM.setValue(CIjobName, version));
+            if (leftNeedDeploy) {
+                $b.prepend(deployLink);
+            }
+            if (rightNeedDeploy) {
+                if (leftNeedDeploy) {
+                    var cloneDeployLink = $(deployLink).clone().css('margin', '0px 15px').click(() => lymTM.setValue(CIjobName, version));
+                    commitNode.append(cloneDeployLink);
+                } else {
+                    commitNode.append($(deployLink).css('margin', '0px 15px'));
+                }
+            }
+        }
+    });
 }

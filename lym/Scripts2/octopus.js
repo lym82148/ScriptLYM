@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Octopus
 // @namespace    http://tampermonkey.net/
-// @version      4
+// @version      5
 // @description  CD
 // @author       Yiming Liu
 // @match        https://deploy.iherb.net/app

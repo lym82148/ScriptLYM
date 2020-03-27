@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Common
 // @namespace    http://tampermonkey.net/
-// @version      7
+// @version      8
 // @description  configs & util
 // @author       Yiming Liu
 // @include      *
@@ -31,23 +31,23 @@ unsafeWindow.lymTM = window.lymTM = {
         return this.isJqueryObj(obj) ? obj[0] : obj;
     },
     isJqueryObj: function (obj) {
-        return ("$" in unsafeWindow || "$" in window) && obj instanceof $;
+        return ("jQuery" in unsafeWindow || "jQuery" in window) && obj instanceof jQuery;
     },
     async: async function (obj, time = 100) {
         if (typeof obj == 'number') {// 参数是数字
             await this.sleep(obj);
         }
         else if (this.isJqueryObj(obj)) {// 参数是jQuery对象
-            while (!$(obj.selector).length) {
+            while (!jQuery(obj.selector).length) {
                 await this.sleep(time);
             }
-            return $(obj.selector);
+            return jQuery(obj.selector);
         }
         else if (obj) { // 参数是方法
             var res;
             while (true) {
                 res = obj();
-                if (("$" in unsafeWindow || "$" in window) && res instanceof $) {
+                if (this.isJqueryObj(res)) {
                     if (res.length) {
                         break;
                     }
@@ -98,10 +98,17 @@ unsafeWindow.lymTM = window.lymTM = {
     ],
     urls: {
         "OctopusShop": "https://deploy.iherb.net/app#/projects/shop",
-        "OctopusCSPortal": "https://deploy.iherb.net/app#/projects/cs-portal"
+        "OctopusCSPortal": "https://deploy.iherb.net/app#/projects/cs-portal",
+        "CDJenkinsCS": "https://jenkins.iherb.io/job/backoffice/job/CS/job",
+        "CDJenkinsBuildNow": "build?delay=0sec",
+        "CIJenkinsCSSearch": "https://jenkins-ci.iherb.net/job/backoffice/job/CS/search/?q=",
+        "CSConfig": "https://bitbucket.org/iherbllc/backoffice.cs.config/src/master",
+        "DataDog": "https://app.datadoghq.com/infrastructure?filter=",
+        BackOfficeTestSwagger: (a) => `https://backoffice-${a}.internal.iherbtest.io/swagger/index.html`,
+        BackOfficeProdSwagger: (a) => `https://backoffice-${a}.central.iherb.io/swagger/index.html`,
     },
     serviceConfigs: {},
-    init() {
+    init: async function () {
         this.serviceConfigs = [
             {
                 "name": "legacy.checkout-web",
@@ -121,60 +128,7 @@ unsafeWindow.lymTM = window.lymTM = {
                     "Config": `${this.urls.OctopusShop}/variables`
                 },
                 "envLinks": {
-                    "DataDog": "https://app.datadoghq.com/infrastructure?filter=SHOP%24SFV"
-                },
-            },
-            {
-                "name": "backoffice.cs.proxy.service",
-                "fullslug": "iherbllc/backoffice.cs.proxy.service",
-                "defaultBranch": "master",
-                "buildLinks": {
-                    "Master": "https://jenkins-ci.iherb.net/job/backoffice/job/CS/search/?q=cs-proxy-service",
-                },
-                "deployLinks": {
-                    "Master": "https://jenkins.iherb.io/job/backoffice/job/CS/job/cs-proxy-service/"
-                },
-                "configLinks": {
-                    "Config": "https://bitbucket.org/iherbllc/backoffice.cs.config/src/master/cs-proxy-service/"
-                },
-                "envLinks": {
-                    "Test": "https://backoffice-cs-proxy-service.internal.iherbtest.io/swagger/index.html",
-                    "Prod": "https://backoffice-cs-proxy-service.central.iherb.io/swagger/index.html",
-                },
-            },
-            {
-                "name": "backoffice.cs.customer.service",
-                "fullslug": "iherbllc/backoffice.cs.customer.service",
-                "defaultBranch": "master",
-                "buildLinks": {
-                    "Master": "https://jenkins-ci.iherb.net/job/backoffice/job/CS/search/?q=cs-customer-service",
-                },
-                "deployLinks": {
-                    "Master": "https://jenkins.iherb.io/job/backoffice/job/CS/job/cs-customer-service/"
-                },
-                "configLinks": {
-                    "Config": "https://bitbucket.org/iherbllc/backoffice.cs.config/src/master/cs-customer-service/"
-                },
-                "envLinks": {
-                    "Test": "https://backoffice-cs-customer-service.internal.iherbtest.io/swagger/index.html",
-                    "Prod": "https://backoffice-cs-customer-service.central.iherb.io/swagger/index.html",
-                },
-            },
-            {
-                "name": "backoffice.promos.manager.rewardservice",
-                "fullslug": "iherbllc/backoffice.promos.manager.rewardservice",
-                "defaultBranch": "master",
-                "buildLinks": {
-                    "Master": "https://jenkins-ci.iherb.net/job/backoffice/job/CS/search/?q=cs-reward-service",
-                },
-                "deployLinks": {
-                    "Master": "https://jenkins.iherb.io/job/backoffice/job/CS/job/cs-reward-service/"
-                },
-                "configLinks": {
-                    "Config": "https://bitbucket.org/iherbllc/backoffice.cs.config/src/master/cs-reward-service/"
-                },
-                "envLinks": {
-                    "Test": "https://backoffice-cs-reward-service.internal.iherbtest.io/swagger/index.html",
+                    "DataDog": `${this.urls.DataDog}SHOP%24SFV`
                 },
             },
             {
@@ -198,14 +152,88 @@ unsafeWindow.lymTM = window.lymTM = {
                     "Prod": "https://csportalext.iherb.net/",
                 },
             },
-        ]
+            // example
+            //             {
+            //                 "name": "backoffice.cs.customer.service",
+            //                 "fullslug": "iherbllc/backoffice.cs.customer.service",
+            //                 "defaultBranch": "master",
+            //                 "buildLinks": {
+            //                     "Jenkins": `${this.urls.CIJenkinsCSSearch}cs-customer-service`
+            //                 },
+            //                 "deployLinks": {
+            //                     "Jenkins":  `${this.urls.CDJenkinsCS}/cs-customer-service/`
+            //                 },
+            //                 "configLinks": {
+            //                     "Config": `${this.urls.CSConfig}/cs-customer-service/`
+            //                 },
+            //                 "envLinks": {
+            //                     "Test": this.urls.BackOfficeTestSwagger('cs-customer-service'),
+            //                     "Prod": this.urls.BackOfficeProdSwagger('cs-customer-service'),
+            //                 },
+            //                 "definitionIds": {
+            //                     "cs-customer-service": `${this.urls.CDJenkinsCS}/cs-customer-service/${this.urls.CDJenkinsBuildNow}`
+            //                 }
+            //             },
+
+            {
+                "name": "backoffice.promos.manager.rewardservice",
+                "fullslug": "iherbllc/backoffice.promos.manager.rewardservice",
+                "defaultBranch": "master",
+                "buildLinks": {
+                    "Jenkins": "https://jenkins-ci.iherb.net/job/backoffice/job/RewardCampaign/search/?q=promos-manager-reward-servic",
+                },
+                "deployLinks": {
+                    "Jenkins": "https://jenkins.iherb.io/job/backoffice/job/RewardCampaign/job/promos-manager-reward-service/"
+                },
+                "configLinks": {
+                    "Config": ""
+                },
+                "envLinks": {
+                    "Test": "",
+                },
+            },
+            { "name": "backoffice.cs.reward.service" },
+            { "name": "backoffice.cs.proxy.service" },
+            { "name": "backoffice.cs.customer.service" },
+
+        ];
+        for (var item of this.serviceConfigs) {
+            if (item.name.startsWith('backoffice.')) {
+                var name = item.name.replace('backoffice.', '').replace(/\./g, '-');
+                item.fullslug = item.fullslug || `iherbllc${item.name}`;
+                item.defaultBranch = item.defaultBranch || 'master';
+                item.buildLinks = item.buildLinks || {};
+                item.deployLinks = item.deployLinks || {};
+                item.configLinks = item.configLinks || {};
+                item.envLinks = item.envLinks || {};
+                item.definitionIds = item.definitionIds || {};
+                item.buildLinks.Jenkins = item.buildLinks.Jenkins || `${this.urls.CIJenkinsCSSearch}${name}`;
+                item.deployLinks.Jenkins = item.deployLinks.Jenkins || `${this.urls.CDJenkinsCS}/${name}/`;
+                item.configLinks.Config = item.configLinks.Config || `${this.urls.CSConfig}/${name}/`;
+                item.envLinks.Test = item.envLinks.Test || this.urls.BackOfficeTestSwagger(name);
+                item.envLinks.Prod = item.envLinks.Prod || this.urls.BackOfficeProdSwagger(name);
+                item.definitionIds[name] = item.definitionIds[name] || `${this.urls.CDJenkinsCS}/${name}/${this.urls.CDJenkinsBuildNow}`;
+            }
+        }
+        this.async(() => this.cleanValues());
     },
     keys: {
         'TfsBuildId': 'TfsBuildId', 'GMailBody': 'GMailBody'
     },
     swaggers: {
-        "localhost:44300": "https://client-rewards-backoffice.internal.iherbtest.io/rewards/create",
-        "backoffice-cs-reward-service.internal.iherbtest.io": "https://client-rewards-backoffice.internal.iherbtest.io/rewards/create",
+        "https://client-rewards-backoffice.internal.iherbtest.io/rewards/create": [
+            "localhost:44300",
+            "backoffice-cs-reward-service.internal.iherbtest.io",
+            "backoffice-cs-customer-service.internal.iherbtest.io"
+        ]
+    },
+    searchEnvUrl(url) {
+        for (var a of this.serviceConfigs) {
+            for (var key in a.envLinks) {
+                if (a.envLinks[key] == url) { return a.envLinks; }
+            }
+        }
+        return null;
     },
     getDeployUrlByDefinitionId(id) {
         for (var a of this.serviceConfigs) {
@@ -254,7 +282,14 @@ unsafeWindow.lymTM = window.lymTM = {
         return null;
     },
     getSwaggerEnv: function (swagger) {
-        return this.swaggers[swagger];
+        for (var key in this.swaggers) {
+            for (var item of this.swaggers[key]) {
+                if (item == swagger) {
+                    return key;
+                }
+            }
+        }
+        return null;
     },
     nodeRemoveCallback: function (node, callback) {
         node.on('DOMNodeRemovedFromDocument', callback);
@@ -282,6 +317,11 @@ unsafeWindow.lymTM = window.lymTM = {
     listValues: function () {
         return GM_listValues();
     },
+    cleanValues: function () {
+        for (var a of this.listValues()) {
+            this.getValue(a);
+        }
+    },
     copy: function (data) {
         GM_setClipboard(data, 'text');
     },
@@ -308,8 +348,11 @@ unsafeWindow.lymTM = window.lymTM = {
             if (new RegExp("(" + k + ")").test(fmt)) fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
         return fmt;
     },
-    open: function (url) {
+    open: function (url, option) {
         return GM_openInTab(url);
+    },
+    openActive: function (url) {
+        return GM_openInTab(url, { 'active': true });
     },
     addListener: function (key, callback) {
         // function(name, old_value, new_value, remote)
@@ -335,5 +378,6 @@ unsafeWindow.lymTM = window.lymTM = {
         this.originSet.call(obj, val);
         obj.dispatchEvent(this.inputEvent);
     },
+
 };
 lymTM.init();

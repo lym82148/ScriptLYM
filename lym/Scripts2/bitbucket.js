@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Bitbucket
 // @namespace    http://tampermonkey.net/
-// @version      7
+// @version      8
 // @description  pull request approver、build link、deploy link
 // @author       Yiming Liu
 // @include      mailto:*
@@ -66,10 +66,10 @@ async function process(func, time) {
     console.table({ curUserName, serviceName });
 
     // Build Links Deploy Links
-    var buildDiv = $('<div style="margin-left:15px;font-weight:bold;display:inline">build:</div>');
-    var deployDiv = $('<div style="margin-left:20px;font-weight:bold;display:inline">deploy:</div>');
-    var configDiv = $('<div style="margin-left:20px;font-weight:bold;display:inline">config:</div>');
-    var envDiv = $('<div style="margin-left:20px;font-weight:bold;display:inline">env:</div>');
+    var buildDiv = $('<div style="margin-left:15px;font-weight:bold;display:inline">CI:</div>');
+    var deployDiv = $('<div style="margin-left:20px;font-weight:bold;display:inline">CD:</div>');
+    var configDiv = $('<div style="margin-left:20px;font-weight:bold;display:inline">Config:</div>');
+    var envDiv = $('<div style="margin-left:20px;font-weight:bold;display:inline">Env:</div>');
     var wrapDiv = $('<div></div>').append(buildDiv).append(deployDiv).append(configDiv).append(envDiv);
     var buildLinks = lymTM.getBuildLinks(serviceName);
     for (var a in buildLinks) {
