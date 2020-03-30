@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Common
 // @namespace    http://tampermonkey.net/
-// @version      8
+// @version      9
 // @description  configs & util
 // @author       Yiming Liu
 // @include      *
@@ -106,6 +106,7 @@ unsafeWindow.lymTM = window.lymTM = {
         "DataDog": "https://app.datadoghq.com/infrastructure?filter=",
         BackOfficeTestSwagger: (a) => `https://backoffice-${a}.internal.iherbtest.io/swagger/index.html`,
         BackOfficeProdSwagger: (a) => `https://backoffice-${a}.central.iherb.io/swagger/index.html`,
+        TfsLog: (a) => `https://tfs.iherb.net/tfs/iHerb%20Projects%20Collection/8c0065ee-bf13-4864-b26d-6c887fc45f05/_apis/build/builds/${a}/logs/3`,
     },
     serviceConfigs: {},
     init: async function () {
@@ -218,7 +219,7 @@ unsafeWindow.lymTM = window.lymTM = {
         this.async(() => this.cleanValues());
     },
     keys: {
-        'TfsBuildId': 'TfsBuildId', 'GMailBody': 'GMailBody'
+        'TfsBuildId': 'TfsBuildId', 'GMailBody': 'GMailBody', 'Tfs': 'Tfs'
     },
     swaggers: {
         "https://client-rewards-backoffice.internal.iherbtest.io/rewards/create": [
@@ -298,10 +299,13 @@ unsafeWindow.lymTM = window.lymTM = {
         // use 'one' to avoid endless loop
         node.one('DOMNodeInserted', callback);
     },
-    setValue: function (k, v) {
+    setValue: function (k, v, t = 600000) {
         if (k) {
-            GM_setValue(k, { value: v, expire: Date.now() + 600000 });
+            GM_setValue(k, { value: v, expire: Date.now() + t });
         }
+    },
+    setValueNotExpired: function (k, v) {
+        this.setValue(k, v, Number.MAX_SAFE_INTEGER);
     },
     getValue: function (k) {
         var res = GM_getValue(k);
@@ -333,7 +337,7 @@ unsafeWindow.lymTM = window.lymTM = {
         var body = escape(obj.body || '');
         return `mailto:${to}?cc=${cc}&bcc=${bcc}&subject=${subject}&body=${body}`;
     },
-    dateFormat: function (date, fmt = 'yyyy-MM-dd HH:mm:ss') {
+    dateFormat: function (date, fmt = 'yyyy-MM-dd hh:mm:ss') {
         var o = {
             "M+": date.getMonth() + 1, //月份
             "d+": date.getDate(), //日
@@ -378,6 +382,66 @@ unsafeWindow.lymTM = window.lymTM = {
         this.originSet.call(obj, val);
         obj.dispatchEvent(this.inputEvent);
     },
-
+    getTfsLog(id, callback) {
+        var val = this.getTfsLogFromCache(id);
+        if (id in val) {
+            callback(val[id]);
+            return new Promise((a) => a());
+        } else {
+            return $.ajax({
+                url: this.urls.TfsLog(id), success: res => {
+                    var title = this.transLog(res);
+                    val = this.getValue(this.keys.Tfs);
+                    val[id] = title;
+                    this.setValueNotExpired(this.keys.Tfs, val);
+                    callback(title);
+                }
+            }).promise();
+        }
+    },
+    getTfsLogFromCache(id) {
+        var val = this.getValue(this.keys.Tfs);
+        if (val == null) {
+            val = {};
+            this.setValueNotExpired(this.keys.Tfs, val);
+        }
+        return val;
+    },
+    getTfsLogEx(id, callback) {
+        var val = this.getTfsLogFromCache(id);
+        var url = this.urls.TfsLog(id);
+        if (id in val) {
+            callback(val[id]);
+            return new Promise((a) => a());
+        } else {
+            var tab = this.open(url);
+            return new Promise(resolve => {
+                lymTM.listenOnce(url, async (a, b, c) => {
+                    tab.close();
+                    callback(c.value);
+                    var val = this.getValue(this.keys.Tfs);
+                    val[id] = c.value;
+                    this.setValueNotExpired(this.keys.Tfs, val);
+                    resolve();
+                });
+            });
+        }
+    },
+    transLog(log) {
+        var lines = log.split('\n');
+        var flag = false;
+        var title = '';
+        for (var line of lines) {
+            if (line.includes('Previous HEAD position was')) { flag = true; }
+            if (flag) {
+                var arr = line.split(' ');
+                var date = new Date(arr[0]);
+                arr[0] = lymTM.dateFormat(date);
+                title = `${arr.join(' ')}\n\n` + title;
+            }
+            if (line.includes('HEAD is now at')) { break; }
+        }
+        return title;
+    },
 };
 lymTM.init();

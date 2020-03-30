@@ -1,10 +1,14 @@
 ﻿// ==UserScript==
 // @name         jQueryCookie
 // @namespace    http://tampermonkey.net/
-// @version      2
+// @version      3
 // @description  try to take over the world!
 // @author       You
+// get token for swagger
 // @match        https://client-rewards-backoffice.internal.iherbtest.io/*
+// @match        https://rewards-web.backoffice.iherbtest.net/*
+// get token for swagger login page
+// @match        https://security-identity-test.iherb.net/core/login*
 // @grant        none
 // ==/UserScript==
 

@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Jenkins
 // @namespace    http://tampermonkey.net/
-// @version      2
+// @version      3
 // @description  CI CD
 // @author       Yiming Liu
 // @match        https://jenkins-ci.iherb.net/*

@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         GMail
 // @namespace    http://tampermonkey.net/
-// @version      2
+// @version      3
 // @description  send weekly report
 // @author       Yiming Liu
 // @match        https://mail.google.com/mail/u/0/*

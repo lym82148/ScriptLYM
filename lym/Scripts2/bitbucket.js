@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Bitbucket
 // @namespace    http://tampermonkey.net/
-// @version      8
+// @version      9
 // @description  pull request approver、build link、deploy link
 // @author       Yiming Liu
 // @include      mailto:*
@@ -18,37 +18,24 @@
 })();
 
 async function process(func, time) {
+    console.log(1);
     // error url from source tree
     if (location.href.startsWith('https://bitbucket.org//')) {
         $('#error').prepend($(lymTM.createLabel('Redirecting')).css('font-size', '36px'));
         location.href = location.href.replace('https://bitbucket.org//', 'https://bitbucket.org/');
         return;
     }
+
+    // job
     createBranchThread();
-    // dashboard mail link
-    if (location.href.includes('//bitbucket.org/dashboard/overview')) {
-        var rows = await lymTM.async($('tr[data-qa=jira-issue-row]'));
-        var mailto = lymTM.getMailTo({ to: 'xiaoyu.luo@iherb.com', subject: 'Weekly Report ' + lymTM.dateFormat(new Date(), 'MM-dd') });
-        var mailLink = $(lymTM.createLink('Mail All', mailto)).attr('target', '_blank').css({ 'margin-left': '20px', 'font-size': '20px', 'font-weight': 'normal' });
-        mailLink.click(async function () {
-            var rows = $('tr[data-qa=jira-issue-row]');
-            rows.closest('div').next('p').find('button').click();
-            rows = await lymTM.async($('tr[data-qa=jira-issue-row]'));
-            var arr = rows.map((a, b) => transferRowToModel(b)).sort(a => a.serviceName + a.storyId);
-            console.log(arr);
-            var res = makeWeeklyReport(arr);
-            console.log(res);
-            //             lymTM.copy(res);
-            lymTM.setValue(lymTM.keys.GMailBody, res);
-        });
-        rows.closest('table').parent().parent().prev().find('h2').append(mailLink);
-        // 不能 return，用户点击会加载后续节点
-        //         return;
-    }
+    // not need await
+    createMailLinkThread();
+
 
     // "ol.aui-nav-breadcrumbs" for page pull-requests/new
-    // "div:has(div>a[type]):not(:has(div>div>a[type])):first" for page pull-requests/
-    var bread = await lymTM.async($('ol.aui-nav-breadcrumbs,div:has(div>a[type]):not(:has(div>div>a[type])):first'));
+    // "div:has(div>a[type]):not(:has(div>div>a[type]))" for page pull-requests/
+    // ":has(div[data-qa])" for page repositories
+    var bread = await lymTM.async($('ol.aui-nav-breadcrumbs,div:has(div>a[type]):not(:has(div>div>a[type]),:has(div[data-qa]))'));
     // 在关键元素 bread 加载完成后 计时开始
     time.reset();
 
@@ -191,11 +178,11 @@ async function createBranchThread() {
     // as a job thread,force async a at first
     await lymTM.async();
     var node = await lymTM.async($('#branch-name-prefix'));
+    lymTM.nodeRemoveCallback(node, createBranchThread);
     var createBranchForm = $('#create-branch-form');
     var userName = $('#bb-bootstrap').data('current-user').displayName.split(' ')[0];
     var newBranchNameInput = $('input[name=branchName]');
     lymTM.reactSet(newBranchNameInput, `${userName}/${newBranchNameInput.val()}`);
-    lymTM.nodeRemoveCallback(node, createBranchThread);
     var currentBranchName = $('#select-branch>div').text();
     var repoName = $('#select-repository>div').text().replace('iherbllc/', '');
     var targetBranchName = lymTM.getDefaultBranch(repoName);
@@ -206,6 +193,30 @@ async function createBranchThread() {
     }
 
 }
-
+async function createMailLinkThread() {
+    // as a job thread,force async a at first
+    await lymTM.async();
+    var rows = await lymTM.async($('tr[data-qa=jira-issue-row]'));
+    // dashboard mail link
+    if (location.href.includes('//bitbucket.org/dashboard/overview')) {
+        // 如果存在就不再增加
+        if ($('h2>a').length) { return; }
+        lymTM.nodeRemoveCallback(rows.closest('table'), createMailLinkThread);
+        var mailto = lymTM.getMailTo({ to: 'xiaoyu.luo@iherb.com', subject: 'Weekly Report ' + lymTM.dateFormat(new Date(), 'MM-dd') });
+        var mailLink = $(lymTM.createLink('Mail All', mailto)).attr('target', '_blank').css({ 'margin-left': '20px', 'font-size': '20px', 'font-weight': 'normal' });
+        mailLink.click(async function () {
+            var rows = $('tr[data-qa=jira-issue-row]');
+            rows.closest('div').next('p').find('button').click();
+            rows = await lymTM.async($('tr[data-qa=jira-issue-row]'));
+            var arr = rows.map((a, b) => transferRowToModel(b)).sort(a => a.serviceName + a.storyId);
+            console.log(arr);
+            var res = makeWeeklyReport(arr);
+            console.log(res);
+            //             lymTM.copy(res);
+            lymTM.setValue(lymTM.keys.GMailBody, res);
+        });
+        rows.closest('table').parent().parent().prev().find('h2').append(mailLink);
+    }
+}
 
 

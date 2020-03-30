@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Swagger
 // @namespace    http://tampermonkey.net/
-// @version      4
+// @version      5
 // @description  swagger
 // @author       Yiming Liu
 // all swaggers
@@ -32,7 +32,7 @@ async function process(func, time) {
         } else {
             var tab = lymTM.open(env);
             // callback and close window
-            var listenerId = lymTM.listenOnce(env, async (a, b, c) => {
+            lymTM.listenOnce(env, async (a, b, c) => {
                 console.log(c.value);
                 tab.close();
                 var btn = await lymTM.async($('button.authorize'));

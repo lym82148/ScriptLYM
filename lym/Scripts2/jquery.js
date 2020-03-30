@@ -1,9 +1,15 @@
 ﻿// ==UserScript==
 // @name         jQuery
 // @namespace    http://tampermonkey.net/
-// @version      1
+// @version      2
 // @description  try to take over the world!
 // @author       You
+// @match        https://deploy.iherb.net/app*
+// @match        https://mail.google.com/mail/u/0/*
+// @match        https://client-rewards-backoffice.internal.iherbtest.io/*
+// @match        https://rewards-web.backoffice.iherbtest.net/*
+// @match        https://tfs.iherb.net/tfs/iHerb%20Projects%20Collection/*/_apis/build/builds/*/logs/3
+// @match        *://*/swagger/*
 // @grant        none
 // ==/UserScript==
 
