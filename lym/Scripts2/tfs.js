@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Tfs
 // @namespace    http://tampermonkey.net/
-// @version      7
+// @version      8
 // @description  CI
 // @author       Yiming Liu
 // @match        https://tfs.iherb.net/tfs/iHerb%20Projects%20Collection/iHerbDev/*_build/index*

@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Common
 // @namespace    http://tampermonkey.net/
-// @version      9
+// @version      10
 // @description  configs & util
 // @author       Yiming Liu
 // @include      *
@@ -92,8 +92,8 @@ unsafeWindow.lymTM = window.lymTM = {
     teamMembers: [
         { "userName": "Terry (Xiaoyu) Luo" },
         { "userName": "Yiming Liu" },
-        //                 { "userName": "Tony (Sichao) Qian" },
-        //                 { "userName": "Diri (Jianwei) Guo" },
+        { "userName": "Tony (Sichao) Qian" },
+        { "userName": "Diri (Jianwei) Guo" },
 
     ],
     urls: {
@@ -178,10 +178,11 @@ unsafeWindow.lymTM = window.lymTM = {
 
             {
                 "name": "backoffice.promos.manager.rewardservice",
+                "jenkinsName": "promos-manager-reward-service",
                 "fullslug": "iherbllc/backoffice.promos.manager.rewardservice",
                 "defaultBranch": "master",
                 "buildLinks": {
-                    "Jenkins": "https://jenkins-ci.iherb.net/job/backoffice/job/RewardCampaign/search/?q=promos-manager-reward-servic",
+                    "Jenkins": "https://jenkins-ci.iherb.net/job/backoffice/job/RewardCampaign/search/?q=promos-manager-reward-service",
                 },
                 "deployLinks": {
                     "Jenkins": "https://jenkins.iherb.io/job/backoffice/job/RewardCampaign/job/promos-manager-reward-service/"
@@ -196,11 +197,12 @@ unsafeWindow.lymTM = window.lymTM = {
             { "name": "backoffice.cs.reward.service" },
             { "name": "backoffice.cs.proxy.service" },
             { "name": "backoffice.cs.customer.service" },
+            { "name": "backoffice.cs.reward.core.service" },
 
         ];
         for (var item of this.serviceConfigs) {
             if (item.name.startsWith('backoffice.')) {
-                var name = item.name.replace('backoffice.', '').replace(/\./g, '-');
+                item.jenkinsName = item.name.replace('backoffice.', '').replace(/\./g, '-');
                 item.fullslug = item.fullslug || `iherbllc${item.name}`;
                 item.defaultBranch = item.defaultBranch || 'master';
                 item.buildLinks = item.buildLinks || {};
@@ -208,12 +210,12 @@ unsafeWindow.lymTM = window.lymTM = {
                 item.configLinks = item.configLinks || {};
                 item.envLinks = item.envLinks || {};
                 item.definitionIds = item.definitionIds || {};
-                item.buildLinks.Jenkins = item.buildLinks.Jenkins || `${this.urls.CIJenkinsCSSearch}${name}`;
-                item.deployLinks.Jenkins = item.deployLinks.Jenkins || `${this.urls.CDJenkinsCS}/${name}/`;
-                item.configLinks.Config = item.configLinks.Config || `${this.urls.CSConfig}/${name}/`;
-                item.envLinks.Test = item.envLinks.Test || this.urls.BackOfficeTestSwagger(name);
-                item.envLinks.Prod = item.envLinks.Prod || this.urls.BackOfficeProdSwagger(name);
-                item.definitionIds[name] = item.definitionIds[name] || `${this.urls.CDJenkinsCS}/${name}/${this.urls.CDJenkinsBuildNow}`;
+                item.buildLinks.Jenkins = item.buildLinks.Jenkins || `${this.urls.CIJenkinsCSSearch}${item.jenkinsName}`;
+                item.deployLinks.Jenkins = item.deployLinks.Jenkins || `${this.urls.CDJenkinsCS}/${item.jenkinsName}/`;
+                item.configLinks.Config = item.configLinks.Config || `${this.urls.CSConfig}/${item.jenkinsName}/`;
+                item.envLinks.Test = item.envLinks.Test || this.urls.BackOfficeTestSwagger(item.jenkinsName);
+                item.envLinks.Prod = item.envLinks.Prod || this.urls.BackOfficeProdSwagger(item.jenkinsName);
+                item.definitionIds[item.jenkinsName] = item.definitionIds[item.jenkinsName] || `${this.urls.CDJenkinsCS}/${item.jenkinsName}/${this.urls.CDJenkinsBuildNow}`;
             }
         }
         this.async(() => this.cleanValues());
@@ -225,13 +227,12 @@ unsafeWindow.lymTM = window.lymTM = {
         "https://client-rewards-backoffice.internal.iherbtest.io/rewards/create": [
             "localhost:44300",
             "backoffice-cs-reward-service.internal.iherbtest.io",
-            "backoffice-cs-customer-service.internal.iherbtest.io"
-        ]
+        ],
     },
-    searchEnvUrl(url) {
+    searchConfigByUrl(url) {
         for (var a of this.serviceConfigs) {
             for (var key in a.envLinks) {
-                if (a.envLinks[key] == url) { return a.envLinks; }
+                if (a.envLinks[key] == url) { return a; }
             }
         }
         return null;
@@ -442,6 +443,38 @@ unsafeWindow.lymTM = window.lymTM = {
             if (line.includes('HEAD is now at')) { break; }
         }
         return title;
+    },
+    getServiceNameByJenkinsName(jenkinsName) {
+        var res = this.serviceConfigs.filter((a) => a.jenkinsName == jenkinsName);
+        return res.length ? res[0].name : '';
+    },
+    generateRelativeLinks(serviceName, $, currentUrl = '') {
+        var buildDiv = $('<div style="margin-left:15px;font-weight:bold;display:inline">CI:</div>');
+        var deployDiv = $('<div style="margin-left:20px;font-weight:bold;display:inline">CD:</div>');
+        var configDiv = $('<div style="margin-left:20px;font-weight:bold;display:inline">Config:</div>');
+        var envDiv = $('<div style="margin-left:20px;font-weight:bold;display:inline">Env:</div>');
+        var wrapDiv = $('<div></div>').append(buildDiv).append(deployDiv).append(configDiv).append(envDiv);
+        var buildLinks = lymTM.getBuildLinks(serviceName);
+        for (var a in buildLinks) {
+            if (currentUrl.startsWith(buildLinks[a])) { continue; }
+            $(lymTM.createLink(a, buildLinks[a])).css({ 'margin-left': '6px', 'font-weight': 'normal' }).appendTo(buildDiv);
+        }
+        var deployLinks = lymTM.getDeployLinks(serviceName);
+        for (var b in deployLinks) {
+            if (currentUrl.startsWith(deployLinks[b])) { continue; }
+            $(lymTM.createLink(b, deployLinks[b])).css({ 'margin-left': '6px', 'font-weight': 'normal' }).appendTo(deployDiv);
+        }
+        var configLinks = lymTM.getConfigLinks(serviceName);
+        for (var c in configLinks) {
+            if (currentUrl.startsWith(configLinks[c])) { continue; }
+            $(lymTM.createLink(c, configLinks[c])).css({ 'margin-left': '6px', 'font-weight': 'normal' }).appendTo(configDiv);
+        }
+        var envLinks = lymTM.getEnvLinks(serviceName);
+        for (var d in envLinks) {
+            if (currentUrl.startsWith(envLinks[d])) { continue; }
+            $(lymTM.createLink(d, envLinks[d])).css({ 'margin-left': '6px', 'font-weight': 'normal' }).appendTo(envDiv);
+        }
+        return wrapDiv;
     },
 };
 lymTM.init();

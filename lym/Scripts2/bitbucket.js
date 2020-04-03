@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Bitbucket
 // @namespace    http://tampermonkey.net/
-// @version      9
+// @version      10
 // @description  pull request approver、build link、deploy link
 // @author       Yiming Liu
 // @include      mailto:*
@@ -53,27 +53,7 @@ async function process(func, time) {
     console.table({ curUserName, serviceName });
 
     // Build Links Deploy Links
-    var buildDiv = $('<div style="margin-left:15px;font-weight:bold;display:inline">CI:</div>');
-    var deployDiv = $('<div style="margin-left:20px;font-weight:bold;display:inline">CD:</div>');
-    var configDiv = $('<div style="margin-left:20px;font-weight:bold;display:inline">Config:</div>');
-    var envDiv = $('<div style="margin-left:20px;font-weight:bold;display:inline">Env:</div>');
-    var wrapDiv = $('<div></div>').append(buildDiv).append(deployDiv).append(configDiv).append(envDiv);
-    var buildLinks = lymTM.getBuildLinks(serviceName);
-    for (var a in buildLinks) {
-        $(lymTM.createLink(a, buildLinks[a])).css({ 'margin-left': '6px', 'font-weight': 'normal' }).appendTo(buildDiv);
-    }
-    var deployLinks = lymTM.getDeployLinks(serviceName);
-    for (var b in deployLinks) {
-        $(lymTM.createLink(b, deployLinks[b])).css({ 'margin-left': '6px', 'font-weight': 'normal' }).appendTo(deployDiv);
-    }
-    var configLinks = lymTM.getConfigLinks(serviceName);
-    for (var c in configLinks) {
-        $(lymTM.createLink(c, configLinks[c])).css({ 'margin-left': '6px', 'font-weight': 'normal' }).appendTo(configDiv);
-    }
-    var envLinks = lymTM.getEnvLinks(serviceName);
-    for (var d in envLinks) {
-        $(lymTM.createLink(d, envLinks[d])).css({ 'margin-left': '6px', 'font-weight': 'normal' }).appendTo(envDiv);
-    }
+    var wrapDiv = lymTM.generateRelativeLinks(serviceName, $);
     bread.append(wrapDiv);
 
     // when page change bread is removed, run script again
@@ -113,7 +93,7 @@ async function process(func, time) {
     // 隐藏搜索列表
     $('#select2-drop-mask').click();
     // 等待搜索结果加载准备
-    await lymTM.async(500);
+    await lymTM.async(1000);
 
     var tabFun = async function (e) {
         if (e.key == 'Tab') {
@@ -156,12 +136,21 @@ function transferRowToModel(row) {
 function makeWeeklyReport(arr) {
     var res = '<p style="font-weight:normal;font-size:20px">What we did:</p>';
     var groupList = Object.create(null);
+    var willDoList = Object.create(null);
     for (var item of arr) {
+        debugger;
         item.serviceName = item.serviceName || '&nbsp;';
-        if (!(item.serviceName in groupList)) {
-            groupList[item.serviceName] = [];
+        if (item.statusText == 'Not Started') {
+            if (!(item.serviceName in willDoList)) {
+                willDoList[item.serviceName] = [];
+            }
+            willDoList[item.serviceName].push(item);
+        } else {
+            if (!(item.serviceName in groupList)) {
+                groupList[item.serviceName] = [];
+            }
+            groupList[item.serviceName].push(item);
         }
-        groupList[item.serviceName].push(item);
     }
     for (var service in groupList) {
         res += `<ul><li style="font-weight:normal;font-size:16px">${service}`;
@@ -170,7 +159,19 @@ function makeWeeklyReport(arr) {
         }
         res += '</li></ul>';
     }
-    res += '<p style="font-weight:normal;font-size:20px">What we will do:</p><ul style="font-weight:normal;font-size:16px"><li>CS Portal &amp; WCF Shop Service support</li></ul>';
+    var willDoStr = '';
+    for (var willDoService in willDoList) {
+        willDoStr += `<ul><li style="font-weight:normal;font-size:16px">${willDoService}`;
+        for (var willDoStory of willDoList[willDoService]) {
+            willDoStr += `<ul style="font-weight:normal;font-size:13px"><li><a href="${willDoStory.href}">${willDoStory.storyId}</a> ${willDoStory.content} <span style="font-weight:bolder">(${willDoStory.statusText})<span></li></ul>`;
+        }
+        willDoStr += '</li></ul>';
+    }
+    if (!willDoStr) {
+        res += '<p style="font-weight:normal;font-size:20px">What we will do:</p><ul style="font-weight:normal;font-size:16px"><li>CS Portal &amp; WCF Shop Service support</li></ul>';
+    } else {
+        res += '<p style="font-weight:normal;font-size:20px">What we will do:</p>' + willDoStr;
+    }
     return res;
 }
 

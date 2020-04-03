@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Jenkins
 // @namespace    http://tampermonkey.net/
-// @version      3
+// @version      4
 // @description  CI CD
 // @author       Yiming Liu
 // @match        https://jenkins-ci.iherb.net/*
@@ -18,10 +18,30 @@
     time.end();
 })();
 async function process(wrap, time) {
+    // if search result is only one, then goto that result
+    if (location.href.includes("/search/?q=")) {
+        var resultLinks = $('#main-panel>ol>li>a');
+        if (resultLinks.length == 1) {
+            var jobId = setTimeout(() => resultLinks[0].click(), 1000);
+            $('html').css('background-color', '#475fa585');
+            $('*').click(() => {
+                $('html').css('background-color', '');
+                clearTimeout(jobId);
+            });
+        }
+        return;
+    }
+
     // CI job name
     CIjobName = $('title').text().split(/\s|\(/).shift();
     console.log(`CIjobName:${CIjobName}`);
     if (!CIjobName) { return; }
+    var serviceName = lymTM.getServiceNameByJenkinsName(CIjobName);
+    console.log(`serviceName:${serviceName}`);
+    if (serviceName) {
+        var wrapDiv = lymTM.generateRelativeLinks(serviceName, $, location.href);
+    }
+    jQuery('#main-panel').prepend(wrapDiv);
     // CI
     if (location.host == 'jenkins-ci.iherb.net') {
         setInterval(renderDeployLink, 1000);

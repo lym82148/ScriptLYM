@@ -1,15 +1,15 @@
 ﻿// ==UserScript==
 // @name         Swagger
 // @namespace    http://tampermonkey.net/
-// @version      5
+// @version      6
 // @description  swagger
 // @author       Yiming Liu
 // all swaggers
 // @match        *://*/swagger/*
-// get token from cs portal
+// get token from reward portal
 // @match        https://client-rewards-backoffice.internal.iherbtest.io/rewards/create*
 // @match        https://rewards-web.backoffice.iherbtest.net/rewards/create*
-// auto login cs portal
+// auto login reward portal
 // @match        https://security-identity-test.iherb.net/core/login*
 // ==/UserScript==
 
@@ -47,24 +47,33 @@ async function process(func, time) {
             });
         }
         // envLinks on swagger title
-        var envLinks = lymTM.searchEnvUrl(location.href);
-        if (envLinks) {
-            var wrapDiv = $('<div></div>')
-            for (var d in envLinks) {
-                var link = createLink(d, envLinks[d]);
-                link.appendTo(wrapDiv);
+        var config = lymTM.searchConfigByUrl(location.href);
+        if (config) {
+            var envLinks = config.envLinks;
+            if (envLinks) {
+                var wrapDiv = $('<div></div>')
+                for (var d in envLinks) {
+                    var link = createLink(d, envLinks[d]);
+                    link.appendTo(wrapDiv);
+                }
+                wrapDiv.mouseout(function () {
+                    render(this);
+                });
+                wrapDiv.mouseenter(function () {
+                    showAll(this);
+                });
+                wrapDiv.mousemove(function () {
+                    showAll(this);
+                });
+                render(wrapDiv);
+                $('a[rel]:first').append(wrapDiv);
             }
-            wrapDiv.mouseout(function () {
-                render(this);
-            });
-            wrapDiv.mouseenter(function () {
-                showAll(this);
-            });
-            wrapDiv.mousemove(function () {
-                showAll(this);
-            });
-            render(wrapDiv);
-            $('a[rel]:first').append(wrapDiv);
+            var serviceName = config.name;
+            console.log(`serviceName:${serviceName}`)
+            var wrapDivEx = lymTM.generateRelativeLinks(serviceName, $, location.href);
+            wrapDivEx.css('margin', '8px');
+            var node = await lymTM.async($('h2.title'));
+            node.after(wrapDivEx);
         }
         return;
     } else {
