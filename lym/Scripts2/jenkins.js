@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Jenkins
 // @namespace    http://tampermonkey.net/
-// @version      4
+// @version      5
 // @description  CI CD
 // @author       Yiming Liu
 // @match        https://jenkins-ci.iherb.net/*
@@ -23,12 +23,14 @@ async function process(wrap, time) {
         var resultLinks = $('#main-panel>ol>li>a');
         if (resultLinks.length == 1) {
             var jobId = setTimeout(() => resultLinks[0].click(), 1000);
-            $('html').css('background-color', '#475fa585');
-            $('*').click(() => {
-                $('html').css('background-color', '');
-                clearTimeout(jobId);
-            });
+            lymTM.maskDiv(jobId, $);
         }
+        return;
+    }
+    // log page
+    if (location.href.endsWith('/wfapi/changesets')) {
+        var arr = JSON.parse($('pre').text());
+        lymTM.setValue(location.href, arr[0].commits);
         return;
     }
 
@@ -45,12 +47,59 @@ async function process(wrap, time) {
     // CI
     if (location.host == 'jenkins-ci.iherb.net') {
         setInterval(renderDeployLink, 1000);
+        setInterval(getJenkinsLog, 1000);
     } else if (location.host == 'jenkins.iherb.io') { // CD
         var CDjobName = $('a.breadcrumbBarAnchor:last').text().split(/\s|\(/).shift();
-        console.log(CDjobName);
-        jQuery('input[value=VERSION]').next().val(lymTM.getValue(CDjobName)).change();
-        lymTM.removeValue(CDjobName);
+        console.log(`CDjobName${CDjobName}`);
+        var options = jQuery('input[value=VERSION]').next('select').children();
+        for (var j = 0; j < options.length; j++) {
+            var option = options.eq(j);
+            var packageNameKey = `${CDjobName}:${option.val()}`;
+            var val = lymTM.getJenkinsLogFromCache();
+            var version = packageNameKey.split(':').last();
+            console.log(`version:${version}`);
+            if (packageNameKey in val) {
+                if (val[packageNameKey]) {
+                    var node = $(transferLog(val[packageNameKey]));
+                    var title = [].join.call(node.map((a, b) => b.textContent), '\n')
+                    option.attr('data-title', val[packageNameKey]).attr('title', title);
+                }
+            }
+        }
+        var divCommit = $('<div></div>');
+        jQuery('input[value=VERSION]').next().change(function () {
+            var title = jQuery(this).find(`[value="${this.value}"]`).attr('data-title');
+            if (title) {
+                divCommit.html(transferLog(title));
+            } else {
+                divCommit.html('');
+            }
+        }).after(divCommit);
+        var curVersion = lymTM.getValue(CDjobName);
+        var versionSelect = jQuery('input[value=VERSION]').next();
+        if (curVersion) {
+            versionSelect.val(curVersion);
+            lymTM.removeValue(CDjobName);
+        }
+        versionSelect.change();
     }
+
+}
+var CIJenkinsOrigin = new URL(lymTM.urls.CIJenkinsCSSearch).origin;
+function transferLog(title) {
+    var res = '';
+    console.log(title)
+    var arr = JSON.parse(title);
+    if (arr.length) {
+        for (var i = 0; i < arr.length; i++) {
+            res += `<div>${lymTM.dateFormat(new Date(arr[i].timestamp), 'yyyy-MM-dd hh:mm:ss')} <span style='font-weight:bolder'>${arr[i].message}</span> `;
+            var item = lymTM.createLink(arr[i].commitId.substring(0, 7), `${CIJenkinsOrigin}${arr[i].consoleUrl}`);
+            item.style.fontSize = '13px';
+            res += item.outerHTML;
+            res += '</div>';
+        }
+    }
+    return res;
 }
 // page has already used $
 var $ = jQuery;
@@ -58,7 +107,7 @@ var CIjobName;
 async function renderDeployLink() {
     $('tr.build-row div.build-controls>div.build-badge').each(async (a, b) => {
         var $b = $(b);
-        var buildNo = $b.closest('td').find('a.display-name').text().trim();
+        var buildNo = $b.closest('td').find('a.display-name').text().replace(/\u200B/g, '').trim();
         var version = $b.parent().next().text().split(':').pop().trim();
         // "".trim() return object is String {""}
         if (!version.length) { return; }
@@ -84,4 +133,15 @@ async function renderDeployLink() {
             }
         }
     });
+}
+async function getJenkinsLog() {
+    var changeList = await lymTM.async($('td.stage-start .stage-start-box:has(div.changeset-box:not(.no-changes))'));
+    for (var i = 0; i < changeList.length; i++) {
+        var item = changeList.eq(i);
+        var buildId = item.prev().text().trim().replace('#', '');
+        var packageName = $(`.pane.build-name:has([href$="/${buildId}/"])`).siblings('.desc').text().trim();
+        if (buildId && packageName) {
+            await lymTM.getJenkinsLogEx(`${location.pathname}${buildId}`, (a) => console.log(a), `${packageName}`);
+        }
+    }
 }

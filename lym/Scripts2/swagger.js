@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Swagger
 // @namespace    http://tampermonkey.net/
-// @version      6
+// @version      7
 // @description  swagger
 // @author       Yiming Liu
 // all swaggers
@@ -11,6 +11,7 @@
 // @match        https://rewards-web.backoffice.iherbtest.net/rewards/create*
 // auto login reward portal
 // @match        https://security-identity-test.iherb.net/core/login*
+// @require      file://c:\iHerb\tmConfig.js
 // ==/UserScript==
 
 (async function wrap() {
@@ -29,6 +30,18 @@ async function process(func, time) {
         var env = lymTM.getSwaggerEnv(swagger);
         if (!env) {
             console.log(`config not found for swagger:${swagger}`);
+            var swaggerAuth = window[lymTM.localConfigs.swaggerTMConfig][location.host];
+            if (swaggerAuth) {
+                var btn = await lymTM.async($('button.authorize'));
+                // open auth popup
+                btn.click();
+                var input = await lymTM.async($('div.auth-container input'));
+                lymTM.reactSet(input, swaggerAuth);
+                // confirm auth
+                $('button.auth.authorize').click();
+                // close auth popup
+                $('button.auth.btn-done').click();
+            }
         } else {
             var tab = lymTM.open(env);
             // callback and close window
@@ -85,9 +98,11 @@ async function process(func, time) {
                 lymTM.setValue(location.href, value);
             } else {
                 var loginForm = await lymTM.async($('form:has(#password)'));
-                // 等待浏览器填充
-                await lymTM.async(() => loginForm.find('#username').val());
-                loginForm.find('#rememberMe').prop('checked', true).end().submit();
+                var jobId = setTimeout(async () => {
+                    await lymTM.async(() => loginForm.find('#username').val());
+                    loginForm.find('#rememberMe').prop('checked', true).end().submit();
+                }, 1500);
+                lymTM.maskDiv(jobId);
             }
         }
     }

@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Common
 // @namespace    http://tampermonkey.net/
-// @version      10
+// @version      11
 // @description  configs & util
 // @author       Yiming Liu
 // @include      *
@@ -96,6 +96,7 @@ unsafeWindow.lymTM = window.lymTM = {
         { "userName": "Diri (Jianwei) Guo" },
 
     ],
+    localConfigs: { "swaggerTMConfig": "swaggerTMConfig" },
     urls: {
         "OctopusShop": "https://deploy.iherb.net/app#/projects/shop",
         "OctopusCSPortal": "https://deploy.iherb.net/app#/projects/cs-portal",
@@ -107,6 +108,7 @@ unsafeWindow.lymTM = window.lymTM = {
         BackOfficeTestSwagger: (a) => `https://backoffice-${a}.internal.iherbtest.io/swagger/index.html`,
         BackOfficeProdSwagger: (a) => `https://backoffice-${a}.central.iherb.io/swagger/index.html`,
         TfsLog: (a) => `https://tfs.iherb.net/tfs/iHerb%20Projects%20Collection/8c0065ee-bf13-4864-b26d-6c887fc45f05/_apis/build/builds/${a}/logs/3`,
+        JenkinsLog: (a) => `https://jenkins-ci.iherb.net${a}/wfapi/changesets`,
     },
     serviceConfigs: {},
     init: async function () {
@@ -177,6 +179,27 @@ unsafeWindow.lymTM = window.lymTM = {
             //             },
 
             {
+                "name": "backoffice.csportal-automation",
+                "fullslug": "iherbllc/backoffice.cs.customer.service",
+                "defaultBranch": "develop",
+                "buildLinks": {
+                    //                     "Jenkins": `${this.urls.CIJenkinsCSSearch}cs-customer-service`
+                },
+                "deployLinks": {
+                    //                     "Jenkins":  `${this.urls.CDJenkinsCS}/cs-customer-service/`
+                },
+                "configLinks": {
+                    //                     "Config": `${this.urls.CSConfig}/cs-customer-service/`
+                },
+                "envLinks": {
+                    //                     "Test": this.urls.BackOfficeTestSwagger('cs-customer-service'),
+                    //                     "Prod": this.urls.BackOfficeProdSwagger('cs-customer-service'),
+                },
+                "definitionIds": {
+                    //                     "cs-customer-service": `${this.urls.CDJenkinsCS}/cs-customer-service/${this.urls.CDJenkinsBuildNow}`
+                }
+            },
+            {
                 "name": "backoffice.promos.manager.rewardservice",
                 "jenkinsName": "promos-manager-reward-service",
                 "fullslug": "iherbllc/backoffice.promos.manager.rewardservice",
@@ -221,7 +244,7 @@ unsafeWindow.lymTM = window.lymTM = {
         this.async(() => this.cleanValues());
     },
     keys: {
-        'TfsBuildId': 'TfsBuildId', 'GMailBody': 'GMailBody', 'Tfs': 'Tfs'
+        'TfsBuildId': 'TfsBuildId', 'GMailBody': 'GMailBody', 'Tfs': 'Tfs', 'Jenkins': 'Jenkins'
     },
     swaggers: {
         "https://client-rewards-backoffice.internal.iherbtest.io/rewards/create": [
@@ -408,6 +431,14 @@ unsafeWindow.lymTM = window.lymTM = {
         }
         return val;
     },
+    getJenkinsLogFromCache() {
+        var val = this.getValue(this.keys.Jenkins);
+        if (val == null) {
+            val = {};
+            this.setValueNotExpired(this.keys.Jenkins, val);
+        }
+        return val;
+    },
     getTfsLogEx(id, callback) {
         var val = this.getTfsLogFromCache(id);
         var url = this.urls.TfsLog(id);
@@ -444,6 +475,27 @@ unsafeWindow.lymTM = window.lymTM = {
         }
         return title;
     },
+    getJenkinsLogEx(id, callback, key) {
+        var val = this.getJenkinsLogFromCache();
+        var url = this.urls.JenkinsLog(id);
+        if (key in val) {
+            callback(val[key]);
+            return new Promise((a) => a());
+        } else {
+            this.setValue(url, key);
+            var tab = this.open(url);
+            return new Promise(resolve => {
+                lymTM.listenOnce(url, async (a, b, c) => {
+                    tab.close();
+                    callback(c.value);
+                    var val = this.getValue(this.keys.Jenkins);
+                    val[key] = c.value;
+                    this.setValueNotExpired(this.keys.Jenkins, val);
+                    resolve();
+                });
+            });
+        }
+    },
     getServiceNameByJenkinsName(jenkinsName) {
         var res = this.serviceConfigs.filter((a) => a.jenkinsName == jenkinsName);
         return res.length ? res[0].name : '';
@@ -476,5 +528,15 @@ unsafeWindow.lymTM = window.lymTM = {
         }
         return wrapDiv;
     },
+    maskDiv(jobId, $) {
+        $ = $ || unsafeWindow.$;
+        var maskDiv = $('<div style="background-color: #475fa585;height: 5000px;position: absolute;z-index: 9999;width: 5000px;top: 0;left: 0;"></div>');
+        maskDiv.click(function () {
+            this.remove();
+            clearTimeout(jobId);
+        });
+        $('body').append(maskDiv);
+    },
+
 };
 lymTM.init();

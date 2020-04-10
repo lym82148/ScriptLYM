@@ -1,11 +1,12 @@
 ﻿// ==UserScript==
 // @name         Bitbucket
 // @namespace    http://tampermonkey.net/
-// @version      10
+// @version      11
 // @description  pull request approver、build link、deploy link
 // @author       Yiming Liu
 // @include      mailto:*
 // @match        https://bitbucket.org/*
+// @match https://iherbglobal.atlassian.net/issues/?filter=*
 // ==/UserScript==
 
 (async function wrap() {
@@ -18,7 +19,6 @@
 })();
 
 async function process(func, time) {
-    console.log(1);
     // error url from source tree
     if (location.href.startsWith('https://bitbucket.org//')) {
         $('#error').prepend($(lymTM.createLabel('Redirecting')).css('font-size', '36px'));
@@ -30,7 +30,7 @@ async function process(func, time) {
     createBranchThread();
     // not need await
     createMailLinkThread();
-
+    createMailLinkThreadEx();
 
     // "ol.aui-nav-breadcrumbs" for page pull-requests/new
     // "div:has(div>a[type]):not(:has(div>div>a[type]))" for page pull-requests/
@@ -133,12 +133,23 @@ function transferRowToModel(row) {
     var statusText = link.end().find('td>div>span').text();
     return { storyId, href, serviceName, content, statusText };
 }
+function transferRowToModelEx(row) {
+    var $row = $(row);
+    var link = $row.find('td a.issue-link');
+    var href = location.origin + link.attr('href');
+    var textNode = $row.find('td.summary a.issue-link').text();
+    var arr = textNode.split('-');
+    var serviceName = arr.length == 1 ? '' : arr[0].trim();
+    var content = textNode.replace(serviceName, '').replace('-', '').trim();
+    var storyId = link.data('issue-key');
+    var statusText = $row.find('td.status').text().trim();
+    return { storyId, href, serviceName, content, statusText };
+}
 function makeWeeklyReport(arr) {
     var res = '<p style="font-weight:normal;font-size:20px">What we did:</p>';
     var groupList = Object.create(null);
     var willDoList = Object.create(null);
     for (var item of arr) {
-        debugger;
         item.serviceName = item.serviceName || '&nbsp;';
         if (item.statusText == 'Not Started') {
             if (!(item.serviceName in willDoList)) {
@@ -203,8 +214,9 @@ async function createMailLinkThread() {
         // 如果存在就不再增加
         if ($('h2>a').length) { return; }
         lymTM.nodeRemoveCallback(rows.closest('table'), createMailLinkThread);
-        var mailto = lymTM.getMailTo({ to: 'xiaoyu.luo@iherb.com', subject: 'Weekly Report ' + lymTM.dateFormat(new Date(), 'MM-dd') });
+        var mailto = lymTM.getMailTo({ to: 'xiaoyu.luo@iherb.com', subject: 'Weekly Report ' + getFriday() });
         var mailLink = $(lymTM.createLink('Mail All', mailto)).attr('target', '_blank').css({ 'margin-left': '20px', 'font-size': '20px', 'font-weight': 'normal' });
+        var filterLink = $(lymTM.createLink('Filter', 'https://iherbglobal.atlassian.net/issues/?filter=11293')).attr('target', '_blank').css({ 'margin-left': '20px', 'font-size': '20px', 'font-weight': 'normal' });
         mailLink.click(async function () {
             var rows = $('tr[data-qa=jira-issue-row]');
             rows.closest('div').next('p').find('button').click();
@@ -216,8 +228,41 @@ async function createMailLinkThread() {
             //             lymTM.copy(res);
             lymTM.setValue(lymTM.keys.GMailBody, res);
         });
-        rows.closest('table').parent().parent().prev().find('h2').append(mailLink);
+        rows.closest('table').parent().parent().prev().find('h2').append(mailLink).append(filterLink);
     }
+}
+async function createMailLinkThreadEx() {
+    // as a job thread,force async a at first
+    await lymTM.async();
+    // filter mail link
+    if (location.href.includes('iherbglobal.atlassian.net/issues/?filter=')) {
+        lymTM.nodeInsertCallback($('div.navigator-content'), createMailLinkThreadEx);
+        if ($('div.issue-table-info-bar>div.aui-item>a[href^=mailto]').length) {
+            return;
+        }
+        var rows = await lymTM.async($('tr.issuerow'));
+        var mailto = lymTM.getMailTo({ to: 'xiaoyu.luo@iherb.com', subject: 'Weekly Report ' + getFriday() });
+        var mailLink = $(lymTM.createLink('Mail All', mailto)).attr('target', '_blank').css({ 'margin-left': '20px', 'font-size': '20px', 'font-weight': 'normal' });
+        mailLink.click(async function () {
+            var rows = $('tr.issuerow');
+            var arr = rows.map((a, b) => transferRowToModelEx(b)).sort(a => a.serviceName + a.storyId).toArray();
+            console.log(arr);
+            var res = makeWeeklyReport(arr);
+            console.log(res);
+            //             lymTM.copy(res);
+            lymTM.setValue(lymTM.keys.GMailBody, res);
+        });
+        var node = await lymTM.async(() => $('tr.issuerow').closest('table').closest('div.issue-table-container').prev().children(':eq(0)'));
+        if (!node.has('a[href^=mailto]').length) {
+            node.append(mailLink);
+        }
+    }
+}
+function getFriday() {
+    var date = new Date();
+    var dayOfWeek = date.getDay();
+    var friday = new Date(+date + (5 - dayOfWeek) * 86400000);
+    return lymTM.dateFormat(friday, 'MM-dd');
 }
 
 

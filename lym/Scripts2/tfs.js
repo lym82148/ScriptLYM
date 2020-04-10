@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Tfs
 // @namespace    http://tampermonkey.net/
-// @version      8
+// @version      9
 // @description  CI
 // @author       Yiming Liu
 // @match        https://tfs.iherb.net/tfs/iHerb%20Projects%20Collection/iHerbDev/*_build/index*
@@ -18,9 +18,11 @@
     time.end();
 })();
 async function process(wrap, time) {
+    // log page
     if (location.href.endsWith('/logs/3')) {
         var tag = lymTM.transLog($('pre').text());
         lymTM.setValue(location.href, tag);
+        return;
     }
     var definitionId = lymTM.getQueryString('definitionId');
     var deployUrl = lymTM.getDeployUrlByDefinitionId(definitionId);
