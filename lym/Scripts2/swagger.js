@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Swagger
 // @namespace    http://tampermonkey.net/
-// @version      7
+// @version      8
 // @description  swagger
 // @author       Yiming Liu
 // all swaggers
@@ -98,11 +98,7 @@ async function process(func, time) {
                 lymTM.setValue(location.href, value);
             } else {
                 var loginForm = await lymTM.async($('form:has(#password)'));
-                var jobId = setTimeout(async () => {
-                    await lymTM.async(() => loginForm.find('#username').val());
-                    loginForm.find('#rememberMe').prop('checked', true).end().submit();
-                }, 1500);
-                lymTM.maskDiv(jobId);
+                await lymTM.maskDiv(() => loginForm.find('#password').val(), () => loginForm.find('#rememberMe').prop('checked', true).end().submit());
             }
         }
     }

@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         jQuery
 // @namespace    http://tampermonkey.net/
-// @version      3
+// @version      4
 // @description  try to take over the world!
 // @author       You
 // @match        https://deploy.iherb.net/app*
@@ -10,6 +10,8 @@
 // @match        https://rewards-web.backoffice.iherbtest.net/*
 // @match        https://tfs.iherb.net/tfs/iHerb%20Projects%20Collection/*/_apis/build/builds/*/logs/3
 // @match        https://jenkins-ci.iherb.net/*/wfapi/changesets
+// @match        https://jenkins.iherb.io/login*
+// @match        https://jenkins-ci.iherb.net/login*
 // @match        *://*/swagger/*
 // @grant        none
 // ==/UserScript==
@@ -27,6 +29,7 @@
  *
  * Date: 2015-04-28T16:19Z
  */
+
 
 (function (global, factory) {
 

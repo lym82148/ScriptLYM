@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Tfs
 // @namespace    http://tampermonkey.net/
-// @version      9
+// @version      10
 // @description  CI
 // @author       Yiming Liu
 // @match        https://tfs.iherb.net/tfs/iHerb%20Projects%20Collection/iHerbDev/*_build/index*
@@ -38,14 +38,14 @@ async function process(wrap, time) {
     $('div.summary-build-row span[mycell]').remove();
     buildList.before('<span mycell style="display:table-cell"></span>');
     buildList.filter(':has([title=succeeded])').each(
-        (a, b) => {
+        async (a, b) => {
             var $b = $(b);
             var buildId = $b.siblings('.build-detail-link-column').text().replace('#', '');
             var deployLink = $(lymTM.createLink('deploy', deployUrl));
             deployLink.click(() => { lymTM.setValue(lymTM.keys.TfsBuildId, buildId) });
             deployLink.css({ 'font-size': '14px', 'margin-left': '4px' }).appendTo($b.prev());
             var buildIdEx = $b.closest('div').find('span.build-detail-link-column>a').attr('href').replace(/^.*buildId=/, '').split('&').shift();
-            lymTM.getTfsLog(buildIdEx, (title) => deployLink.prop('title', title));
+            await lymTM.getTfsLog(buildIdEx, (title) => deployLink.prop('title', title));
         }
     );
 

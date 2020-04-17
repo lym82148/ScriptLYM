@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Jenkins
 // @namespace    http://tampermonkey.net/
-// @version      5
+// @version      6
 // @description  CI CD
 // @author       Yiming Liu
 // @match        https://jenkins-ci.iherb.net/*
@@ -22,20 +22,30 @@ async function process(wrap, time) {
     if (location.href.includes("/search/?q=")) {
         var resultLinks = $('#main-panel>ol>li>a');
         if (resultLinks.length == 1) {
-            var jobId = setTimeout(() => resultLinks[0].click(), 1000);
-            lymTM.maskDiv(jobId, $);
+            await lymTM.maskDiv(null, () => resultLinks[0].click(), $);
         }
+        return;
+    }
+    // if login
+    if (location.pathname.startsWith("/login")) {
+        // todo
+        var submitBtn = await lymTM.async($('form input:submit'));
+        await lymTM.maskDiv(() => $('input[name=j_password]').val(), () => submitBtn.click());
         return;
     }
     // log page
     if (location.href.endsWith('/wfapi/changesets')) {
         var arr = JSON.parse($('pre').text());
-        lymTM.setValue(location.href, arr[0].commits);
+        var commits = [null];
+        arr.forEach(b => commits = commits.concat(b.commits, null));
+        lymTM.setValue(location.href, commits);
         return;
     }
 
     // CI job name
-    CIjobName = $('title').text().split(/\s|\(/).shift();
+    //     CIjobName = $('title').text().split(/\s|\(/).shift();
+    //      CIjobName = $('title').text().replace(/(\w|\s|»)*» /,'').split(/\s|\(/).shift()
+    CIjobName = jQuery('a[title="Back to Project"],a[title=Up]').attr('href').split('/').filter(a => a && a != '..').last().split(/\s|\(/).shift();
     console.log(`CIjobName:${CIjobName}`);
     if (!CIjobName) { return; }
     var serviceName = lymTM.getServiceNameByJenkinsName(CIjobName);
@@ -43,13 +53,15 @@ async function process(wrap, time) {
     if (serviceName) {
         var wrapDiv = lymTM.generateRelativeLinks(serviceName, $, location.href);
     }
-    jQuery('#main-panel').prepend(wrapDiv);
+    jQuery('#breadcrumbs').append(wrapDiv);
+    //     jQuery('#main-panel').prepend(wrapDiv);
     // CI
     if (location.host == 'jenkins-ci.iherb.net') {
         setInterval(renderDeployLink, 1000);
         setInterval(getJenkinsLog, 1000);
     } else if (location.host == 'jenkins.iherb.io') { // CD
-        var CDjobName = $('a.breadcrumbBarAnchor:last').text().split(/\s|\(/).shift();
+        //         var CDjobName = $('a.breadcrumbBarAnchor:last').text().split(/\s|\(/).shift();
+        var CDjobName = CIjobName;
         console.log(`CDjobName${CDjobName}`);
         var options = jQuery('input[value=VERSION]').next('select').children();
         for (var j = 0; j < options.length; j++) {
@@ -91,8 +103,18 @@ function transferLog(title) {
     console.log(title)
     var arr = JSON.parse(title);
     if (arr.length) {
-        for (var i = 0; i < arr.length; i++) {
-            res += `<div>${lymTM.dateFormat(new Date(arr[i].timestamp), 'yyyy-MM-dd hh:mm:ss')} <span style='font-weight:bolder'>${arr[i].message}</span> `;
+        for (var i = arr.length - 1; i >= 0; i--) {
+            if (arr[i] == null) {
+                res += '<hr/>';
+                continue;
+            }
+            var splitArr = arr[i].message.trim().split(' ');
+            var storyId = splitArr.shift();
+            var wrapMessage = arr[i].message;
+            if (/^\w*-\d*$/.test(storyId)) {
+                wrapMessage = `<a href='${lymTM.urls.JiraStoryLink(storyId)}' target='_blank'>${storyId}</a> ${splitArr.join(' ')}`;
+            }
+            res += `<div>${lymTM.dateFormat(new Date(arr[i].timestamp), 'yyyy-MM-dd hh:mm:ss')}<span style='font-weight:bolder'> ${arr[i].authorJenkinsId} </span><span>${wrapMessage}</span> `;
             var item = lymTM.createLink(arr[i].commitId.substring(0, 7), `${CIJenkinsOrigin}${arr[i].consoleUrl}`);
             item.style.fontSize = '13px';
             res += item.outerHTML;
@@ -111,7 +133,7 @@ async function renderDeployLink() {
         var version = $b.parent().next().text().split(':').pop().trim();
         // "".trim() return object is String {""}
         if (!version.length) { return; }
-        var commitNode = await lymTM.async($(`div.jobName:contains(${buildNo})~div.stage-start-box>div:last`));
+        var commitNode = $(`div.jobName:contains(${buildNo})~div.stage-start-box>div:last`);
         // deploy link not in left column
         var leftNeedDeploy = !$b.find('a:contains(deploy)').length;
         // deploy link not in right table

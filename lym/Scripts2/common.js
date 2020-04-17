@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Common
 // @namespace    http://tampermonkey.net/
-// @version      11
+// @version      12
 // @description  configs & util
 // @author       Yiming Liu
 // @include      *
@@ -33,12 +33,16 @@ unsafeWindow.lymTM = window.lymTM = {
     isJqueryObj: function (obj) {
         return ("jQuery" in unsafeWindow || "jQuery" in window) && obj instanceof jQuery;
     },
-    async: async function (obj, time = 100) {
+    async: async function (obj, execTime = 99999999999, time = 100) {
+        var untilTime = +new Date() + execTime;
         if (typeof obj == 'number') {// 参数是数字
             await this.sleep(obj);
         }
         else if (this.isJqueryObj(obj)) {// 参数是jQuery对象
             while (!jQuery(obj.selector).length) {
+                if (untilTime < new Date()) {
+                    break;
+                }
                 await this.sleep(time);
             }
             return jQuery(obj.selector);
@@ -52,6 +56,9 @@ unsafeWindow.lymTM = window.lymTM = {
                         break;
                     }
                 } else if (res) {
+                    break;
+                }
+                if (untilTime < new Date()) {
                     break;
                 }
                 await this.sleep(time);
@@ -103,12 +110,19 @@ unsafeWindow.lymTM = window.lymTM = {
         "CDJenkinsCS": "https://jenkins.iherb.io/job/backoffice/job/CS/job",
         "CDJenkinsBuildNow": "build?delay=0sec",
         "CIJenkinsCSSearch": "https://jenkins-ci.iherb.net/job/backoffice/job/CS/search/?q=",
-        "CSConfig": "https://bitbucket.org/iherbllc/backoffice.cs.config/src/master",
+        CSConfigValueEdit: (a) => `https://bitbucket.org/iherbllc/backoffice.cs.config/src/master/${a}/override/values.la-test.yaml?mode=edit&spa=0&at=master&fileviewer=file-view-default`,
+        //         CSConfigValue:(a)=>`https://bitbucket.org/iherbllc/backoffice.cs.config/src/master/${a}/override/values.la-test.yaml`,
         "DataDog": "https://app.datadoghq.com/infrastructure?filter=",
         BackOfficeTestSwagger: (a) => `https://backoffice-${a}.internal.iherbtest.io/swagger/index.html`,
         BackOfficeProdSwagger: (a) => `https://backoffice-${a}.central.iherb.io/swagger/index.html`,
         TfsLog: (a) => `https://tfs.iherb.net/tfs/iHerb%20Projects%20Collection/8c0065ee-bf13-4864-b26d-6c887fc45f05/_apis/build/builds/${a}/logs/3`,
         JenkinsLog: (a) => `https://jenkins-ci.iherb.net${a}/wfapi/changesets`,
+        JiraStoryLink: (a) => `https://iherbglobal.atlassian.net/browse/${a}`,
+        JiraFilterLink: "https://iherbglobal.atlassian.net/issues/?filter=11293",
+        JiraSprintLink: "https://iherbglobal.atlassian.net/secure/RapidBoard.jspa?rapidView=374",
+        BackOfficeConfigFile: (a) => (b) => `https://bitbucket.org/iherbllc/backoffice.${a}/raw/${b}/src/${a}.API/appsettings.json`,
+        BackOfficeConfigFileDev: (a) => (b) => `https://bitbucket.org/iherbllc/backoffice.${a}/raw/${b}/src/${a}.API/appsettings.Development.json`,
+        BranchListApi: (a) => `https://bitbucket.org/!api/internal/repositories/iherbllc/${a}/branch-list/?sort=ahead&pagelen=30&fields=values.name`
     },
     serviceConfigs: {},
     init: async function () {
@@ -221,11 +235,25 @@ unsafeWindow.lymTM = window.lymTM = {
             { "name": "backoffice.cs.proxy.service" },
             { "name": "backoffice.cs.customer.service" },
             { "name": "backoffice.cs.reward.core.service" },
+            {
+                "name": "backoffice.infrastructure.mailservice",
+                "jenkinsName": "backoffice-infrastructure-mailservice",
+                "configLinks": {
+                    "Test": "https://bitbucket.org/iherbllc/backoffice.reward.config/src/master/backoffice-infrastructure-mailservice/override/values.la-test.yaml?mode=edit&spa=0&at=master&fileviewer=file-view-default",
+                },
+                "projectConfigFile": (b) => `https://bitbucket.org/iherbllc/backoffice.infrastructure.mailservice/raw/${b}/src/iHerb.BackOffice.Infrastructure.MailService.Api/appsettings.json`,
+                "projectConfigFileDev": (b) => `https://bitbucket.org/iherbllc/backoffice.infrastructure.mailservice/raw/${b}/src/iHerb.BackOffice.Infrastructure.MailService.Api/appsettings.Development.json`,
+                "deployLinks": {
+                    "Jenkins": "https://jenkins.iherb.io/job/backoffice/job/RewardCampaign/job/backoffice-infrastructure-mailservice/"
+                },
+            },
 
         ];
         for (var item of this.serviceConfigs) {
             if (item.name.startsWith('backoffice.')) {
-                item.jenkinsName = item.name.replace('backoffice.', '').replace(/\./g, '-');
+                item.nameEx = item.name.replace('backoffice.', '');
+                item.projectName = item.nameEx.replace(/\.\w/g, (word) => word.toUpperCase()).replace(/^cs./, 'CS.');
+                item.jenkinsName = item.jenkinsName || item.nameEx.replace(/\./g, '-');
                 item.fullslug = item.fullslug || `iherbllc${item.name}`;
                 item.defaultBranch = item.defaultBranch || 'master';
                 item.buildLinks = item.buildLinks || {};
@@ -235,13 +263,15 @@ unsafeWindow.lymTM = window.lymTM = {
                 item.definitionIds = item.definitionIds || {};
                 item.buildLinks.Jenkins = item.buildLinks.Jenkins || `${this.urls.CIJenkinsCSSearch}${item.jenkinsName}`;
                 item.deployLinks.Jenkins = item.deployLinks.Jenkins || `${this.urls.CDJenkinsCS}/${item.jenkinsName}/`;
-                item.configLinks.Config = item.configLinks.Config || `${this.urls.CSConfig}/${item.jenkinsName}/`;
-                item.envLinks.Test = item.envLinks.Test || this.urls.BackOfficeTestSwagger(item.jenkinsName);
-                item.envLinks.Prod = item.envLinks.Prod || this.urls.BackOfficeProdSwagger(item.jenkinsName);
+                item.configLinks.Test = item.configLinks.Test || this.urls.CSConfigValueEdit(item.jenkinsName);
+                item.envLinks.Test = item.envLinks.Test || this.urls.BackOfficeTestSwagger(item.jenkinsName.replace(/^backoffice-/, ''));
+                item.envLinks.Prod = item.envLinks.Prod || this.urls.BackOfficeProdSwagger(item.jenkinsName.replace(/^backoffice-/, ''));
                 item.definitionIds[item.jenkinsName] = item.definitionIds[item.jenkinsName] || `${this.urls.CDJenkinsCS}/${item.jenkinsName}/${this.urls.CDJenkinsBuildNow}`;
+                item.projectConfigFile = item.projectConfigFile || this.urls.BackOfficeConfigFile(item.projectName);
+                item.projectConfigFileDev = item.projectConfigFileDev || this.urls.BackOfficeConfigFileDev(item.projectName);
             }
         }
-        this.async(() => this.cleanValues());
+        this.cleanValues();
     },
     keys: {
         'TfsBuildId': 'TfsBuildId', 'GMailBody': 'GMailBody', 'Tfs': 'Tfs', 'Jenkins': 'Jenkins'
@@ -260,6 +290,20 @@ unsafeWindow.lymTM = window.lymTM = {
         }
         return null;
     },
+    async getBranchesByName(jenkinsName) {
+        var branchList = [];
+        var res = this.serviceConfigs.filter((a) => a.jenkinsName == jenkinsName);
+        if (!res.length) return branchList;
+        var url = this.urls.BranchListApi(res[0].name);
+        try {
+            await $.ajax({
+                url: url, success: (res) => {
+                    branchList = res.values.map(a => a.name);
+                }
+            }).promise();
+        } catch (e) { }
+        return branchList;
+    },
     getDeployUrlByDefinitionId(id) {
         for (var a of this.serviceConfigs) {
             for (var key in a.definitionIds) {
@@ -267,6 +311,14 @@ unsafeWindow.lymTM = window.lymTM = {
             }
         }
         return '';
+    },
+    getProjectConfigFile: function (jenkinsName, branchName) {
+        var res = this.serviceConfigs.filter((a) => a.jenkinsName == jenkinsName);
+        return res.length ? res[0].projectConfigFile(branchName) : '';
+    },
+    getProjectConfigFileDev: function (jenkinsName, branchName) {
+        var res = this.serviceConfigs.filter((a) => a.jenkinsName == jenkinsName);
+        return res.length ? res[0].projectConfigFileDev(branchName) : '';
     },
     getDefaultBranch: function (name) {
         var res = this.serviceConfigs.filter((a) => a.name == name);
@@ -406,13 +458,20 @@ unsafeWindow.lymTM = window.lymTM = {
         this.originSet.call(obj, val);
         obj.dispatchEvent(this.inputEvent);
     },
-    getTfsLog(id, callback) {
+    async get(url, success, error) {
+        try {
+            await $.ajax({
+                url: url, success: success, error: error
+            }).promise();
+        } catch (e) { }
+    },
+    async getTfsLog(id, callback) {
         var val = this.getTfsLogFromCache(id);
         if (id in val) {
             callback(val[id]);
             return new Promise((a) => a());
         } else {
-            return $.ajax({
+            await $.ajax({
                 url: this.urls.TfsLog(id), success: res => {
                     var title = this.transLog(res);
                     val = this.getValue(this.keys.Tfs);
@@ -528,14 +587,62 @@ unsafeWindow.lymTM = window.lymTM = {
         }
         return wrapDiv;
     },
-    maskDiv(jobId, $) {
+    async maskDiv(condition, action, $) {
         $ = $ || unsafeWindow.$;
-        var maskDiv = $('<div style="background-color: #475fa585;height: 5000px;position: absolute;z-index: 9999;width: 5000px;top: 0;left: 0;"></div>');
+        var maskDiv = $('<div style="background-color: #ade2ff99;height: 5000px;position: absolute;z-index: 9999;width: 65%;top: 0px;left: 0px;"></div>');
+        var maskDivEx = $('<div style="background-color: #ffc6ba99;height: 5000px;position: absolute;z-index: 9999;width: 35%;top: 0px;left: 65%;"></div>');
+        var userAction = false;
+        var cancelSignal = false;
         maskDiv.click(function () {
-            this.remove();
-            clearTimeout(jobId);
+            userAction = true;
+            cancelSignal = false;
+            maskDiv.remove();
+            maskDivEx.remove();
         });
-        $('body').append(maskDiv);
+        maskDivEx.click(function () {
+            userAction = true;
+            cancelSignal = true;
+            maskDiv.remove();
+            maskDivEx.remove();
+        });
+        $('body').append(maskDiv).append(maskDivEx);
+        // wait user cancel or 1.5 seconds
+        await lymTM.async(() => userAction, 1500);
+        // wait condition, for example:chrome auto fill
+        console.log(3);
+        if (condition) {
+            await lymTM.async(condition);
+            // when user click, chrome auto fill event will trigger first,so we need to wait cancelSignal for a while;
+            await lymTM.async(50);
+        }
+        if (!cancelSignal) {
+            maskDiv.remove();
+            maskDivEx.remove();
+            action();
+        }
+    },
+    transferConfigJson(json, parentKey, res) {
+        if (!res) {
+            res = Object.create(null);
+        }
+        if (!parentKey) {
+            parentKey = '';
+        } else {
+            parentKey = `${parentKey}__`;
+        }
+        for (var key in json) {
+            var currentKey = parentKey + key;
+            if (json[key] instanceof Object) {
+                this.transferConfigJson(json[key], currentKey, res);
+            } else {
+                if (currentKey in res) {
+                    console.warn(`duplicated config '${currentKey}': '${res[currentKey]}' '${currentKey}: ${json[key]}'`);
+                } else {
+                    res[currentKey] = json[key];
+                }
+            }
+        }
+        return res;
     },
 
 };

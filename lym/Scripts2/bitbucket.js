@@ -1,12 +1,13 @@
 ﻿// ==UserScript==
 // @name         Bitbucket
 // @namespace    http://tampermonkey.net/
-// @version      11
+// @version      12
 // @description  pull request approver、build link、deploy link
 // @author       Yiming Liu
 // @include      mailto:*
 // @match        https://bitbucket.org/*
-// @match https://iherbglobal.atlassian.net/issues/?filter=*
+// @match        https://iherbglobal.atlassian.net/issues/?filter=*
+// @match        https://bitbucket.org/iherbllc/*config*.yaml?*mode=edit*
 // ==/UserScript==
 
 (async function wrap() {
@@ -23,6 +24,117 @@ async function process(func, time) {
     if (location.href.startsWith('https://bitbucket.org//')) {
         $('#error').prepend($(lymTM.createLabel('Redirecting')).css('font-size', '36px'));
         location.href = location.href.replace('https://bitbucket.org//', 'https://bitbucket.org/');
+        return;
+    }
+    if (location.href.includes('config') && location.search.includes('mode=edit')) {
+        var originConfig = $('div.codehilite>pre').text();
+        var existConfigs = Object.create(null);
+        var headConfigsRegx = /[\s\S]*\nconfigmap:\n  data:\n/;
+        var matchRes = $('div.codehilite>pre').text().match(headConfigsRegx);
+        var headConfigs;
+        if (matchRes) {
+            headConfigs = matchRes[0];
+        } else {
+            headConfigs = originConfig;
+        }
+        $('div.codehilite>pre').text().replace(headConfigs, '').split(/\n/).filter(a => a).forEach(a => {
+            var arr = a.split(': ');
+            if (arr.length != 2) {
+                console.log(`error when split config '${a}' by ': '`);
+            }
+            if (arr[0].trim() in existConfigs) {
+                console.warn(`duplicated config '${arr[0]}: ${existConfigs[arr[0]]}' '${a}'`);
+            } else {
+                existConfigs[arr[0].trim()] = arr[1].trim();
+            }
+        })
+
+        var jenkinsName = location.href.replace(/^.*\/master\/|/, '').split('/').shift();
+        jenkinsName = jenkinsName.replace(/^backoffice-/, '');
+        console.log(jenkinsName);
+        var copyConfigStr;
+        var processing = false;
+        var link = $(lymTM.createButton('Copy', () => { if (processing) { return; } lymTM.copy(copyConfigStr); link.fadeOut(200); setTimeout(() => link.fadeIn(200), 200) })).css({ 'display': 'inline', 'outline': 'none' });
+
+        var selectBranchAction = async function () {
+            processing = true;
+            link.fadeOut();
+            var branchName = this.value;
+            var projectConfigs = Object.create(null);
+            var configUrl = lymTM.getProjectConfigFile(jenkinsName, branchName);
+            console.log(configUrl);
+            await lymTM.get(configUrl, (res) => {
+                var json = JSON.parse(res);
+                projectConfigs = lymTM.transferConfigJson(json);
+            });
+            var configUrlDev = lymTM.getProjectConfigFileDev(jenkinsName, branchName);
+            console.log(configUrlDev);
+            await lymTM.get(configUrlDev, (res) => {
+                var json = JSON.parse(res);
+                $.extend(projectConfigs, lymTM.transferConfigJson(json));
+            });
+            //             console.log("projectConfigs",projectConfigs);
+            MergeConfig(projectConfigs);
+            link.fadeIn();
+            processing = false;
+        }
+
+        function MergeConfig(projectConfigs) {
+            var projectNewAddConfig = new Map(Object.keys(projectConfigs).filter(x => !(x in existConfigs)).map(x => [x, projectConfigs[x]]));
+            var existRedundantConfig = new Map(Object.keys(existConfigs).filter(x => !(x in projectConfigs)).map(x => [x, existConfigs[x]]));
+            var differentConfig = new Map(Object.keys(projectConfigs).filter(x => x in existConfigs && existConfigs[x] != projectConfigs[x].toString()).map(x => [x, [existConfigs[x], projectConfigs[x]]]));
+            console.log("existRedundantConfig", existRedundantConfig);
+            console.log("projectNewAddConfig", projectNewAddConfig);
+            console.log("differentConfig", differentConfig);
+            // projectConfigs will not overwrite existConfigs
+            $.extend(projectConfigs, existConfigs);
+            var keysArr = new Array(...Object.keys(projectConfigs)).sort();
+            //             console.log(keysArr);
+            var configStr = '';
+            for (var key of keysArr) {
+                var value = projectConfigs[key];
+                if (key == "ASPNETCORE_ENVIRONMENT") {
+                    configStr = `    ${key}: ${value}\n` + configStr;
+                } else {
+                    configStr += `    ${key}: ${value}\n`;
+                }
+            }
+            copyConfigStr = headConfigs + configStr;
+            //             console.log(copyConfigStr);
+        }
+
+        var branches = await lymTM.getBranchesByName(jenkinsName);
+        var options = '';
+        for (var branchName of branches) {
+            options += `<option>${branchName}</option>`;
+        }
+        var selectBranch = $(`<select>${options}</select>`).css({ 'margin': '10px', 'font-size': '16px' });
+        var useCustomer = $(lymTM.createButton('Input', () => {
+            var res = prompt();
+            if (!res) { return; }
+            try {
+                res = res.trim();
+                if (!res.startsWith('{')) {
+                    res = `{${res}}`;
+                }
+                res = JSON.parse(res);
+                if (!(res instanceof Object)) {
+                    throw "must be a json object";
+                }
+            } catch (e) {
+                alert(e);
+                return;
+            }
+            var configs = lymTM.transferConfigJson(res)
+            MergeConfig(configs);
+            lymTM.copy(copyConfigStr);
+            alert('copy success');
+        })).css({ 'display': 'inline', 'outline': 'none' });
+
+        $('#source-path>div:last-child').append(useCustomer).append(selectBranch).append(link);
+
+        selectBranch.change(selectBranchAction);
+        selectBranch.change();
         return;
     }
 
@@ -55,6 +167,7 @@ async function process(func, time) {
     // Build Links Deploy Links
     var wrapDiv = lymTM.generateRelativeLinks(serviceName, $);
     bread.append(wrapDiv);
+    $('div[offset][aria-hidden]>div>div:first').append(wrapDiv.clone().css('line-height', 3).children().css('margin', 5).end());
 
     // when page change bread is removed, run script again
     lymTM.nodeRemoveCallback(bread, func);
@@ -205,18 +318,19 @@ async function createBranchThread() {
     }
 
 }
+var filterLink = $(lymTM.createLink('Recent Work', lymTM.urls.JiraFilterLink)).attr('target', '_blank').css({ 'margin-left': '20px', 'font-size': '20px', 'font-weight': 'normal' });
+var sprintLink = $(lymTM.createLink('Active Sprint', lymTM.urls.JiraSprintLink)).attr('target', '_blank').css({ 'margin-left': '20px', 'font-size': '20px', 'font-weight': 'normal' });
 async function createMailLinkThread() {
     // as a job thread,force async a at first
     await lymTM.async();
+    var h2 = await lymTM.async($('h2:contains(Jira Software issues)'));
+    h2.append(sprintLink).append(filterLink);
     var rows = await lymTM.async($('tr[data-qa=jira-issue-row]'));
     // dashboard mail link
     if (location.href.includes('//bitbucket.org/dashboard/overview')) {
-        // 如果存在就不再增加
-        if ($('h2>a').length) { return; }
         lymTM.nodeRemoveCallback(rows.closest('table'), createMailLinkThread);
         var mailto = lymTM.getMailTo({ to: 'xiaoyu.luo@iherb.com', subject: 'Weekly Report ' + getFriday() });
         var mailLink = $(lymTM.createLink('Mail All', mailto)).attr('target', '_blank').css({ 'margin-left': '20px', 'font-size': '20px', 'font-weight': 'normal' });
-        var filterLink = $(lymTM.createLink('Filter', 'https://iherbglobal.atlassian.net/issues/?filter=11293')).attr('target', '_blank').css({ 'margin-left': '20px', 'font-size': '20px', 'font-weight': 'normal' });
         mailLink.click(async function () {
             var rows = $('tr[data-qa=jira-issue-row]');
             rows.closest('div').next('p').find('button').click();
@@ -228,7 +342,7 @@ async function createMailLinkThread() {
             //             lymTM.copy(res);
             lymTM.setValue(lymTM.keys.GMailBody, res);
         });
-        rows.closest('table').parent().parent().prev().find('h2').append(mailLink).append(filterLink);
+        h2.append(mailLink);
     }
 }
 async function createMailLinkThreadEx() {
