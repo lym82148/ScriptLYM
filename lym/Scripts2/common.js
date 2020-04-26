@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Common
 // @namespace    http://tampermonkey.net/
-// @version      12
+// @version      13
 // @description  configs & util
 // @author       Yiming Liu
 // @include      *
@@ -101,8 +101,10 @@ unsafeWindow.lymTM = window.lymTM = {
         { "userName": "Yiming Liu" },
         { "userName": "Tony (Sichao) Qian" },
         { "userName": "Diri (Jianwei) Guo" },
-
     ],
+    approvers: {
+        automation: [{ "userName": "Jane (Wenjing) Liu" }]
+    },
     localConfigs: { "swaggerTMConfig": "swaggerTMConfig" },
     urls: {
         "OctopusShop": "https://deploy.iherb.net/app#/projects/shop",
@@ -111,6 +113,7 @@ unsafeWindow.lymTM = window.lymTM = {
         "CDJenkinsBuildNow": "build?delay=0sec",
         "CIJenkinsCSSearch": "https://jenkins-ci.iherb.net/job/backoffice/job/CS/search/?q=",
         CSConfigValueEdit: (a) => `https://bitbucket.org/iherbllc/backoffice.cs.config/src/master/${a}/override/values.la-test.yaml?mode=edit&spa=0&at=master&fileviewer=file-view-default`,
+        CSConfigValueProdEdit: (a) => `https://bitbucket.org/iherbllc/backoffice.cs.config/src/master/${a}/override/values.oregon-central-0.yaml?mode=edit&spa=0&at=master&fileviewer=file-view-default`,
         //         CSConfigValue:(a)=>`https://bitbucket.org/iherbllc/backoffice.cs.config/src/master/${a}/override/values.la-test.yaml`,
         "DataDog": "https://app.datadoghq.com/infrastructure?filter=",
         BackOfficeTestSwagger: (a) => `https://backoffice-${a}.internal.iherbtest.io/swagger/index.html`,
@@ -211,8 +214,10 @@ unsafeWindow.lymTM = window.lymTM = {
                 },
                 "definitionIds": {
                     //                     "cs-customer-service": `${this.urls.CDJenkinsCS}/cs-customer-service/${this.urls.CDJenkinsBuildNow}`
-                }
+                },
+                "approvers": "automation",
             },
+            { "name": "backoffice.rewards-web-automation", "approvers": "automation" },
             {
                 "name": "backoffice.promos.manager.rewardservice",
                 "jenkinsName": "promos-manager-reward-service",
@@ -232,7 +237,10 @@ unsafeWindow.lymTM = window.lymTM = {
                 },
             },
             { "name": "backoffice.cs.reward.service" },
-            { "name": "backoffice.cs.proxy.service" },
+            {
+                "name": "backoffice.cs.proxy.service",
+                "projectConfigFileDev": (b) => `https://bitbucket.org/iherbllc/backoffice.cs.proxy.service/raw/${b}/src/Backoffice.CS.Proxy.Service.API/appsettings.Development.json`
+            },
             { "name": "backoffice.cs.customer.service" },
             { "name": "backoffice.cs.reward.core.service" },
             {
@@ -240,6 +248,7 @@ unsafeWindow.lymTM = window.lymTM = {
                 "jenkinsName": "backoffice-infrastructure-mailservice",
                 "configLinks": {
                     "Test": "https://bitbucket.org/iherbllc/backoffice.reward.config/src/master/backoffice-infrastructure-mailservice/override/values.la-test.yaml?mode=edit&spa=0&at=master&fileviewer=file-view-default",
+                    "Prod": "https://bitbucket.org/iherbllc/backoffice.reward.config/src/master/backoffice-infrastructure-mailservice/override/values.oregon-central-0.yaml?mode=edit&spa=0&at=master&fileviewer=file-view-default",
                 },
                 "projectConfigFile": (b) => `https://bitbucket.org/iherbllc/backoffice.infrastructure.mailservice/raw/${b}/src/iHerb.BackOffice.Infrastructure.MailService.Api/appsettings.json`,
                 "projectConfigFileDev": (b) => `https://bitbucket.org/iherbllc/backoffice.infrastructure.mailservice/raw/${b}/src/iHerb.BackOffice.Infrastructure.MailService.Api/appsettings.Development.json`,
@@ -264,9 +273,10 @@ unsafeWindow.lymTM = window.lymTM = {
                 item.buildLinks.Jenkins = item.buildLinks.Jenkins || `${this.urls.CIJenkinsCSSearch}${item.jenkinsName}`;
                 item.deployLinks.Jenkins = item.deployLinks.Jenkins || `${this.urls.CDJenkinsCS}/${item.jenkinsName}/`;
                 item.configLinks.Test = item.configLinks.Test || this.urls.CSConfigValueEdit(item.jenkinsName);
+                item.configLinks.Prod = item.configLinks.Prod || this.urls.CSConfigValueProdEdit(item.jenkinsName);
                 item.envLinks.Test = item.envLinks.Test || this.urls.BackOfficeTestSwagger(item.jenkinsName.replace(/^backoffice-/, ''));
                 item.envLinks.Prod = item.envLinks.Prod || this.urls.BackOfficeProdSwagger(item.jenkinsName.replace(/^backoffice-/, ''));
-                item.definitionIds[item.jenkinsName] = item.definitionIds[item.jenkinsName] || `${this.urls.CDJenkinsCS}/${item.jenkinsName}/${this.urls.CDJenkinsBuildNow}`;
+                item.definitionIds[item.jenkinsName] = item.definitionIds[item.jenkinsName] || `${item.deployLinks.Jenkins}${this.urls.CDJenkinsBuildNow}`;
                 item.projectConfigFile = item.projectConfigFile || this.urls.BackOfficeConfigFile(item.projectName);
                 item.projectConfigFileDev = item.projectConfigFileDev || this.urls.BackOfficeConfigFileDev(item.projectName);
             }
@@ -274,13 +284,19 @@ unsafeWindow.lymTM = window.lymTM = {
         this.cleanValues();
     },
     keys: {
-        'TfsBuildId': 'TfsBuildId', 'GMailBody': 'GMailBody', 'Tfs': 'Tfs', 'Jenkins': 'Jenkins'
+        'TfsBuildId': 'TfsBuildId', 'GMailBody': 'GMailBody', 'Tfs': 'Tfs', 'Jenkins': 'Jenkins', 'Swagger': 'Swagger'
     },
     swaggers: {
         "https://client-rewards-backoffice.internal.iherbtest.io/rewards/create": [
             "localhost:44300",
-            "backoffice-cs-reward-service.internal.iherbtest.io",
+            "backoffice-cs-reward-service.internal.iherbtest.io"
         ],
+        "https://cs-portal.backoffice.iherbtest.net/rewards": [
+            "localhost:54319",
+            "backoffice-cs-reward-core-service.internal.iherbtest.io",
+            "localhost:56322",
+            "backoffice-cs-customer-service.internal.iherbtest.io",
+        ]
     },
     searchConfigByUrl(url) {
         for (var a of this.serviceConfigs) {
@@ -340,8 +356,13 @@ unsafeWindow.lymTM = window.lymTM = {
         var res = this.serviceConfigs.filter((a) => a.name == name);
         return res.length ? res[0].envLinks : { 'N/A': 'javascript:alert("env link not found for service:' + name + '")' };
     },
-    getApproveUsers: function (curUser) {
-        return this.teamMembers.filter((a) => a.userName != curUser);
+    getApproveUsers: function (curUser, name) {
+        var res = this.serviceConfigs.filter((a) => a.name == name);
+        if (res.length && res[0].approvers) {
+            return this.approvers[res[0].approvers].filter((a) => a.userName != curUser);
+        } else {
+            return this.teamMembers.filter((a) => a.userName != curUser);
+        }
     },
     start: function () {
         return {
@@ -452,10 +473,23 @@ unsafeWindow.lymTM = window.lymTM = {
     },
     inputEvent: new Event('input', { bubbles: true }),
     originSet: Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set,
+    originSetTextArea: Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set,
+    originSetSelect: Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value').set,
+    originSetOption: Object.getOwnPropertyDescriptor(HTMLOptionElement.prototype, 'selected').set,
+
+
     // for react change input value
     reactSet(obj, val) {
         obj = this.transferJqueryObj(obj);
-        this.originSet.call(obj, val);
+        if (obj instanceof HTMLInputElement) {
+            this.originSet.call(obj, val);
+        } else if (obj instanceof HTMLTextAreaElement) {
+            this.originSetTextArea.call(obj, val);
+        } else if (obj instanceof HTMLSelectElement) {
+            this.originSetSelect.call(obj, val);
+        } else if (obj instanceof HTMLOptionElement) {
+            this.originSetOption.call(obj, val);
+        }
         obj.dispatchEvent(this.inputEvent);
     },
     async get(url, success, error) {
@@ -482,10 +516,72 @@ unsafeWindow.lymTM = window.lymTM = {
             }).promise();
         }
     },
+    clearSwaggerCache(id) {
+        var val = this.getSwaggerCacheFromCache(id);
+        val[id] = [];
+        this.setValueNotExpired(this.keys.Swagger, val);
+    },
+    updateSwaggerCache(id, key, alwaysTop, txt) {
+        var val = this.getSwaggerCacheFromCache(id);
+        if (val[id]) {
+            var index = val[id].findIndex(a => a.guid == key);
+            var model = val[id][index];
+            if (model) {
+                if (alwaysTop != null) {
+                    model.alwaysTop = alwaysTop;
+                    val[id].splice(index, 1);
+                    if (model.alwaysTop) {
+                        val[id].push(model);
+                    } else {
+                        val[id].unshift(model);
+                    }
+                }
+                if (txt != null) { model.txt = txt; }
+                this.setValueNotExpired(this.keys.Swagger, val);
+            }
+        }
+    },
+    setSwaggerCache(id, value) {
+        var val = this.getSwaggerCacheFromCache(id);
+        if (!val[id]) {
+            val[id] = [];
+        }
+        var index = val[id].findIndex(b => JSON.stringify(b.value) == JSON.stringify(value));
+        var newItem = Object.create(null);
+        if (index >= 0) {
+            var temp = val[id][index];
+            delete val[id][index];
+            val[id] = val[id].filter(b => b);
+            newItem = temp;
+            newItem.count++;
+        } else {
+            newItem.value = value;
+            newItem.count = 1;
+            newItem.guid = this.guid();
+        }
+        val[id].push(newItem);
+        while (val[id].length > 10) {
+            val[id].shift();
+        }
+        this.setValueNotExpired(this.keys.Swagger, val);
+        return val;
+    },
+    getSwaggerCache(id) {
+        var val = this.getSwaggerCacheFromCache(id);
+        return val[id];
+    },
+    getSwaggerCacheFromCache() {
+        var val = this.getValue(this.keys.Swagger);
+        if (val == null) {
+            val = Object.create(null);
+            this.setValueNotExpired(this.keys.Swagger, val);
+        }
+        return val;
+    },
     getTfsLogFromCache(id) {
         var val = this.getValue(this.keys.Tfs);
         if (val == null) {
-            val = {};
+            val = Object.create(null);
             this.setValueNotExpired(this.keys.Tfs, val);
         }
         return val;
@@ -493,7 +589,7 @@ unsafeWindow.lymTM = window.lymTM = {
     getJenkinsLogFromCache() {
         var val = this.getValue(this.keys.Jenkins);
         if (val == null) {
-            val = {};
+            val = Object.create(null);
             this.setValueNotExpired(this.keys.Jenkins, val);
         }
         return val;
@@ -538,15 +634,20 @@ unsafeWindow.lymTM = window.lymTM = {
         var val = this.getJenkinsLogFromCache();
         var url = this.urls.JenkinsLog(id);
         if (key in val) {
-            callback(val[key]);
+            if (callback) {
+                callback(val[key]);
+            }
             return new Promise((a) => a());
         } else {
             this.setValue(url, key);
             var tab = this.open(url);
             return new Promise(resolve => {
                 lymTM.listenOnce(url, async (a, b, c) => {
+                    console.log('close tab:', id);
                     tab.close();
-                    callback(c.value);
+                    if (callback) {
+                        callback(c.value);
+                    }
                     var val = this.getValue(this.keys.Jenkins);
                     val[key] = c.value;
                     this.setValueNotExpired(this.keys.Jenkins, val);
@@ -609,7 +710,6 @@ unsafeWindow.lymTM = window.lymTM = {
         // wait user cancel or 1.5 seconds
         await lymTM.async(() => userAction, 1500);
         // wait condition, for example:chrome auto fill
-        console.log(3);
         if (condition) {
             await lymTM.async(condition);
             // when user click, chrome auto fill event will trigger first,so we need to wait cancelSignal for a while;
@@ -644,6 +744,12 @@ unsafeWindow.lymTM = window.lymTM = {
         }
         return res;
     },
+    guid() {
+        var S4 = () => (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1);
+        return (S4() + S4() + "-" + S4() + "-" + S4() + "-" + S4() + "-" + S4() + S4() + S4());
+    },
+
+
 
 };
 lymTM.init();

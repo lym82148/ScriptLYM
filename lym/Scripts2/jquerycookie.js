@@ -1,20 +1,21 @@
 ﻿// ==UserScript==
 // @name         jQueryCookie
 // @namespace    http://tampermonkey.net/
-// @version      3
+// @version      4
 // @description  try to take over the world!
 // @author       You
-// get token for swagger
+// get token for swagger reward portal
 // @match        https://client-rewards-backoffice.internal.iherbtest.io/*
 // @match        https://rewards-web.backoffice.iherbtest.net/*
+// get token for swagger new cs portal
+// @match        https://cs-portal.backoffice.iherbtest.net/*
 // get token for swagger login page
 // @match        https://security-identity-test.iherb.net/core/login*
 // @grant        none
 // ==/UserScript==
 
 (function (factory) {
-
-	if (typeof define === 'function' && define.amd) {
+    if (typeof define === 'function' && define.amd) {
 		// AMD
 		define(['jquery'], factory);
 	} else if (typeof exports === 'object') {

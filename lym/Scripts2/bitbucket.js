@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Bitbucket
 // @namespace    http://tampermonkey.net/
-// @version      12
+// @version      13
 // @description  pull request approver、build link、deploy link
 // @author       Yiming Liu
 // @include      mailto:*
@@ -50,15 +50,20 @@ async function process(func, time) {
         })
 
         var jenkinsName = location.href.replace(/^.*\/master\/|/, '').split('/').shift();
-        jenkinsName = jenkinsName.replace(/^backoffice-/, '');
+        //         jenkinsName = jenkinsName.replace(/^backoffice-/, '');
         console.log(jenkinsName);
         var copyConfigStr;
         var processing = false;
-        var link = $(lymTM.createButton('Copy', () => { if (processing) { return; } lymTM.copy(copyConfigStr); link.fadeOut(200); setTimeout(() => link.fadeIn(200), 200) })).css({ 'display': 'inline', 'outline': 'none' });
-
+        var link = $(lymTM.createButton('', () => {
+            if (processing) { return; } console.log(copyConfigStr);
+            lymTM.copy(copyConfigStr);
+            link.fadeOut(200);
+            setTimeout(() => link.fadeIn(200), 200)
+        })).css({ 'display': 'inline', 'outline': 'none', 'margin-left': '40px' });
         var selectBranchAction = async function () {
             processing = true;
             link.fadeOut();
+            ClearRenderDiff();
             var branchName = this.value;
             var projectConfigs = Object.create(null);
             var configUrl = lymTM.getProjectConfigFile(jenkinsName, branchName);
@@ -78,38 +83,131 @@ async function process(func, time) {
             link.fadeIn();
             processing = false;
         }
+        var projectNewAddConfig;
+        var existRedundantConfig;
+        var differentConfig;
+        function ClearRenderDiff() {
+            copyConfigStr = '';
+            $(`pre.CodeMirror-line`).each((a, b) => { b.style.backgroundColor = null; b.title = ''; });
+            projectNewAddConfig = existRedundantConfig = differentConfig = new Map();
+        }
+        function RenderDiff() {
+            var entity;
+            var configLines = $('div.CodeMirror-code>div:contains(configmap:)').next('div:contains(data:)').nextAll();
+            var keyList = [];
+            configLines.each((index, line) => {
+                var $line = $(line);
+                var preChild = $line.find('pre').children();
+                var key = preChild.text().replace(/: .*$/, '').replace(/\u200B/g, '').trim();
+                keyList.push(key);
+                var value = preChild.text().replace(/^.*?: /, '').trim();
+                if (!key) { return; }
+                var newTransparent = '#00ff7b33';
+                var redundantTransparent = '#ff8c0033';
+                var redundantAdjustment = '#ff000033'
+                var white = 'white';
+                //                 console.log(key);
+                if (existRedundantConfig.get(key) != undefined) {
+                    if (value != existRedundantConfig.get(key)) {
+                        // 变更状态 value 不一致的 key
+                        preChild.find('span:lt(2)').css('background-color', redundantAdjustment);
+                        preChild.css('background-color', newTransparent).attr('title', `original value【${existRedundantConfig.get(key)}】`);
+                    } else {
+                        // 未变更状态 多余的 key
+                        preChild.css('background-color', redundantTransparent).attr('title', 'the config is not in project');
+                    }
+                } else if (key in existConfigs) {
+                    if (value != existConfigs[key]) {
+                        // 变更状态 value 不一致的 key
+                        preChild.find('span:lt(2)').css('background-color', white);
+                        preChild.css('background-color', newTransparent).attr('title', `original value【${existConfigs[key]}】`);
+                    } else {
+                        // 未变更状态 value 不一致的 key
+                        var entity = differentConfig.get(key);
+                        if (entity != undefined) {
+                            preChild.find('span:lt(2)').css('background-color', white);
+                            preChild.css('background-color', redundantTransparent).attr('title', `the value in project is 【${entity[1]}】`).mousedown(((a) => () => lymTM.copy(a))(entity[1]));
+                        }
+                    }
+                } else {
+                    // 新增的 key
+                    preChild.css('background-color', newTransparent).attr('title', 'new config');
+                }
 
+            });
+            var errKeyList = keyList.filter(i => keyList.indexOf(i) != keyList.lastIndexOf(i));
+            configLines.each((index, line) => {
+                var $line = $(line);
+                var lineTag = $line.children('div>div');
+                var preChild = $line.find('pre').children();
+                var lineText = preChild.text().replace(/\u200B/g, '');
+                var key = lineText.replace(/: .*$/, '').trim();
+                var error = 'red';
+                var titleContent = '';
+                var cssObj = { 'padding': '0 0 0 1.5em', 'line-height': '16px', 'margin': '0px' };
+                if (key.trim() == '') { return; }
+                if (errKeyList.includes(key)) {
+                    // 重复的 key
+                    titleContent = `Duplicate key:${key}`;
+                    lineTag.addClass('aui-message aui-message-warning').css(cssObj).attr('title', titleContent);
+                }
+                else if (!lineText.includes(': ')) {
+                    // 没有冒号空格分隔的配置项
+                    if (lineText.includes('：')) {
+                        titleContent = `config must include ': ' instead of '：'`;
+                    } else {
+                        titleContent = `config must include ': '`;
+                    }
+                    lineTag.addClass('aui-message aui-message-warning').css(cssObj).attr('title', titleContent);
+                } else {
+                    lineTag.removeClass('aui-message aui-message-warning').attr('title', '');
+                }
+            });
+        }
         function MergeConfig(projectConfigs) {
-            var projectNewAddConfig = new Map(Object.keys(projectConfigs).filter(x => !(x in existConfigs)).map(x => [x, projectConfigs[x]]));
-            var existRedundantConfig = new Map(Object.keys(existConfigs).filter(x => !(x in projectConfigs)).map(x => [x, existConfigs[x]]));
-            var differentConfig = new Map(Object.keys(projectConfigs).filter(x => x in existConfigs && existConfigs[x] != projectConfigs[x].toString()).map(x => [x, [existConfigs[x], projectConfigs[x]]]));
+            projectNewAddConfig = new Map(Object.keys(projectConfigs).filter(x => !(x in existConfigs)).map(x => [x, projectConfigs[x]]));
+            existRedundantConfig = new Map(Object.keys(existConfigs).filter(x => !(x in projectConfigs)).map(x => [x, existConfigs[x]]));
+            differentConfig = new Map(Object.keys(projectConfigs).filter(x => x in existConfigs && existConfigs[x] != projectConfigs[x].toString()).map(x => [x, [existConfigs[x], projectConfigs[x]]]));
             console.log("existRedundantConfig", existRedundantConfig);
             console.log("projectNewAddConfig", projectNewAddConfig);
             console.log("differentConfig", differentConfig);
+            // do not order by key, order by updated time
             // projectConfigs will not overwrite existConfigs
-            $.extend(projectConfigs, existConfigs);
-            var keysArr = new Array(...Object.keys(projectConfigs)).sort();
+            //             $.extend(projectConfigs, existConfigs);
+            //             var keysArr = new Array(...Object.keys(projectConfigs)).sort();
             //             console.log(keysArr);
             var configStr = '';
-            for (var key of keysArr) {
-                var value = projectConfigs[key];
-                if (key == "ASPNETCORE_ENVIRONMENT") {
-                    configStr = `    ${key}: ${value}\n` + configStr;
-                } else {
-                    configStr += `    ${key}: ${value}\n`;
-                }
+            //             for (var key of Object.keys(existConfigs)) {
+            //                 var value = existConfigs[key];
+            //                 if (key == "ASPNETCORE_ENVIRONMENT") {
+            //                     configStr = `    ${key}: ${value}\n` + configStr;
+            //                 } else {
+            //                     configStr += `    ${key}: ${value}\n`;
+            //                 }
+            //             }
+            //             for (key of Object.keys(projectConfigs)) {
+            //                 if(key in existConfigs){continue;}
+            //                 value = projectConfigs[key];
+            //                 configStr += `    ${key}: ${value}\n`;
+            //             }
+            for (var entity of projectNewAddConfig) {
+                configStr += `    ${entity[0]}: ${entity[1]}\n`;
             }
-            copyConfigStr = headConfigs + configStr;
-            //             console.log(copyConfigStr);
+            if (projectNewAddConfig.size) {
+                link.html(`Copy ${projectNewAddConfig.size} new config`);
+            } else {
+                link.html(`No new config`);
+            }
+            copyConfigStr = configStr;
         }
-
+        debugger;
         var branches = await lymTM.getBranchesByName(jenkinsName);
         var options = '';
         for (var branchName of branches) {
             options += `<option>${branchName}</option>`;
         }
-        var selectBranch = $(`<select>${options}</select>`).css({ 'margin': '10px', 'font-size': '16px' });
-        var useCustomer = $(lymTM.createButton('Input', () => {
+        var selectBranch = $(`<select>${options}</select>`).css({ 'margin-top': '10px', 'font-size': '16px', 'margin-bottom': '10px' });
+        var useCustomer = $(lymTM.createButton('Input config json', () => {
             var res = prompt();
             if (!res) { return; }
             try {
@@ -126,15 +224,33 @@ async function process(func, time) {
                 return;
             }
             var configs = lymTM.transferConfigJson(res)
+            ClearRenderDiff();
             MergeConfig(configs);
             lymTM.copy(copyConfigStr);
             alert('copy success');
         })).css({ 'display': 'inline', 'outline': 'none' });
-
-        $('#source-path>div:last-child').append(useCustomer).append(selectBranch).append(link);
+        var hr = $('<hr/>').css({ 'margin': '2px', 'border': 0 });
+        var div = $('<div/>')
+        var wrapDivEx = $('<div/>');
+        wrapDivEx.append(hr).append(selectBranch).append(div).append(useCustomer).append(link);
+        $('#source-path>div:last-child').append(wrapDivEx);
 
         selectBranch.change(selectBranchAction);
         selectBranch.change();
+
+        var textarea = await lymTM.async($('div.CodeMirror textarea'));
+        // 支持中文输入
+        textarea[0].onkeyup = async () => { await lymTM.async(100); RenderDiff() };
+        // 支持删除
+        textarea[0].onkeydown = RenderDiff;
+        // 支持输入
+        textarea[0].oninput = RenderDiff;
+        // 支持右键粘贴
+        textarea[0].onpaste = RenderDiff;
+        // 保底方案
+        setInterval(RenderDiff, 1000);
+        var styleMock = $('<style>body.adg3 .aui-message::after{margin-top:0px;left:39px;top:0px}</style>')
+        $('body').prepend(styleMock);
         return;
     }
 
@@ -161,7 +277,7 @@ async function process(func, time) {
     // 当前用户名
     var curUserName = $('#bb-bootstrap').data('current-user').displayName;
     // 审核者列表
-    var approveUsers = lymTM.getApproveUsers(curUserName);
+    var approveUsers = lymTM.getApproveUsers(curUserName, serviceName);
     console.table({ curUserName, serviceName });
 
     // Build Links Deploy Links

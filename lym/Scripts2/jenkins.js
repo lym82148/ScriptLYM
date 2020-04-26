@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Jenkins
 // @namespace    http://tampermonkey.net/
-// @version      6
+// @version      7
 // @description  CI CD
 // @author       Yiming Liu
 // @match        https://jenkins-ci.iherb.net/*
@@ -30,6 +30,7 @@ async function process(wrap, time) {
     if (location.pathname.startsWith("/login")) {
         // todo
         var submitBtn = await lymTM.async($('form input:submit'));
+        $('#remember_me').prop('checked', true);
         await lymTM.maskDiv(() => $('input[name=j_password]').val(), () => submitBtn.click());
         return;
     }
@@ -62,7 +63,7 @@ async function process(wrap, time) {
     } else if (location.host == 'jenkins.iherb.io') { // CD
         //         var CDjobName = $('a.breadcrumbBarAnchor:last').text().split(/\s|\(/).shift();
         var CDjobName = CIjobName;
-        console.log(`CDjobName${CDjobName}`);
+        console.log(`CDjobName:${CDjobName}`);
         var options = jQuery('input[value=VERSION]').next('select').children();
         for (var j = 0; j < options.length; j++) {
             var option = options.eq(j);
@@ -130,7 +131,7 @@ async function renderDeployLink() {
     $('tr.build-row div.build-controls>div.build-badge').each(async (a, b) => {
         var $b = $(b);
         var buildNo = $b.closest('td').find('a.display-name').text().replace(/\u200B/g, '').trim();
-        var version = $b.parent().next().text().split(':').pop().trim();
+        var version = $b.parent().next().text().split(':').pop().trim().replace(/\u200b/g, '');
         // "".trim() return object is String {""}
         if (!version.length) { return; }
         var commitNode = $(`div.jobName:contains(${buildNo})~div.stage-start-box>div:last`);
@@ -160,10 +161,10 @@ async function getJenkinsLog() {
     var changeList = await lymTM.async($('td.stage-start .stage-start-box:has(div.changeset-box:not(.no-changes))'));
     for (var i = 0; i < changeList.length; i++) {
         var item = changeList.eq(i);
-        var buildId = item.prev().text().trim().replace('#', '');
-        var packageName = $(`.pane.build-name:has([href$="/${buildId}/"])`).siblings('.desc').text().trim();
+        var buildId = item.prev().text().trim().replace('#', '').replace(/\u200b/g, '');
+        var packageName = $(`.pane.build-name:has([href$="/${buildId}/"])`).siblings('.desc').text().trim().replace(/\u200b/g, '');
         if (buildId && packageName) {
-            await lymTM.getJenkinsLogEx(`${location.pathname}${buildId}`, (a) => console.log(a), `${packageName}`);
+            await lymTM.getJenkinsLogEx(`${location.pathname}${buildId}`, null, `${packageName}`);
         }
     }
 }
