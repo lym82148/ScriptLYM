@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Swagger
 // @namespace    http://tampermonkey.net/
-// @version      9
+// @version      10
 // @description  swagger
 // @author       Yiming Liu
 // all swaggers
@@ -155,10 +155,10 @@ async function process(func, time) {
                         editBtn.click();
                     }
                 });
-                var alwaysTop = $('<input type="button" class="btn" value="AlwaysTop"/>').css({ 'margin': '5px' }).click(function () {
+                var alwaysTop = $('<input type="button" class="btn" value=""/>').css({ 'margin': '5px' }).click(function () {
                     var select = $(this).siblings('select');
                     var guid = select.find(':selected').val();
-                    if (alwaysTop.val().includes('✔')) {
+                    if (alwaysTop.val().includes('Unpin')) {
                         lymTM.updateSwaggerCache(key, guid, false, null);
                     } else {
                         lymTM.updateSwaggerCache(key, guid, true, null);
@@ -166,7 +166,7 @@ async function process(func, time) {
                     refresh($b, guid);
                 });
                 var clearBtn = $('<input type="button" class="btn" value="ClearAll"/>').css({ 'margin': '5px' }).click(function () {
-                    if (confirm(`clear cache ${key}`)) {
+                    if (confirm(`clear all cache ${key} ?`)) {
                         var select = $(this).siblings('select');
                         var guid = select.find(':selected').val();
                         lymTM.clearSwaggerCache(key);
@@ -189,7 +189,7 @@ async function process(func, time) {
                                     mainValue = res[1];
                                     break;
                                 }
-                                if (res[2]) {
+                                if (res[2] && !mainKey) {
                                     mainKey = res[2];
                                     mainValue = res[3];
                                 }
@@ -202,21 +202,15 @@ async function process(func, time) {
                             mainValue = item.value[mainKey];
                             break;
                         }
-                        if (/id$/i.test(field)) {
+                        if (/id$/i.test(field) && !mainKey) {
                             mainKey = field;
                             mainValue = item.value[mainKey];
                         }
                     }
                     console.log(`${mainKey}:${mainValue}`)
-                    mainValue = mainValue.replace(/^(\w{4}).*(\w{4})$/, '$1***$2');
+                    mainValue = mainValue.toString().replace(/^(\w{4}).*(\w{4})$/, '$1***$2');
                     var option = $(`<option value='${item.guid}' data-json='${JSON.stringify(item)}'>${item.alwaysTop ? '★' : ''} ${mainValue} ${item.txt || ''} (${item.count})</option>`);
                     select.prepend(option);
-                    //                     if(item.alwaysTop){
-                    //                         alwaysTop.val('✔AlwaysTop');
-                    //                     }else{
-                    //                         alwaysTop.val('❌AlwaysTop');
-                    //                     }
-                    //                     txt.val(item.txt);
                 }
                 function findMainKey(obj, res) {
                     if (!res) { res = [] };
@@ -239,10 +233,10 @@ async function process(func, time) {
                 function setFields() {
                     var key = `${envKey}_${block.attr('id')}`;
                     var body = swaggerCache[key][swaggerCache[key].length - 1 - select.prop('selectedIndex')];
-                    console.log(body);
+                    //                     console.log(body);
                     var table = block.find('table.parameters');
                     for (var field of Object.keys(body.value)) {
-                        var row = table.find(`tr[data-param-name=${field}]`);
+                        var row = table.find(`tr div.parameter__name:contains(${field})`).closest('tr');
                         if (!row.length) continue;
                         var box = row.find('td.parameters-col_description').find('input,select,textarea:first').first();
                         switch (box.prop('tagName')) {
@@ -261,19 +255,17 @@ async function process(func, time) {
                     var tryBtn = block.find('.try-out__btn:not(.cancel)');
                     if (tryBtn.length) {
                         tryBtn.click();
-                    } else {
-                        setFields();
                     }
+                    setFields();
                     var json = select.find(':selected').data('json');
                     if (json.alwaysTop) {
-                        alwaysTop.val('✔alwaysTop');
+                        alwaysTop.val('Unpin');
                     } else {
-                        alwaysTop.val('❌alwaysTop');
+                        alwaysTop.val('Pin');
                     }
                     txt.val(json.txt);
                 });
                 $b.before(wrapDiv);
-                select.prop('selectedIndex', 0);
                 block.find('.try-out__btn').click(async () => {
                     await lymTM.async();
                     block.find('table.parameters>tbody>tr:not([data-param-name])').each((a, b) => {
@@ -290,6 +282,7 @@ async function process(func, time) {
                 var $b = $(b);
                 $b.attr('lymtm-processed', '');
                 initLine($b);
+                $b.prev('div:not([class])').find('select').prop('selectedIndex', 0).change();
             });
         }, 100)
         return;

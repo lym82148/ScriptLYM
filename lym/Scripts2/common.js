@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Common
 // @namespace    http://tampermonkey.net/
-// @version      13
+// @version      14
 // @description  configs & util
 // @author       Yiming Liu
 // @include      *
@@ -122,7 +122,7 @@ unsafeWindow.lymTM = window.lymTM = {
         JenkinsLog: (a) => `https://jenkins-ci.iherb.net${a}/wfapi/changesets`,
         JiraStoryLink: (a) => `https://iherbglobal.atlassian.net/browse/${a}`,
         JiraFilterLink: "https://iherbglobal.atlassian.net/issues/?filter=11293",
-        JiraSprintLink: "https://iherbglobal.atlassian.net/secure/RapidBoard.jspa?rapidView=374",
+        JiraSprintLink: (a) => `https://iherbglobal.atlassian.net/secure/RapidBoard.jspa?rapidView=374&assignee=${a}`,
         BackOfficeConfigFile: (a) => (b) => `https://bitbucket.org/iherbllc/backoffice.${a}/raw/${b}/src/${a}.API/appsettings.json`,
         BackOfficeConfigFileDev: (a) => (b) => `https://bitbucket.org/iherbllc/backoffice.${a}/raw/${b}/src/${a}.API/appsettings.Development.json`,
         BranchListApi: (a) => `https://bitbucket.org/!api/internal/repositories/iherbllc/${a}/branch-list/?sort=ahead&pagelen=30&fields=values.name`
@@ -291,7 +291,8 @@ unsafeWindow.lymTM = window.lymTM = {
             "localhost:44300",
             "backoffice-cs-reward-service.internal.iherbtest.io"
         ],
-        "https://cs-portal.backoffice.iherbtest.net/rewards": [
+        "https://cs-portal.backoffice.iherbtest.net/rewards/hyperwallet": [
+            "localhost:5000",
             "localhost:54319",
             "backoffice-cs-reward-core-service.internal.iherbtest.io",
             "localhost:56322",
@@ -335,6 +336,16 @@ unsafeWindow.lymTM = window.lymTM = {
     getProjectConfigFileDev: function (jenkinsName, branchName) {
         var res = this.serviceConfigs.filter((a) => a.jenkinsName == jenkinsName);
         return res.length ? res[0].projectConfigFileDev(branchName) : '';
+    },
+    getRefreshLogLink: function (name) {
+        var res = this.serviceConfigs.filter((a) => a.name == name);
+        if (res.length && res[0].buildLinks) {
+            var key = Object.keys(res[0].buildLinks);
+            var value = res[0].buildLinks[key];
+            if (value) {
+                return `${value}#refresh`;
+            }
+        }
     },
     getDefaultBranch: function (name) {
         var res = this.serviceConfigs.filter((a) => a.name == name);
@@ -629,6 +640,14 @@ unsafeWindow.lymTM = window.lymTM = {
             if (line.includes('HEAD is now at')) { break; }
         }
         return title;
+    },
+    setJenkinsLogNoChange(id, key) {
+        var val = this.getJenkinsLogFromCache();
+        var url = this.urls.JenkinsLog(id);
+        if (!(key in val)) {
+            val[key] = null;
+            this.setValueNotExpired(this.keys.Jenkins, val);
+        }
     },
     getJenkinsLogEx(id, callback, key) {
         var val = this.getJenkinsLogFromCache();
