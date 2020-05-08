@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Bitbucket
 // @namespace    http://tampermonkey.net/
-// @version      14
+// @version      15
 // @description  pull request approver、build link、deploy link
 // @author       Yiming Liu
 // @include      mailto:*
@@ -148,6 +148,7 @@ async function process(func, time) {
                 var preChild = $line.find('pre').children();
                 var lineText = preChild.text().replace(/\u200B/g, '');
                 var key = lineText.replace(/: .*$/, '').trim();
+                var value = lineText.replace(/^.*?: /, '').trim();
                 var error = 'red';
                 var titleContent = '';
                 var cssObj = { 'padding': '0 0 0 1.5em', 'line-height': '16px', 'margin': '0px' };
@@ -165,6 +166,9 @@ async function process(func, time) {
                         titleContent = `config must include ': '`;
                     }
                     lineTag.addClass('aui-message aui-message-warning').css(cssObj).attr('title', titleContent);
+                }
+                else if (value == '*') {
+                    lineTag.addClass('aui-message aui-message-warning').css(cssObj).attr('title', 'error value *');
                 } else {
                     lineTag.removeClass('aui-message aui-message-warning').attr('title', '');
                 }
@@ -253,8 +257,8 @@ async function process(func, time) {
         // 支持右键粘贴
         textarea[0].onpaste = RenderDiff;
         // 保底方案
-        setInterval(RenderDiff, 1000);
-        var styleMock = $('<style>body.adg3 .aui-message::after{margin-top:0px;left:39px;top:0px}</style>')
+        lymTM.runJob(RenderDiff, 1000);
+        var styleMock = $('<style>body.adg3 .aui-message::after{margin-top:0px;left:39px;top:0px;cursor:default;}</style>')
         $('body').prepend(styleMock);
         return;
     }
@@ -262,8 +266,8 @@ async function process(func, time) {
     // job
     createBranchThread();
     // not need await
-    setInterval(createMailLinkThread, 300);
-    setInterval(createMailLinkThreadEx, 300);
+    lymTM.runJob(createMailLinkThread, 300);
+    lymTM.runJob(createMailLinkThreadEx, 300);
     // 当前用户Id
     var curUserId = $('#bb-bootstrap').data('atlassian-id');
     sprintLink.attr('href', lymTM.urls.JiraSprintLink(curUserId));
@@ -361,10 +365,10 @@ function transferRowToModel(row) {
     var link = $(row).find('td a');
     var href = link.attr('href');
     var textNode = link.prop('lastChild');
-    var arr = textNode.wholeText.split('-');
+    var arr = (textNode.wholeText || textNode.textContent).split('-');
     var serviceName = arr.length == 1 ? '' : arr[0].trim();
-    var content = textNode.wholeText.replace(serviceName, '').replace('-', '').trim();
-    var storyId = link.find('span').text();
+    var content = (textNode.wholeText || textNode.textContent).replace(serviceName, '').replace('-', '').trim();
+    var storyId = link.find('span:first').text();
     var statusText = link.end().find('td>div>span').text();
     return { storyId, href, serviceName, content, statusText };
 }

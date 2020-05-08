@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Common
 // @namespace    http://tampermonkey.net/
-// @version      14
+// @version      15
 // @description  configs & util
 // @author       Yiming Liu
 // @include      *
@@ -181,7 +181,7 @@ unsafeWindow.lymTM = window.lymTM = {
             //                     "Jenkins": `${this.urls.CIJenkinsCSSearch}cs-customer-service`
             //                 },
             //                 "deployLinks": {
-            //                     "Jenkins":  `${this.urls.CDJenkinsCS}/cs-customer-service/`
+            //                     "Jenkins":  `${this.urls.CDJenkinsCS}/cs-customer-service/${this.urls.CDJenkinsBuildNow}`
             //                 },
             //                 "configLinks": {
             //                     "Config": `${this.urls.CSConfig}/cs-customer-service/`
@@ -203,7 +203,7 @@ unsafeWindow.lymTM = window.lymTM = {
                     //                     "Jenkins": `${this.urls.CIJenkinsCSSearch}cs-customer-service`
                 },
                 "deployLinks": {
-                    //                     "Jenkins":  `${this.urls.CDJenkinsCS}/cs-customer-service/`
+                    //                     "Jenkins":  `${this.urls.CDJenkinsCS}/cs-customer-service/${this.urls.CDJenkinsBuildNow}`
                 },
                 "configLinks": {
                     //                     "Config": `${this.urls.CSConfig}/cs-customer-service/`
@@ -234,6 +234,34 @@ unsafeWindow.lymTM = window.lymTM = {
                 },
                 "envLinks": {
                     "Test": "",
+                },
+            },
+            {
+                "name": "User",
+                "envLinks": {
+                    "Test": "https://user-external-api.internal.iherbtest.io/swagger/index.html",
+                    "Prod": "https://user-external-api.central.iherb.io/swagger/index.html"
+                },
+            },
+            {
+                "name": "NewCsPortal",
+                "envLinks": {
+                    "Test": "https://cs-portal.backoffice.iherbtest.net/rewards/hyperwallet",
+                    "Prod": "https://cs-portal.backoffice.iherb.net/rewards/hyperwallet"
+                },
+            },
+            {
+                "name": "RewardPortal",
+                "envLinks": {
+                    "Test": "https://client-rewards-backoffice.internal.iherbtest.io/rewards",
+                    "Prod": "https://rewards-web.backoffice.iherb.net/rewards"
+                },
+            },
+            {
+                "name": "RewardPortalEx",
+                "envLinks": {
+                    "Test": "https://rewards-web.backoffice.iherbtest.net/rewards",
+                    "Prod": "https://rewards-web.backoffice.iherb.net/rewards"
                 },
             },
             { "name": "backoffice.cs.reward.service" },
@@ -271,12 +299,12 @@ unsafeWindow.lymTM = window.lymTM = {
                 item.envLinks = item.envLinks || {};
                 item.definitionIds = item.definitionIds || {};
                 item.buildLinks.Jenkins = item.buildLinks.Jenkins || `${this.urls.CIJenkinsCSSearch}${item.jenkinsName}`;
-                item.deployLinks.Jenkins = item.deployLinks.Jenkins || `${this.urls.CDJenkinsCS}/${item.jenkinsName}/`;
+                item.deployLinks.Jenkins = item.deployLinks.Jenkins || `${this.urls.CDJenkinsCS}/${item.jenkinsName}/${this.urls.CDJenkinsBuildNow}`;
                 item.configLinks.Test = item.configLinks.Test || this.urls.CSConfigValueEdit(item.jenkinsName);
                 item.configLinks.Prod = item.configLinks.Prod || this.urls.CSConfigValueProdEdit(item.jenkinsName);
                 item.envLinks.Test = item.envLinks.Test || this.urls.BackOfficeTestSwagger(item.jenkinsName.replace(/^backoffice-/, ''));
                 item.envLinks.Prod = item.envLinks.Prod || this.urls.BackOfficeProdSwagger(item.jenkinsName.replace(/^backoffice-/, ''));
-                item.definitionIds[item.jenkinsName] = item.definitionIds[item.jenkinsName] || `${item.deployLinks.Jenkins}${this.urls.CDJenkinsBuildNow}`;
+                item.definitionIds[item.jenkinsName] = item.definitionIds[item.jenkinsName] || `${item.deployLinks.Jenkins}`;
                 item.projectConfigFile = item.projectConfigFile || this.urls.BackOfficeConfigFile(item.projectName);
                 item.projectConfigFileDev = item.projectConfigFileDev || this.urls.BackOfficeConfigFileDev(item.projectName);
             }
@@ -291,15 +319,40 @@ unsafeWindow.lymTM = window.lymTM = {
             "localhost:44300",
             "backoffice-cs-reward-service.internal.iherbtest.io"
         ],
+        "https://rewards-web.backoffice.iherb.net/rewards": [
+            "backoffice-cs-reward-service.central.iherb.io"
+        ],
         "https://cs-portal.backoffice.iherbtest.net/rewards/hyperwallet": [
             "localhost:5000",
             "localhost:54319",
             "backoffice-cs-reward-core-service.internal.iherbtest.io",
             "localhost:56322",
             "backoffice-cs-customer-service.internal.iherbtest.io",
+        ],
+        "https://cs-portal.backoffice.iherb.net/rewards/hyperwallet": [
+            "backoffice-cs-reward-core-service.central.iherb.io",
+            "backoffice-cs-customer-service.central.iherb.io",
         ]
     },
-    searchConfigByUrl(url) {
+    searchConfigByHost(location) {
+        for (var a of this.serviceConfigs) {
+            for (var key in a.envLinks) {
+                if (this.sameHost(a.envLinks[key], location)) { return a; }
+            }
+        }
+        return null;
+    },
+    sameHost(a, b) {
+        try {
+            var urlA = new URL(a);
+            var urlB = new URL(b);
+            return urlA.host == urlB.host;
+        } catch (e) {
+            console.log(e, a, b);
+            return false;
+        }
+    },
+    searchConfigByUrl_CanDeleteAfter20200601(url) {
         for (var a of this.serviceConfigs) {
             for (var key in a.envLinks) {
                 if (a.envLinks[key] == url) { return a; }
@@ -483,6 +536,7 @@ unsafeWindow.lymTM = window.lymTM = {
         return id;
     },
     inputEvent: new Event('input', { bubbles: true }),
+    changeEvent: new Event('change', { bubbles: true }),
     originSet: Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set,
     originSetTextArea: Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set,
     originSetSelect: Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value').set,
@@ -491,24 +545,28 @@ unsafeWindow.lymTM = window.lymTM = {
 
     // for react change input value
     reactSet(obj, val) {
+        var event = this.inputEvent;
         obj = this.transferJqueryObj(obj);
+        var eventObj = obj;
         if (obj instanceof HTMLInputElement) {
             this.originSet.call(obj, val);
         } else if (obj instanceof HTMLTextAreaElement) {
             this.originSetTextArea.call(obj, val);
         } else if (obj instanceof HTMLSelectElement) {
-            this.originSetSelect.call(obj, val);
+            event = this.changeEvent;
         } else if (obj instanceof HTMLOptionElement) {
             this.originSetOption.call(obj, val);
+            event = this.changeEvent;
+            eventObj = obj.parentNode;
         }
-        obj.dispatchEvent(this.inputEvent);
+        eventObj.dispatchEvent(event);
     },
     async get(url, success, error) {
         try {
             await $.ajax({
                 url: url, success: success, error: error
             }).promise();
-        } catch (e) { }
+        } catch (e) { console.log(e); }
     },
     async getTfsLog(id, callback) {
         var val = this.getTfsLogFromCache(id);
@@ -649,30 +707,30 @@ unsafeWindow.lymTM = window.lymTM = {
             this.setValueNotExpired(this.keys.Jenkins, val);
         }
     },
-    getJenkinsLogEx(id, callback, key) {
+    async getJenkinsLogEx(id, callback, key, $) {
         var val = this.getJenkinsLogFromCache();
         var url = this.urls.JenkinsLog(id);
         if (key in val) {
             if (callback) {
                 callback(val[key]);
             }
-            return new Promise((a) => a());
+            //             return new Promise((a) => a());
         } else {
             this.setValue(url, key);
-            var tab = this.open(url);
-            return new Promise(resolve => {
-                lymTM.listenOnce(url, async (a, b, c) => {
-                    console.log('close tab:', id);
-                    tab.close();
+            var resolve = (data) => {
+                if (data) {
+                    var commits = [null];
+                    data.forEach(b => commits = commits.concat(b.commits, null));
+                    console.log('commits', commits);
                     if (callback) {
-                        callback(c.value);
+                        callback(commits);
                     }
                     var val = this.getValue(this.keys.Jenkins);
-                    val[key] = c.value;
+                    val[key] = commits;
                     this.setValueNotExpired(this.keys.Jenkins, val);
-                    resolve();
-                });
-            });
+                }
+            }
+            $.ajax(url, { success: resolve });
         }
     },
     getServiceNameByJenkinsName(jenkinsName) {
@@ -767,7 +825,26 @@ unsafeWindow.lymTM = window.lymTM = {
         var S4 = () => (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1);
         return (S4() + S4() + "-" + S4() + "-" + S4() + "-" + S4() + "-" + S4() + S4() + S4());
     },
-
+    runJob(func, ts, immediately = true) {
+        var processing = false;
+        var job = async () => {
+            if (processing) {
+                return;
+            } else {
+                processing = true;
+                try {
+                    await func();
+                } catch (e) {
+                    console.log(e);
+                }
+                processing = false;
+            }
+        };
+        setInterval(job, ts);
+        if (immediately) {
+            setTimeout(job, 0);
+        }
+    },
 
 
 };

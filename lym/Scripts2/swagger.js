@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Swagger
 // @namespace    http://tampermonkey.net/
-// @version      10
+// @version      11
 // @description  swagger
 // @author       Yiming Liu
 // all swaggers
@@ -9,8 +9,10 @@
 // get token from reward portal
 // @match        https://client-rewards-backoffice.internal.iherbtest.io/rewards/create*
 // @match        https://rewards-web.backoffice.iherbtest.net/rewards/create*
+// @match        https://rewards-web.backoffice.iherb.net/rewards*
 // get token from new cs portal
 // @match        https://cs-portal.backoffice.iherbtest.net/rewards*
+// @match        https://cs-portal.backoffice.iherb.net/rewards/hyperwallet*
 // auto login reward portal
 // @match        https://security-identity-test.iherb.net/core/login*
 // @require      file://c:\iHerb\tmConfig.js
@@ -26,6 +28,21 @@
 })();
 
 async function process(func, time) {
+    var authValue;
+    var isProd = !location.host.includes('test');
+    var authBtn = lymTM.createButton(isProd ? 'Auth Prod' : 'Auth', async function () {
+        if (authValue) {
+            lymTM.reactSet(this.previousSibling, authValue);
+            await lymTM.async(200);
+            // confirm auth
+            $('button.auth.authorize').click();
+            await lymTM.async(200);
+            // close auth popup
+            $('button.auth.btn-done').click();
+        }
+    });
+    authBtn.style.display = 'inline';
+    authBtn.style.marginLeft = '10px';
     // all swagger
     if (location.href.includes('/swagger/')) {
         var swagger = location.host;
@@ -34,15 +51,18 @@ async function process(func, time) {
             console.log(`config not found for swagger:${swagger}`);
             var swaggerAuth = window[lymTM.localConfigs.swaggerTMConfig][location.host];
             if (swaggerAuth) {
-                var btn = await lymTM.async($('button.authorize'));
-                // open auth popup
-                btn.click();
-                var input = await lymTM.async($('div.auth-container input'));
-                lymTM.reactSet(input, swaggerAuth);
-                // confirm auth
-                $('button.auth.authorize').click();
-                // close auth popup
-                $('button.auth.btn-done').click();
+                authValue = swaggerAuth;
+                if (!isProd) {
+                    var btn = await lymTM.async($('button.authorize'));
+                    // open auth popup
+                    btn.click();
+                    var input = await lymTM.async($('div.auth-container input'));
+                    lymTM.reactSet(input, swaggerAuth);
+                    // confirm auth
+                    $('button.auth.authorize').click();
+                    // close auth popup
+                    $('button.auth.btn-done').click();
+                }
             }
         } else {
             var tab = lymTM.open(env);
@@ -50,46 +70,21 @@ async function process(func, time) {
             lymTM.listenOnce(env, async (a, b, c) => {
                 console.log(c.value);
                 tab.close();
-                var btn = await lymTM.async($('button.authorize'));
-                // open auth popup
-                btn.click();
-                var input = await lymTM.async($('div.auth-container input'));
-                lymTM.reactSet(input, `Bearer ${c.value}`);
-                // confirm auth
-                $('button.auth.authorize').click();
-                // close auth popup
-                $('button.auth.btn-done').click();
+                authValue = `Bearer ${c.value}`;
+                if (!isProd) {
+                    var btn = await lymTM.async($('button.authorize'));
+                    // open auth popup
+                    btn.click();
+                    var input = await lymTM.async($('div.auth-container input'));
+                    lymTM.reactSet(input, authValue);
+                    // confirm auth
+                    $('button.auth.authorize').click();
+                    // close auth popup
+                    $('button.auth.btn-done').click();
+                }
             });
         }
-        // envLinks on swagger title
-        var config = lymTM.searchConfigByUrl(location.href);
-        if (config) {
-            var envLinks = config.envLinks;
-            if (envLinks) {
-                var wrapDiv = $('<div></div>')
-                for (var d in envLinks) {
-                    var link = createLink(d, envLinks[d]);
-                    link.appendTo(wrapDiv);
-                }
-                wrapDiv.mouseout(function () {
-                    render(this);
-                });
-                wrapDiv.mouseenter(function () {
-                    showAll(this);
-                });
-                wrapDiv.mousemove(function () {
-                    showAll(this);
-                });
-                render(wrapDiv);
-                $('a[rel]:first').append(wrapDiv);
-            }
-            var serviceName = config.name;
-            console.log(`serviceName:${serviceName}`)
-            var wrapDivEx = lymTM.generateRelativeLinks(serviceName, $, location.href);
-            wrapDivEx.css('margin', '8px');
-            var node = await lymTM.async($('h2.title'));
-            node.after(wrapDivEx);
-        }
+
         var envKey = location.host.includes('central.iherb.io') ? 'prod' : 'test';
         var swaggerCache = lymTM.getSwaggerCacheFromCache();
         $('body').on('click', 'button.execute', async function () {
@@ -245,7 +240,8 @@ async function process(func, time) {
                                 lymTM.reactSet(box, body.value[field]);
                                 break;
                             case "SELECT":
-                                box.val(body.value[field]);
+                                box.children().each((a, b) => { b.selected = body.value[field].includes(b.value) });
+                                lymTM.reactSet(box);
                                 break;
                         }
 
@@ -277,18 +273,25 @@ async function process(func, time) {
                 });
             }
         }
-        setInterval(() => {
+        lymTM.runJob(() => {
             $('div.try-out:not([lymtm-processed])').each((a, b) => {
                 var $b = $(b);
                 $b.attr('lymtm-processed', '');
                 initLine($b);
                 $b.prev('div:not([class])').find('select').prop('selectedIndex', 0).change();
             });
-        }, 100)
+        }, 100);
+        lymTM.runJob(async () => {
+            var authContent = await lymTM.async($('.auth-container input:text'));
+            if (!authContent.next(authBtn).length) {
+                authContent.after(authBtn);
+            }
+        }, 100);
         return;
     } else {
         // cs portal page
-        if (location.host == 'client-rewards-backoffice.internal.iherbtest.io' || location.host == 'security-identity-test.iherb.net' || location.host == 'cs-portal.backoffice.iherbtest.net') {
+        if (location.host == 'client-rewards-backoffice.internal.iherbtest.io' || location.host == 'security-identity-test.iherb.net' || location.host == 'cs-portal.backoffice.iherbtest.net'
+            || location.host == 'rewards-web.backoffice.iherb.net' || location.host == 'cs-portal.backoffice.iherb.net') {
             var value = $.cookie('AccessToken');
             console.log(value);
             if (value) {
@@ -301,31 +304,5 @@ async function process(func, time) {
 
     }
 }
-function createLink(content, url) {
-    var link = $(`<span>${content}</span>`);
-    link.css({
-        'background-color': '#FFFFFF',
-        'border-radius': '3px',
-        opacity: '70%',
-        color: '#89bf04',
-        'font-size': '14px',
-        'font-weight': 'normal',
-        padding: '4px 8px',
-        'line-height': '20px',
-        margin: '3px',
-    });
-    link.data('url', url);
-    if (url != location.href) {
-        link.css('cursor', 'pointer');
-        link.click(function () { lymTM.openActive($(this).data('url')) });
-    }
-    return link;
-}
-function render(div) {
-    $(div).children().each(function () {
-        if ($(this).data('url') != location.href) { $(this).css('opacity', '10%'); } else { $(this).css('opacity', '80%'); }
-    });
-}
-function showAll(div) {
-    $(div).children().css('opacity', '80%');
-}
+
+

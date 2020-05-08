@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Jenkins
 // @namespace    http://tampermonkey.net/
-// @version      8
+// @version      9
 // @description  CI CD
 // @author       Yiming Liu
 // @match        https://jenkins-ci.iherb.net/*
@@ -66,8 +66,8 @@ async function process(wrap, time) {
     //     jQuery('#main-panel').prepend(wrapDiv);
     // CI
     if (location.host == 'jenkins-ci.iherb.net') {
-        setInterval(renderDeployLink, 1000);
-        setInterval(getJenkinsLog, 1000);
+        lymTM.runJob(renderDeployLink, 1000);
+        lymTM.runJob(getJenkinsLog, 1000);
     } else if (location.host == 'jenkins.iherb.io') { // CD
         //         var CDjobName = $('a.breadcrumbBarAnchor:last').text().split(/\s|\(/).shift();
         var CDjobName = CIjobName;
@@ -130,6 +130,8 @@ async function process(wrap, time) {
                 }
                 if (!title) {
                     dataTitle = title = 'refresh to get log';
+                    option.html(`　${option.val()}`);
+                } else if (title == 'no changes') {
                     option.html(`☆ ${option.val()}`);
                 } else {
                     option.html(`★ ${option.val()}`);
@@ -161,8 +163,7 @@ async function process(wrap, time) {
                 divCommit.html('');
             }
         };
-        refreshLogJob();
-        setInterval(refreshLogJob, 300);
+        lymTM.runJob(refreshLogJob, 300);
         jQuery('input[value=VERSION]').next().change(refreshDiv).after(divCommit);
         var curVersion = lymTM.getValue(CDjobName);
         var versionSelect = jQuery('input[value=VERSION]').next();
@@ -180,6 +181,17 @@ async function process(wrap, time) {
             lymTM.open(refreshLink);
         });
         versionSelect.css({ 'padding-bottom': '7px' }).after(refreshBtn.css({ 'margin': '5px', 'display': 'inline' }));
+        var val = lymTM.getJenkinsLogFromCache();
+        var top3HasLog = $('input[value=VERSION]+select>option:lt(3)').toArray().all(a => {
+            var packageNameKey = `${CDjobName}:${a.value}`;
+            if (packageNameKey in val) {
+                return true;
+            }
+            return false;
+        });
+        if (!top3HasLog) {
+            refreshBtn.click();
+        }
     }
 
 }
@@ -245,7 +257,14 @@ async function renderDeployLink() {
 var finishPackages = [];
 var processingPackages = [];
 async function getJenkinsLog() {
-    var changeList = await lymTM.async($('td.stage-start .stage-start-box:has(div.changeset-box)'));
+    var nodata = $('#pipeline-box').find('div.alert-info:contains("No data available")');
+    if (nodata.length && location.hash == '#refresh') {
+        close();
+    }
+    var changeList = await lymTM.async($('td.stage-start .stage-start-box:has(div.changeset-box)'), 1000);
+    if (!changeList.length) {
+        return;
+    }
     var allPackages = changeList.prev().text().replace(/\u200b/g, '').split('#').filter(a => a);
     if (location.hash == '#refresh') {
         if (!allPackages.filter(a => !finishPackages.includes(a)).length) {
@@ -255,7 +274,7 @@ async function getJenkinsLog() {
     for (var i = 0; i < changeList.length; i++) {
         var item = changeList.eq(i);
         var buildId = item.prev().text().trim().replace('#', '').replace(/\u200b/g, '');
-        var packageName = $(`.pane.build-name:has([href$="/${buildId}/"])`).siblings('.desc').text().trim().replace(/\u200b/g, '');
+        var packageName = $(`.pane.build-name:has([href$="/${buildId}/"])`).closest('td').find('.pane.desc').text().trim().replace(/\u200b/g, '');
         if (item.find('.no-changes').length) {
             lymTM.setJenkinsLogNoChange(`${location.pathname}${buildId}`, `${packageName}`);
             if (!finishPackages.includes(buildId)) {
@@ -266,14 +285,14 @@ async function getJenkinsLog() {
         else if (buildId && packageName) {
             if (!processingPackages.includes(buildId)) {
                 processingPackages.push(buildId);
-                await lymTM.getJenkinsLogEx(`${location.pathname}${buildId}`, () => {
+                await lymTM.getJenkinsLogEx(`${location.pathname}${buildId}`, ((buildId) => () => {
                     if (!finishPackages.includes(buildId)) {
                         finishPackages.push(buildId);
                     }
                     if (processingPackages.includes(buildId)) {
                         processingPackages.splice(processingPackages.indexOf(buildId), 1);
                     }
-                }, `${packageName}`);
+                })(buildId), `${packageName}`, $);
             }
         } else {
             if (!finishPackages.includes(buildId)) {
