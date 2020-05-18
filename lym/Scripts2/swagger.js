@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Swagger
 // @namespace    http://tampermonkey.net/
-// @version      11
+// @version      12
 // @description  swagger
 // @author       Yiming Liu
 // all swaggers
@@ -15,6 +15,7 @@
 // @match        https://cs-portal.backoffice.iherb.net/rewards/hyperwallet*
 // auto login reward portal
 // @match        https://security-identity-test.iherb.net/core/login*
+// @match        https://secauthext.iherb.net/core/login*
 // @require      file://c:\iHerb\tmConfig.js
 // ==/UserScript==
 
@@ -291,7 +292,8 @@ async function process(func, time) {
     } else {
         // cs portal page
         if (location.host == 'client-rewards-backoffice.internal.iherbtest.io' || location.host == 'security-identity-test.iherb.net' || location.host == 'cs-portal.backoffice.iherbtest.net'
-            || location.host == 'rewards-web.backoffice.iherb.net' || location.host == 'cs-portal.backoffice.iherb.net') {
+            || location.host == 'rewards-web.backoffice.iherb.net' || location.host == 'cs-portal.backoffice.iherb.net'
+            || location.host == 'secauthext.iherb.net') {
             var value = $.cookie('AccessToken');
             console.log(value);
             if (value) {

@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         EnvironmentSwitch
 // @namespace    http://tampermonkey.net/
-// @version      0.2
+// @version      1
 // @description  test prod switch
 // @author       Yiming Liu
 // @include      https://*iherb*/*
@@ -20,7 +20,6 @@
 async function process(func, time) {
     // envLinks on swagger title
     var config = lymTM.searchConfigByHost(location);
-    debugger;
     console.log(config);
     if (!config || !config.envLinks) {
         console.log('no config for environment switch');
@@ -36,9 +35,8 @@ async function process(func, time) {
             addDataUrl(link, envLinkKey, envLinks[envLinkKey]);
             link.appendTo(wrapDiv);
         }
-        targetContent = $('a[rel]:first');
-        wrapDiv.css('height', '30px');
-
+        targetContent = $('a.link:first').css('max-width', '360px');
+        wrapDiv.css({ 'width': '250px' });
         var serviceName = config.name;
         console.log(`serviceName:${serviceName}`)
         var wrapDivEx = lymTM.generateRelativeLinks(serviceName, $, location.href);
@@ -47,6 +45,7 @@ async function process(func, time) {
         wrapDivEx.css('margin', '8px');
         var node = await lymTM.async($('h2.title'));
         node.after(wrapDivEx);
+        targetContent.closest('div.topbar').css({ 'position': 'fixed', 'width': '100%', 'margin-top': '-52px' });
     }
     // new cs portal & reward portal
     else if (location.host == 'cs-portal.backoffice.iherbtest.net' || location.host == 'cs-portal.backoffice.iherb.net'

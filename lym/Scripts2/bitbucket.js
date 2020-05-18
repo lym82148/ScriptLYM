@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Bitbucket
 // @namespace    http://tampermonkey.net/
-// @version      15
+// @version      16
 // @description  pull request approver、build link、deploy link
 // @author       Yiming Liu
 // @include      mailto:*
@@ -41,6 +41,7 @@ async function process(func, time) {
             var arr = a.split(': ');
             if (arr.length != 2) {
                 console.log(`error when split config '${a}' by ': '`);
+                return;
             }
             if (arr[0].trim() in existConfigs) {
                 console.warn(`duplicated config '${arr[0]}: ${existConfigs[arr[0]]}' '${a}'`);

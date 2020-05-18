@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Common
 // @namespace    http://tampermonkey.net/
-// @version      15
+// @version      16
 // @description  configs & util
 // @author       Yiming Liu
 // @include      *
@@ -113,6 +113,7 @@ unsafeWindow.lymTM = window.lymTM = {
         "CDJenkinsBuildNow": "build?delay=0sec",
         "CIJenkinsCSSearch": "https://jenkins-ci.iherb.net/job/backoffice/job/CS/search/?q=",
         CSConfigValueEdit: (a) => `https://bitbucket.org/iherbllc/backoffice.cs.config/src/master/${a}/override/values.la-test.yaml?mode=edit&spa=0&at=master&fileviewer=file-view-default`,
+        CSConfigValuePreprodEdit: (a) => `https://bitbucket.org/iherbllc/backoffice.cs.config/src/master/${a}/override/values.oregon-central-preprod-0.yaml?mode=edit&spa=0&at=master&fileviewer=file-view-default`,
         CSConfigValueProdEdit: (a) => `https://bitbucket.org/iherbllc/backoffice.cs.config/src/master/${a}/override/values.oregon-central-0.yaml?mode=edit&spa=0&at=master&fileviewer=file-view-default`,
         //         CSConfigValue:(a)=>`https://bitbucket.org/iherbllc/backoffice.cs.config/src/master/${a}/override/values.la-test.yaml`,
         "DataDog": "https://app.datadoghq.com/infrastructure?filter=",
@@ -265,6 +266,7 @@ unsafeWindow.lymTM = window.lymTM = {
                 },
             },
             { "name": "backoffice.cs.reward.service" },
+            { "name": "backoffice.cs.zendesk.syncjob" },
             {
                 "name": "backoffice.cs.proxy.service",
                 "projectConfigFileDev": (b) => `https://bitbucket.org/iherbllc/backoffice.cs.proxy.service/raw/${b}/src/Backoffice.CS.Proxy.Service.API/appsettings.Development.json`
@@ -284,7 +286,40 @@ unsafeWindow.lymTM = window.lymTM = {
                     "Jenkins": "https://jenkins.iherb.io/job/backoffice/job/RewardCampaign/job/backoffice-infrastructure-mailservice/"
                 },
             },
-
+            {
+                "name": "legacy.csportal-zendesk",
+                "jenkinsName": "csportal-zendesk",
+                "buildLinks": {
+                    "Jenkins": "https://jenkins-ci.iherb.net/job/checkout/job/csportal-zendesk/job/csportal-zendesk/",
+                },
+                "logLinks": {
+                    "Prod": "https://es-prod.iherb.net/_plugin/kibana/app/kibana#/discover?_g=(refreshInterval:(pause:!t,value:0),time:(from:now-24h,mode:quick,to:now))&_a=(columns:!(message,kubernetes.container_name),filters:!(('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'!'backoffice-cs!'',key:kubernetes.container_name,negate:!f,params:(query:zendesk,type:phrase),type:phrase,value:zendesk),query:(match:(kubernetes.container_name:(query:zendesk,type:phrase))))),index:checkout,interval:auto,query:(language:lucene,query:''),sort:!('@timestamp',desc))"
+                }
+            },
+            {
+                "name": "rewards-csportal",
+                "envLinks": {
+                    "Test": "https://rewards-csportal.internal.iherbtest.io/swagger/index.html",
+                    "Preprod": "https://rewards-csportal.central.iherbpreprod.io/swagger/index.html",
+                    "Prod": "https://rewards-csportal.central.iherb.io/swagger/index.html",
+                }
+            },
+            {
+                "name": "rewards-cashout-csportal",
+                "envLinks": {
+                    "Test": "https://rewards-cashout-csportal.internal.iherbtest.io/swagger/index.html",
+                    "Preprod": "https://rewards-cashout-csportal.central.iherbpreprod.io/swagger/index.html",
+                    "Prod": "https://rewards-cashout-csportal.central.iherb.io/swagger/index.html",
+                }
+            },
+            {
+                "name": "rewards",
+                "envLinks": {
+                    "Test": "https://rewards.internal.iherbtest.io/swagger/index.html",
+                    "Preprod": "https://rewards.central.iherbpreprod.io/swagger/index.html",
+                    "Prod": "https://rewards.central.iherb.io/swagger/index.html",
+                }
+            }
         ];
         for (var item of this.serviceConfigs) {
             if (item.name.startsWith('backoffice.')) {
@@ -301,6 +336,7 @@ unsafeWindow.lymTM = window.lymTM = {
                 item.buildLinks.Jenkins = item.buildLinks.Jenkins || `${this.urls.CIJenkinsCSSearch}${item.jenkinsName}`;
                 item.deployLinks.Jenkins = item.deployLinks.Jenkins || `${this.urls.CDJenkinsCS}/${item.jenkinsName}/${this.urls.CDJenkinsBuildNow}`;
                 item.configLinks.Test = item.configLinks.Test || this.urls.CSConfigValueEdit(item.jenkinsName);
+                item.configLinks.Preprod = item.configLinks.ProProd || this.urls.CSConfigValuePreprodEdit(item.jenkinsName);
                 item.configLinks.Prod = item.configLinks.Prod || this.urls.CSConfigValueProdEdit(item.jenkinsName);
                 item.envLinks.Test = item.envLinks.Test || this.urls.BackOfficeTestSwagger(item.jenkinsName.replace(/^backoffice-/, ''));
                 item.envLinks.Prod = item.envLinks.Prod || this.urls.BackOfficeProdSwagger(item.jenkinsName.replace(/^backoffice-/, ''));
@@ -316,11 +352,10 @@ unsafeWindow.lymTM = window.lymTM = {
     },
     swaggers: {
         "https://client-rewards-backoffice.internal.iherbtest.io/rewards/create": [
-            "localhost:44300",
-            "backoffice-cs-reward-service.internal.iherbtest.io"
+
         ],
         "https://rewards-web.backoffice.iherb.net/rewards": [
-            "backoffice-cs-reward-service.central.iherb.io"
+
         ],
         "https://cs-portal.backoffice.iherbtest.net/rewards/hyperwallet": [
             "localhost:5000",
@@ -328,10 +363,13 @@ unsafeWindow.lymTM = window.lymTM = {
             "backoffice-cs-reward-core-service.internal.iherbtest.io",
             "localhost:56322",
             "backoffice-cs-customer-service.internal.iherbtest.io",
+            "localhost:44300",
+            "backoffice-cs-reward-service.internal.iherbtest.io"
         ],
         "https://cs-portal.backoffice.iherb.net/rewards/hyperwallet": [
             "backoffice-cs-reward-core-service.central.iherb.io",
             "backoffice-cs-customer-service.central.iherb.io",
+            "backoffice-cs-reward-service.central.iherb.io"
         ]
     },
     searchConfigByHost(location) {
@@ -419,6 +457,10 @@ unsafeWindow.lymTM = window.lymTM = {
     getEnvLinks: function (name) {
         var res = this.serviceConfigs.filter((a) => a.name == name);
         return res.length ? res[0].envLinks : { 'N/A': 'javascript:alert("env link not found for service:' + name + '")' };
+    },
+    getLogLinks: function (name) {
+        var res = this.serviceConfigs.filter((a) => a.name == name);
+        return res.length ? res[0].logLinks : { 'N/A': 'javascript:alert("log link not found for service:' + name + '")' };
     },
     getApproveUsers: function (curUser, name) {
         var res = this.serviceConfigs.filter((a) => a.name == name);
@@ -628,7 +670,9 @@ unsafeWindow.lymTM = window.lymTM = {
             newItem.count = 1;
             newItem.guid = this.guid();
         }
-        val[id].push(newItem);
+        //         val[id].push(newItem);
+        var alwaysTopIndex = val[id].findIndex(b => b.alwaysTop);
+        val[id].splice(alwaysTopIndex, 0, newItem);
         while (val[id].length > 10) {
             val[id].shift();
         }
@@ -742,26 +786,32 @@ unsafeWindow.lymTM = window.lymTM = {
         var deployDiv = $('<div style="margin-left:20px;font-weight:bold;display:inline">CD:</div>');
         var configDiv = $('<div style="margin-left:20px;font-weight:bold;display:inline">Config:</div>');
         var envDiv = $('<div style="margin-left:20px;font-weight:bold;display:inline">Env:</div>');
-        var wrapDiv = $('<div></div>').append(buildDiv).append(deployDiv).append(configDiv).append(envDiv);
+        var logDiv = $('<div style="margin-left:20px;font-weight:bold;display:inline">Log:</div>');
+        var wrapDiv = $('<div></div>').append(buildDiv).append(deployDiv).append(configDiv).append(envDiv).append(logDiv);
         var buildLinks = lymTM.getBuildLinks(serviceName);
-        for (var a in buildLinks) {
-            if (currentUrl.startsWith(buildLinks[a])) { continue; }
-            $(lymTM.createLink(a, buildLinks[a])).css({ 'margin-left': '6px', 'font-weight': 'normal' }).appendTo(buildDiv);
+        for (let d in buildLinks) {
+            if (currentUrl.startsWith(buildLinks[d])) { continue; }
+            $(lymTM.createLink(d, buildLinks[d])).css({ 'margin-left': '6px', 'font-weight': 'normal' }).appendTo(buildDiv);
         }
         var deployLinks = lymTM.getDeployLinks(serviceName);
-        for (var b in deployLinks) {
-            if (currentUrl.startsWith(deployLinks[b])) { continue; }
-            $(lymTM.createLink(b, deployLinks[b])).css({ 'margin-left': '6px', 'font-weight': 'normal' }).appendTo(deployDiv);
+        for (let d in deployLinks) {
+            if (currentUrl.startsWith(deployLinks[d])) { continue; }
+            $(lymTM.createLink(d, deployLinks[d])).css({ 'margin-left': '6px', 'font-weight': 'normal' }).appendTo(deployDiv);
         }
         var configLinks = lymTM.getConfigLinks(serviceName);
-        for (var c in configLinks) {
-            if (currentUrl.startsWith(configLinks[c])) { continue; }
-            $(lymTM.createLink(c, configLinks[c])).css({ 'margin-left': '6px', 'font-weight': 'normal' }).appendTo(configDiv);
+        for (let d in configLinks) {
+            if (currentUrl.startsWith(configLinks[d])) { continue; }
+            $(lymTM.createLink(d, configLinks[d])).css({ 'margin-left': '6px', 'font-weight': 'normal' }).appendTo(configDiv);
         }
         var envLinks = lymTM.getEnvLinks(serviceName);
-        for (var d in envLinks) {
+        for (let d in envLinks) {
             if (currentUrl.startsWith(envLinks[d])) { continue; }
             $(lymTM.createLink(d, envLinks[d])).css({ 'margin-left': '6px', 'font-weight': 'normal' }).appendTo(envDiv);
+        }
+        var logLinks = lymTM.getLogLinks(serviceName);
+        for (let d in logLinks) {
+            if (currentUrl.startsWith(logLinks[d])) { continue; }
+            $(lymTM.createLink(d, logLinks[d])).css({ 'margin-left': '6px', 'font-weight': 'normal' }).appendTo(logDiv);
         }
         return wrapDiv;
     },
