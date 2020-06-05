@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         EnvironmentSwitch
 // @namespace    http://tampermonkey.net/
-// @version      1
+// @version      2
 // @description  test prod switch
 // @author       Yiming Liu
 // @include      https://*iherb*/*
@@ -106,7 +106,7 @@ async function process(func, time) {
 function addDataUrl(link, key, url) {
     link.html(key == 'Prod' ? 'Production' : key);
     link.data('url', url);
-    if (url != location.href.replace(/#.*/, '')) {
+    if (!lymTM.sameHost(url, location.href)) {
         link.css('cursor', 'pointer');
         link.click(function () { lymTM.openActive($(this).data('url')) });
     } else {

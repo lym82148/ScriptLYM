@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Common
 // @namespace    http://tampermonkey.net/
-// @version      16
+// @version      17
 // @description  configs & util
 // @author       Yiming Liu
 // @include      *
@@ -99,7 +99,7 @@ unsafeWindow.lymTM = window.lymTM = {
     teamMembers: [
         { "userName": "Terry (Xiaoyu) Luo" },
         { "userName": "Yiming Liu" },
-        { "userName": "Tony (Sichao) Qian" },
+        //         { "userName": "Tony (Sichao) Qian" },
         { "userName": "Diri (Jianwei) Guo" },
     ],
     approvers: {
@@ -126,7 +126,9 @@ unsafeWindow.lymTM = window.lymTM = {
         JiraSprintLink: (a) => `https://iherbglobal.atlassian.net/secure/RapidBoard.jspa?rapidView=374&assignee=${a}`,
         BackOfficeConfigFile: (a) => (b) => `https://bitbucket.org/iherbllc/backoffice.${a}/raw/${b}/src/${a}.API/appsettings.json`,
         BackOfficeConfigFileDev: (a) => (b) => `https://bitbucket.org/iherbllc/backoffice.${a}/raw/${b}/src/${a}.API/appsettings.Development.json`,
-        BranchListApi: (a) => `https://bitbucket.org/!api/internal/repositories/iherbllc/${a}/branch-list/?sort=ahead&pagelen=30&fields=values.name`
+        BranchListApi: (a) => `https://bitbucket.org/!api/internal/repositories/iherbllc/${a}/branch-list/?sort=ahead&pagelen=30&fields=values.name`,
+        RancherTest: "https://rancher.iherb.io/p/c-djzp4:p-pccbf/workload/deployment:backoffice-cs:",
+        RancherProd: "https://rancher.iherb.io/p/c-457vx:p-n6tcc/workload/deployment:backoffice-cs:"
     },
     serviceConfigs: {},
     init: async function () {
@@ -266,12 +268,26 @@ unsafeWindow.lymTM = window.lymTM = {
                 },
             },
             { "name": "backoffice.cs.reward.service" },
-            { "name": "backoffice.cs.zendesk.syncjob" },
+            {
+                "name": "backoffice.cs.zendesk.syncjob",
+                "projectConfigFile": (b) => `https://bitbucket.org/iherbllc/backoffice.cs.zendesk.syncjob/raw/${b}/src/CS.Zendesk.SyncJob/appsettings.json`,
+                "projectConfigFileDev": (b) => `https://bitbucket.org/iherbllc/backoffice.cs.zendesk.syncjob/raw/${b}/src/CS.Zendesk.SyncJob/appsettings.Development.json`,
+                "logLinks": {
+                    "Test": "https://es-test.iherb.net/_plugin/kibana/app/kibana#/discover?_g=(filters:!(),refreshInterval:(display:Off,pause:!f,value:0),time:(from:now-15m,mode:quick,to:now))&_a=(columns:!(kubernetes.container_name,message,log),filters:!(('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'backoffice-cs-*',key:kubernetes.container_name,negate:!f,type:phrase,value:cs-zendesk-syncjob),query:(match:(kubernetes.container_name:(query:cs-zendesk-syncjob,type:phrase)))),('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'backoffice-cs-*',key:log,negate:!t,type:phrase,value:HttpClientDelegatingHandler),query:(match:(log:(query:HttpClientDelegatingHandler,type:phrase)))),('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'backoffice-cs-*',key:log,negate:!t,params:!(AddTicket,AddChat,AddUser),type:phrases,value:'AddTicket,%20AddChat,%20AddUser'),query:(bool:(minimum_should_match:1,should:!((match_phrase:(log:AddTicket)),(match_phrase:(log:AddChat)),(match_phrase:(log:AddUser)))))),('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'backoffice-cs-*',key:log,negate:!t,params:!(SyncTicket,SyncChat,SyncUser),type:phrases,value:'SyncTicket,%20SyncChat,%20SyncUser'),query:(bool:(minimum_should_match:1,should:!((match_phrase:(log:SyncTicket)),(match_phrase:(log:SyncChat)),(match_phrase:(log:SyncUser))))))),index:'backoffice-cs-*',interval:auto,query:(match_all:()),sort:!('@timestamp',desc))",
+                    "Prod": "https://es-prod.iherb.net/_plugin/kibana/app/kibana#/discover?_g=(filters:!(),refreshInterval:(display:Off,pause:!f,value:0),time:(from:now-12h,mode:quick,to:now))&_a=(columns:!(kubernetes.container_name,message,log),filters:!(('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'backoffice-cs-*',key:kubernetes.container_name,negate:!f,params:(query:cs-zendesk-syncjob,type:phrase),type:phrase,value:cs-zendesk-syncjob),query:(match:(kubernetes.container_name:(query:cs-zendesk-syncjob,type:phrase)))),('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'backoffice-cs-*',key:log,negate:!t,params:(query:HttpClientDelegatingHandler,type:phrase),type:phrase,value:HttpClientDelegatingHandler),query:(match:(log:(query:HttpClientDelegatingHandler,type:phrase)))),('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'backoffice-cs-*',key:log,negate:!t,params:!(AddTicket,AddChat,AddUser),type:phrases,value:'AddTicket,%20AddChat,%20AddUser'),query:(bool:(minimum_should_match:1,should:!((match_phrase:(log:AddTicket)),(match_phrase:(log:AddChat)),(match_phrase:(log:AddUser)))))),('$state':(store:appState),meta:(alias:!n,disabled:!t,index:'backoffice-cs-*',key:log,negate:!t,params:!(SyncTicket,SyncChat,SyncUser),type:phrases,value:'SyncTicket,%20SyncChat,%20SyncUser'),query:(bool:(minimum_should_match:1,should:!((match_phrase:(log:SyncTicket)),(match_phrase:(log:SyncChat)),(match_phrase:(log:SyncUser))))))),index:'!'backoffice-cs!'',interval:auto,query:(language:lucene,query:''),sort:!('@timestamp',desc))"
+                }
+            },
             {
                 "name": "backoffice.cs.proxy.service",
                 "projectConfigFileDev": (b) => `https://bitbucket.org/iherbllc/backoffice.cs.proxy.service/raw/${b}/src/Backoffice.CS.Proxy.Service.API/appsettings.Development.json`
             },
-            { "name": "backoffice.cs.customer.service" },
+            {
+                "name": "backoffice.cs.customer.service",
+                "logLinks": {
+                    "Test": "https://es-test.iherb.net/_plugin/kibana/app/kibana#/discover?_g=(filters:!(),refreshInterval:(display:Off,pause:!f,value:0),time:(from:now-15m,mode:quick,to:now))&_a=(columns:!(kubernetes.container_name,message,log),filters:!(('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'backoffice-cs-*',key:kubernetes.container_name,negate:!f,type:phrase,value:cs-customer-service),query:(match:(kubernetes.container_name:(query:cs-customer-service,type:phrase))))),index:'backoffice-cs-*',interval:auto,query:(match_all:()),sort:!('@timestamp',desc))",
+                    "Prod": "https://es-prod.iherb.net/_plugin/kibana/app/kibana#/discover?_g=(refreshInterval:(pause:!t,value:0),time:(from:now-15m,mode:quick,to:now))&_a=(columns:!(kubernetes.container_name,message,log),filters:!(('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'!'backoffice-cs!'',key:kubernetes.container_name,negate:!f,params:(query:cs-customer-service,type:phrase),type:phrase,value:cs-customer-service),query:(match:(kubernetes.container_name:(query:cs-customer-service,type:phrase))))),index:'!'backoffice-cs!'',interval:auto,query:(language:lucene,query:''),sort:!('@timestamp',desc))"
+                }
+            },
             { "name": "backoffice.cs.reward.core.service" },
             {
                 "name": "backoffice.infrastructure.mailservice",
@@ -285,6 +301,10 @@ unsafeWindow.lymTM = window.lymTM = {
                 "deployLinks": {
                     "Jenkins": "https://jenkins.iherb.io/job/backoffice/job/RewardCampaign/job/backoffice-infrastructure-mailservice/"
                 },
+                "logLinks": {
+                    "Test": "https://es-test.iherb.net/_plugin/kibana/app/kibana#/discover?_g=(filters:!(),refreshInterval:(display:Off,pause:!f,value:0),time:(from:now-15m,mode:quick,to:now))&_a=(columns:!(kubernetes.container_name,message,log),filters:!(('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'backoffice-cs-*',key:kubernetes.container_name,negate:!f,type:phrase,value:cs-customer-service),query:(match:(kubernetes.container_name:(query:cs-reward-core-service,type:phrase))))),index:'backoffice-cs-*',interval:auto,query:(match_all:()),sort:!('@timestamp',desc))",
+                    "Prod": "https://es-prod.iherb.net/_plugin/kibana/app/kibana#/discover?_g=(refreshInterval:(pause:!t,value:0),time:(from:now-15m,mode:quick,to:now))&_a=(columns:!(kubernetes.container_name,message,log),filters:!(('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'!'backoffice-cs!'',key:kubernetes.container_name,negate:!f,params:(query:cs-reward-core-service,type:phrase),type:phrase,value:cs-reward-core-service),query:(match:(kubernetes.container_name:(query:cs-reward-core-service,type:phrase))))),index:'!'backoffice-cs!'',interval:auto,query:(language:lucene,query:''),sort:!('@timestamp',desc))"
+                }
             },
             {
                 "name": "legacy.csportal-zendesk",
@@ -332,6 +352,8 @@ unsafeWindow.lymTM = window.lymTM = {
                 item.deployLinks = item.deployLinks || {};
                 item.configLinks = item.configLinks || {};
                 item.envLinks = item.envLinks || {};
+                item.logLinks = item.logLinks || {};
+                item.rancherLinks = item.rancherLinks || {};
                 item.definitionIds = item.definitionIds || {};
                 item.buildLinks.Jenkins = item.buildLinks.Jenkins || `${this.urls.CIJenkinsCSSearch}${item.jenkinsName}`;
                 item.deployLinks.Jenkins = item.deployLinks.Jenkins || `${this.urls.CDJenkinsCS}/${item.jenkinsName}/${this.urls.CDJenkinsBuildNow}`;
@@ -343,6 +365,9 @@ unsafeWindow.lymTM = window.lymTM = {
                 item.definitionIds[item.jenkinsName] = item.definitionIds[item.jenkinsName] || `${item.deployLinks.Jenkins}`;
                 item.projectConfigFile = item.projectConfigFile || this.urls.BackOfficeConfigFile(item.projectName);
                 item.projectConfigFileDev = item.projectConfigFileDev || this.urls.BackOfficeConfigFileDev(item.projectName);
+                item.rancherLinks.Test = item.rancherLinks.Test || this.urls.RancherTest + item.jenkinsName;
+                item.rancherLinks.Prod = item.rancherLinks.Prod || this.urls.RancherProd + item.jenkinsName;
+
             }
         }
         this.cleanValues();
@@ -461,6 +486,10 @@ unsafeWindow.lymTM = window.lymTM = {
     getLogLinks: function (name) {
         var res = this.serviceConfigs.filter((a) => a.name == name);
         return res.length ? res[0].logLinks : { 'N/A': 'javascript:alert("log link not found for service:' + name + '")' };
+    },
+    getRancherLinks: function (name) {
+        var res = this.serviceConfigs.filter((a) => a.name == name);
+        return res.length ? res[0].rancherLinks : { 'N/A': 'javascript:alert("rancher link not found for service:' + name + '")' };
     },
     getApproveUsers: function (curUser, name) {
         var res = this.serviceConfigs.filter((a) => a.name == name);
@@ -672,6 +701,7 @@ unsafeWindow.lymTM = window.lymTM = {
         }
         //         val[id].push(newItem);
         var alwaysTopIndex = val[id].findIndex(b => b.alwaysTop);
+        if (alwaysTopIndex == -1) { alwaysTopIndex = val[id].length; }
         val[id].splice(alwaysTopIndex, 0, newItem);
         while (val[id].length > 10) {
             val[id].shift();
@@ -787,7 +817,9 @@ unsafeWindow.lymTM = window.lymTM = {
         var configDiv = $('<div style="margin-left:20px;font-weight:bold;display:inline">Config:</div>');
         var envDiv = $('<div style="margin-left:20px;font-weight:bold;display:inline">Env:</div>');
         var logDiv = $('<div style="margin-left:20px;font-weight:bold;display:inline">Log:</div>');
-        var wrapDiv = $('<div></div>').append(buildDiv).append(deployDiv).append(configDiv).append(envDiv).append(logDiv);
+        var rancherDiv = $('<div style="margin-left:20px;font-weight:bold;display:inline">Rancher:</div>');
+
+        var wrapDiv = $('<div></div>').append(buildDiv).append(deployDiv).append(configDiv).append(envDiv).append(logDiv).append(rancherDiv);
         var buildLinks = lymTM.getBuildLinks(serviceName);
         for (let d in buildLinks) {
             if (currentUrl.startsWith(buildLinks[d])) { continue; }
@@ -812,6 +844,11 @@ unsafeWindow.lymTM = window.lymTM = {
         for (let d in logLinks) {
             if (currentUrl.startsWith(logLinks[d])) { continue; }
             $(lymTM.createLink(d, logLinks[d])).css({ 'margin-left': '6px', 'font-weight': 'normal' }).appendTo(logDiv);
+        }
+        var rancherLinks = lymTM.getRancherLinks(serviceName);
+        for (let d in rancherLinks) {
+            if (currentUrl.startsWith(rancherLinks[d])) { continue; }
+            $(lymTM.createLink(d, rancherLinks[d])).css({ 'margin-left': '6px', 'font-weight': 'normal' }).appendTo(rancherDiv);
         }
         return wrapDiv;
     },

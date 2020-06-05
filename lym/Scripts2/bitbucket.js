@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Bitbucket
 // @namespace    http://tampermonkey.net/
-// @version      16
+// @version      17
 // @description  pull request approver、build link、deploy link
 // @author       Yiming Liu
 // @include      mailto:*
@@ -26,6 +26,13 @@ async function process(func, time) {
         location.href = location.href.replace('https://bitbucket.org//', 'https://bitbucket.org/');
         return;
     }
+    //     if(location.href.includes('config')){
+    //         var jenkinsNameFromConfigPage = location.href.match(/.*\/(.*)\/override\/.*/)[1];
+    //         var serviceNameFromConfigPage = lymTM.getServiceNameByJenkinsName(jenkinsNameFromConfigPage);
+    //         var relativeDiv = lymTM.generateRelativeLinks(serviceNameFromConfigPage,$,location.href);
+    //         var breadFromConfigPage = await lymTM.async($('ol.aui-nav-breadcrumbs,div:has(div>a[type]):not(:has(div>div>a[type]),:has(div[data-qa]))'));
+    //         breadFromConfigPage.append(relativeDiv);
+    //     }
     if (location.href.includes('config') && location.search.includes('mode=edit')) {
         var originConfig = $('div.codehilite>pre').text();
         var existConfigs = Object.create(null);
@@ -143,6 +150,15 @@ async function process(func, time) {
 
             });
             var errKeyList = keyList.filter(i => keyList.indexOf(i) != keyList.lastIndexOf(i));
+            var fileName = location.pathname.split('/').pop();
+            var env = 'test';
+            if (fileName.includes('test')) {
+                env = 'test';
+            } else if (fileName.includes('preprod')) {
+                env = 'preprod';
+            } else if (fileName.includes('prod')) {
+                env = 'prod';
+            }
             configLines.each((index, line) => {
                 var $line = $(line);
                 var lineTag = $line.children('div>div');
@@ -170,7 +186,12 @@ async function process(func, time) {
                 }
                 else if (value == '*') {
                     lineTag.addClass('aui-message aui-message-warning').css(cssObj).attr('title', 'error value *');
-                } else {
+                } else if (/ConnectionString/i.test(key) && /Data *Source|Server/i.test(value)) {
+                    lineTag.addClass('aui-message aui-message-warning').css(cssObj).attr('title', 'ConnectionString should be in scret');
+                } else if (/^https?:\/\/.*iherb.*/.test(value.toLowerCase()) && !value.toLowerCase().includes(env)) {
+                    lineTag.addClass('aui-message aui-message-warning').css(cssObj).attr('title', `url does not contain ${env}`);
+                }
+                else {
                     lineTag.removeClass('aui-message aui-message-warning').attr('title', '');
                 }
             });
@@ -261,7 +282,7 @@ async function process(func, time) {
         lymTM.runJob(RenderDiff, 1000);
         var styleMock = $('<style>body.adg3 .aui-message::after{margin-top:0px;left:39px;top:0px;cursor:default;}</style>')
         $('body').prepend(styleMock);
-        return;
+        //         return;
     }
 
     // job
@@ -291,8 +312,20 @@ async function process(func, time) {
     var approveUsers = lymTM.getApproveUsers(curUserName, serviceName);
     console.table({ curUserName, serviceName });
 
+    if (serviceName.endsWith('.config')) {
+        var jenkinsNameFromConfigPage;
+        var match1 = location.href.match(/.*\/(.*)\/override\/.*/);
+        if (match1) {
+            jenkinsNameFromConfigPage = match1[1];
+        } else {
+            var match2 = location.href.match(/.*\/(.*)\//);
+            jenkinsNameFromConfigPage = match2[1];
+        }
+        console.log('jenkinsNameFromConfigPage:', jenkinsNameFromConfigPage);
+        serviceName = lymTM.getServiceNameByJenkinsName(jenkinsNameFromConfigPage);
+    }
     // Build Links Deploy Links
-    var wrapDiv = lymTM.generateRelativeLinks(serviceName, $);
+    var wrapDiv = lymTM.generateRelativeLinks(serviceName, $, location.href);
     bread.append(wrapDiv);
     $('div[offset][aria-hidden]>div>div:first').append(wrapDiv.clone().css('line-height', 3).children().css('margin', 5).end());
 
