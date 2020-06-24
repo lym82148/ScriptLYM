@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Common
 // @namespace    http://tampermonkey.net/
-// @version      17
+// @version      18
 // @description  configs & util
 // @author       Yiming Liu
 // @include      *
@@ -112,9 +112,13 @@ unsafeWindow.lymTM = window.lymTM = {
         "CDJenkinsCS": "https://jenkins.iherb.io/job/backoffice/job/CS/job",
         "CDJenkinsBuildNow": "build?delay=0sec",
         "CIJenkinsCSSearch": "https://jenkins-ci.iherb.net/job/backoffice/job/CS/search/?q=",
+        "CIJenkinsPromosSearch": "https://jenkins-ci.iherb.net/job/backoffice/job/promos/search/?q=",
         CSConfigValueEdit: (a) => `https://bitbucket.org/iherbllc/backoffice.cs.config/src/master/${a}/override/values.la-test.yaml?mode=edit&spa=0&at=master&fileviewer=file-view-default`,
         CSConfigValuePreprodEdit: (a) => `https://bitbucket.org/iherbllc/backoffice.cs.config/src/master/${a}/override/values.oregon-central-preprod-0.yaml?mode=edit&spa=0&at=master&fileviewer=file-view-default`,
         CSConfigValueProdEdit: (a) => `https://bitbucket.org/iherbllc/backoffice.cs.config/src/master/${a}/override/values.oregon-central-0.yaml?mode=edit&spa=0&at=master&fileviewer=file-view-default`,
+        PromosConfigValueEdit: (a) => `https://bitbucket.org/iherbllc/backoffice.reward.config/src/master/${a}/override/values.la-test.yaml?mode=edit&spa=0&at=master&fileviewer=file-view-default`,
+        PromosConfigValuePreprodEdit: (a) => `https://bitbucket.org/iherbllc/backoffice.reward.config/src/master/${a}/override/values.oregon-central-preprod-0.yaml?mode=edit&spa=0&at=master&fileviewer=file-view-default`,
+        PromosConfigValueProdEdit: (a) => `https://bitbucket.org/iherbllc/backoffice.reward.config/src/master/${a}/override/values.oregon-central-0.yaml?mode=edit&spa=0&at=master&fileviewer=file-view-default`,
         //         CSConfigValue:(a)=>`https://bitbucket.org/iherbllc/backoffice.cs.config/src/master/${a}/override/values.la-test.yaml`,
         "DataDog": "https://app.datadoghq.com/infrastructure?filter=",
         BackOfficeTestSwagger: (a) => `https://backoffice-${a}.internal.iherbtest.io/swagger/index.html`,
@@ -128,7 +132,10 @@ unsafeWindow.lymTM = window.lymTM = {
         BackOfficeConfigFileDev: (a) => (b) => `https://bitbucket.org/iherbllc/backoffice.${a}/raw/${b}/src/${a}.API/appsettings.Development.json`,
         BranchListApi: (a) => `https://bitbucket.org/!api/internal/repositories/iherbllc/${a}/branch-list/?sort=ahead&pagelen=30&fields=values.name`,
         RancherTest: "https://rancher.iherb.io/p/c-djzp4:p-pccbf/workload/deployment:backoffice-cs:",
-        RancherProd: "https://rancher.iherb.io/p/c-457vx:p-n6tcc/workload/deployment:backoffice-cs:"
+        RancherProd: "https://rancher.iherb.io/p/c-457vx:p-n6tcc/workload/deployment:backoffice-cs:",
+        RancherPromosTest: "https://rancher.iherb.io/p/c-djzp4:p-pccbf/workload/deployment:backoffice-cs:",
+        RancherPromosProd: "https://rancher.iherb.io/p/c-457vx:p-n6tcc/workload/deployment:backoffice-cs:",
+        BitbucketRepo: "https://bitbucket.org/iherbllc/"
     },
     serviceConfigs: {},
     init: async function () {
@@ -137,11 +144,11 @@ unsafeWindow.lymTM = window.lymTM = {
                 "name": "legacy.checkout-web",
                 "fullslug": "iherbllc/legacy.checkout-web",
                 "defaultBranch": "staging",
-                "buildLinks": {
+                "CILinks": {
                     "ShopService": "https://tfs.iherb.net/tfs/iHerb%20Projects%20Collection/iHerbDev/Orders%20and%20Communications/_build/index?context=mine&path=%5CWebDev&definitionId=1053",
                     "DataContract": "https://tfs.iherb.net/tfs/iHerb%20Projects%20Collection/iHerbDev/Cart/_build/index?context=allDefinitions&path=%5CWebDev&definitionId=1067"
                 },
-                "deployLinks": {
+                "CDLinks": {
                     "ShopService": `${this.urls.OctopusShop}/overview`
                 },
                 "definitionIds": {
@@ -158,10 +165,10 @@ unsafeWindow.lymTM = window.lymTM = {
                 "name": "legacy.customerservice",
                 "fullslug": "iherbllc/legacy.customerservice",
                 "defaultBranch": "master",
-                "buildLinks": {
+                "CILinks": {
                     "Release": "https://tfs.iherb.net/tfs/iHerb%20Projects%20Collection/iHerbDev/Orders%20and%20Communications/_build/index?definitionId=763",
                 },
-                "deployLinks": {
+                "CDLinks": {
                     "Release": `${this.urls.OctopusCSPortal}/overview`
                 },
                 "configLinks": {
@@ -180,10 +187,10 @@ unsafeWindow.lymTM = window.lymTM = {
             //                 "name": "backoffice.cs.customer.service",
             //                 "fullslug": "iherbllc/backoffice.cs.customer.service",
             //                 "defaultBranch": "master",
-            //                 "buildLinks": {
+            //                 "CILinks": {
             //                     "Jenkins": `${this.urls.CIJenkinsCSSearch}cs-customer-service`
             //                 },
-            //                 "deployLinks": {
+            //                 "CDLinks": {
             //                     "Jenkins":  `${this.urls.CDJenkinsCS}/cs-customer-service/${this.urls.CDJenkinsBuildNow}`
             //                 },
             //                 "configLinks": {
@@ -202,10 +209,10 @@ unsafeWindow.lymTM = window.lymTM = {
                 "name": "backoffice.csportal-automation",
                 "fullslug": "iherbllc/backoffice.cs.customer.service",
                 "defaultBranch": "develop",
-                "buildLinks": {
+                "CILinks": {
                     //                     "Jenkins": `${this.urls.CIJenkinsCSSearch}cs-customer-service`
                 },
-                "deployLinks": {
+                "CDLinks": {
                     //                     "Jenkins":  `${this.urls.CDJenkinsCS}/cs-customer-service/${this.urls.CDJenkinsBuildNow}`
                 },
                 "configLinks": {
@@ -226,18 +233,24 @@ unsafeWindow.lymTM = window.lymTM = {
                 "jenkinsName": "promos-manager-reward-service",
                 "fullslug": "iherbllc/backoffice.promos.manager.rewardservice",
                 "defaultBranch": "master",
-                "buildLinks": {
-                    "Jenkins": "https://jenkins-ci.iherb.net/job/backoffice/job/RewardCampaign/search/?q=promos-manager-reward-service",
+                "CILinks": {
+                    "Jenkins": "https://jenkins-ci.iherb.net/job/backoffice/job/RewardCampaign/search/?q=manager-reward-service",
                 },
-                "deployLinks": {
-                    "Jenkins": "https://jenkins.iherb.io/job/backoffice/job/RewardCampaign/job/promos-manager-reward-service/"
+                "CDLinks": {
+                    "Jenkins": "https://jenkins.iherb.io/job/backoffice/job/RewardCampaign/job/promos-manager-reward-service/build?delay=0sec"
                 },
                 "configLinks": {
-                    "Config": ""
+
                 },
                 "envLinks": {
-                    "Test": "",
+                    "Test": "https://reward-portal-service.backoffice.iherbtest.net/swagger/index.html",
+                    "Prod": "https://promos-backoffice-manager-reward-api.backoffice.iherb.net/swagger/index.html"
                 },
+                "projectConfigFile": (a) => `https://bitbucket.org/iherbllc/backoffice.promos.manager.rewardservice/raw/${a}/src/iHerb.BackOffice.Promos.Manager.RewardService.API/appsettings.json`,
+                "projectConfigFileDev": (a) => `https://bitbucket.org/iherbllc/backoffice.promos.manager.rewardservice/raw/${a}/src/iHerb.BackOffice.Promos.Manager.RewardService.API/appsettings.Development.json`,
+                "rancherLinks": {
+                    "Prod": "https://rancher.iherb.io/p/c-457vx:p-ndbxv/workload/deployment:backoffice-reward:promos-manager-reward-service"
+                }
             },
             {
                 "name": "User",
@@ -256,7 +269,7 @@ unsafeWindow.lymTM = window.lymTM = {
             {
                 "name": "RewardPortal",
                 "envLinks": {
-                    "Test": "https://client-rewards-backoffice.internal.iherbtest.io/rewards",
+                    "Test": "https://rewards-web.backoffice.iherbtest.net/rewards",
                     "Prod": "https://rewards-web.backoffice.iherb.net/rewards"
                 },
             },
@@ -275,7 +288,8 @@ unsafeWindow.lymTM = window.lymTM = {
                 "logLinks": {
                     "Test": "https://es-test.iherb.net/_plugin/kibana/app/kibana#/discover?_g=(filters:!(),refreshInterval:(display:Off,pause:!f,value:0),time:(from:now-15m,mode:quick,to:now))&_a=(columns:!(kubernetes.container_name,message,log),filters:!(('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'backoffice-cs-*',key:kubernetes.container_name,negate:!f,type:phrase,value:cs-zendesk-syncjob),query:(match:(kubernetes.container_name:(query:cs-zendesk-syncjob,type:phrase)))),('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'backoffice-cs-*',key:log,negate:!t,type:phrase,value:HttpClientDelegatingHandler),query:(match:(log:(query:HttpClientDelegatingHandler,type:phrase)))),('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'backoffice-cs-*',key:log,negate:!t,params:!(AddTicket,AddChat,AddUser),type:phrases,value:'AddTicket,%20AddChat,%20AddUser'),query:(bool:(minimum_should_match:1,should:!((match_phrase:(log:AddTicket)),(match_phrase:(log:AddChat)),(match_phrase:(log:AddUser)))))),('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'backoffice-cs-*',key:log,negate:!t,params:!(SyncTicket,SyncChat,SyncUser),type:phrases,value:'SyncTicket,%20SyncChat,%20SyncUser'),query:(bool:(minimum_should_match:1,should:!((match_phrase:(log:SyncTicket)),(match_phrase:(log:SyncChat)),(match_phrase:(log:SyncUser))))))),index:'backoffice-cs-*',interval:auto,query:(match_all:()),sort:!('@timestamp',desc))",
                     "Prod": "https://es-prod.iherb.net/_plugin/kibana/app/kibana#/discover?_g=(filters:!(),refreshInterval:(display:Off,pause:!f,value:0),time:(from:now-12h,mode:quick,to:now))&_a=(columns:!(kubernetes.container_name,message,log),filters:!(('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'backoffice-cs-*',key:kubernetes.container_name,negate:!f,params:(query:cs-zendesk-syncjob,type:phrase),type:phrase,value:cs-zendesk-syncjob),query:(match:(kubernetes.container_name:(query:cs-zendesk-syncjob,type:phrase)))),('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'backoffice-cs-*',key:log,negate:!t,params:(query:HttpClientDelegatingHandler,type:phrase),type:phrase,value:HttpClientDelegatingHandler),query:(match:(log:(query:HttpClientDelegatingHandler,type:phrase)))),('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'backoffice-cs-*',key:log,negate:!t,params:!(AddTicket,AddChat,AddUser),type:phrases,value:'AddTicket,%20AddChat,%20AddUser'),query:(bool:(minimum_should_match:1,should:!((match_phrase:(log:AddTicket)),(match_phrase:(log:AddChat)),(match_phrase:(log:AddUser)))))),('$state':(store:appState),meta:(alias:!n,disabled:!t,index:'backoffice-cs-*',key:log,negate:!t,params:!(SyncTicket,SyncChat,SyncUser),type:phrases,value:'SyncTicket,%20SyncChat,%20SyncUser'),query:(bool:(minimum_should_match:1,should:!((match_phrase:(log:SyncTicket)),(match_phrase:(log:SyncChat)),(match_phrase:(log:SyncUser))))))),index:'!'backoffice-cs!'',interval:auto,query:(language:lucene,query:''),sort:!('@timestamp',desc))"
-                }
+                },
+                "hangfireLinks": {}
             },
             {
                 "name": "backoffice.cs.proxy.service",
@@ -298,18 +312,21 @@ unsafeWindow.lymTM = window.lymTM = {
                 },
                 "projectConfigFile": (b) => `https://bitbucket.org/iherbllc/backoffice.infrastructure.mailservice/raw/${b}/src/iHerb.BackOffice.Infrastructure.MailService.Api/appsettings.json`,
                 "projectConfigFileDev": (b) => `https://bitbucket.org/iherbllc/backoffice.infrastructure.mailservice/raw/${b}/src/iHerb.BackOffice.Infrastructure.MailService.Api/appsettings.Development.json`,
-                "deployLinks": {
-                    "Jenkins": "https://jenkins.iherb.io/job/backoffice/job/RewardCampaign/job/backoffice-infrastructure-mailservice/"
+                "CILinks": {
+                    "Jenkins": "https://jenkins-ci.iherb.net/search/?q=backoffice-infrastructure-mailservice"
+                },
+                "CDLinks": {
+                    "Jenkins": "https://jenkins.iherb.io/job/backoffice/job/RewardCampaign/job/backoffice-infrastructure-mailservice/build?delay=0sec"
                 },
                 "logLinks": {
-                    "Test": "https://es-test.iherb.net/_plugin/kibana/app/kibana#/discover?_g=(filters:!(),refreshInterval:(display:Off,pause:!f,value:0),time:(from:now-15m,mode:quick,to:now))&_a=(columns:!(kubernetes.container_name,message,log),filters:!(('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'backoffice-cs-*',key:kubernetes.container_name,negate:!f,type:phrase,value:cs-customer-service),query:(match:(kubernetes.container_name:(query:cs-reward-core-service,type:phrase))))),index:'backoffice-cs-*',interval:auto,query:(match_all:()),sort:!('@timestamp',desc))",
+                    "Test": "https://es-test.iherb.net/_plugin/kibana/app/kibana#/discover?_g=(filters:!(),refreshInterval:(display:Off,pause:!f,value:0),time:(from:now-15m,mode:quick,to:now))&_a=(columns:!(kubernetes.container_name,message,log),filters:!(('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'backoffice-cs-*',key:kubernetes.container_name,negate:!f,type:phrase,value:backoffice-infrastructure-mailservice),query:(match:(kubernetes.container_name:(query:backoffice-infrastructure-mailservice,type:phrase))))),index:'backoffice-reward-*',interval:auto,query:(match_all:()),sort:!('@timestamp',desc))",
                     "Prod": "https://es-prod.iherb.net/_plugin/kibana/app/kibana#/discover?_g=(refreshInterval:(pause:!t,value:0),time:(from:now-15m,mode:quick,to:now))&_a=(columns:!(kubernetes.container_name,message,log),filters:!(('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'!'backoffice-cs!'',key:kubernetes.container_name,negate:!f,params:(query:cs-reward-core-service,type:phrase),type:phrase,value:cs-reward-core-service),query:(match:(kubernetes.container_name:(query:cs-reward-core-service,type:phrase))))),index:'!'backoffice-cs!'',interval:auto,query:(language:lucene,query:''),sort:!('@timestamp',desc))"
                 }
             },
             {
                 "name": "legacy.csportal-zendesk",
                 "jenkinsName": "csportal-zendesk",
-                "buildLinks": {
+                "CILinks": {
                     "Jenkins": "https://jenkins-ci.iherb.net/job/checkout/job/csportal-zendesk/job/csportal-zendesk/",
                 },
                 "logLinks": {
@@ -348,39 +365,57 @@ unsafeWindow.lymTM = window.lymTM = {
                 item.jenkinsName = item.jenkinsName || item.nameEx.replace(/\./g, '-');
                 item.fullslug = item.fullslug || `iherbllc${item.name}`;
                 item.defaultBranch = item.defaultBranch || 'master';
-                item.buildLinks = item.buildLinks || {};
-                item.deployLinks = item.deployLinks || {};
+                item.CILinks = item.CILinks || {};
+                item.CDLinks = item.CDLinks || {};
                 item.configLinks = item.configLinks || {};
                 item.envLinks = item.envLinks || {};
                 item.logLinks = item.logLinks || {};
                 item.rancherLinks = item.rancherLinks || {};
                 item.definitionIds = item.definitionIds || {};
-                item.buildLinks.Jenkins = item.buildLinks.Jenkins || `${this.urls.CIJenkinsCSSearch}${item.jenkinsName}`;
-                item.deployLinks.Jenkins = item.deployLinks.Jenkins || `${this.urls.CDJenkinsCS}/${item.jenkinsName}/${this.urls.CDJenkinsBuildNow}`;
-                item.configLinks.Test = item.configLinks.Test || this.urls.CSConfigValueEdit(item.jenkinsName);
-                item.configLinks.Preprod = item.configLinks.ProProd || this.urls.CSConfigValuePreprodEdit(item.jenkinsName);
-                item.configLinks.Prod = item.configLinks.Prod || this.urls.CSConfigValueProdEdit(item.jenkinsName);
+                item.CDLinks.Jenkins = item.CDLinks.Jenkins || `${this.urls.CDJenkinsCS}/${item.jenkinsName}/${this.urls.CDJenkinsBuildNow}`;
+                if (item.name.startsWith('backoffice.cs.')) {
+                    item.CILinks.Jenkins = item.CILinks.Jenkins || `${this.urls.CIJenkinsCSSearch}${item.jenkinsName}`;
+                    item.configLinks.Test = item.configLinks.Test || this.urls.CSConfigValueEdit(item.jenkinsName);
+                    item.configLinks.Preprod = item.configLinks.Preprod || this.urls.CSConfigValuePreprodEdit(item.jenkinsName);
+                    item.configLinks.Prod = item.configLinks.Prod || this.urls.CSConfigValueProdEdit(item.jenkinsName);
+                    item.rancherLinks.Test = item.rancherLinks.Test || this.urls.RancherTest + item.jenkinsName;
+                    item.rancherLinks.Prod = item.rancherLinks.Prod || this.urls.RancherProd + item.jenkinsName;
+                } else if (item.name.startsWith('backoffice.promos.')) {
+                    item.CILinks.Jenkins = item.CILinks.Jenkins || `${this.urls.CIJenkinsPromosSearch}${item.jenkinsName}`;
+                    item.configLinks.Test = item.configLinks.Test || this.urls.PromosConfigValueEdit(item.jenkinsName);
+                    item.configLinks.Preprod = item.configLinks.Preprod || this.urls.PromosConfigValuePreprodEdit(item.jenkinsName);
+                    item.configLinks.Prod = item.configLinks.Prod || this.urls.PromosConfigValueProdEdit(item.jenkinsName);
+                    item.rancherLinks.Test = item.rancherLinks.Test || this.urls.RancherPromosTest + item.jenkinsName;
+                    item.rancherLinks.Prod = item.rancherLinks.Prod || this.urls.RancherPromosProd + item.jenkinsName;
+                }
                 item.envLinks.Test = item.envLinks.Test || this.urls.BackOfficeTestSwagger(item.jenkinsName.replace(/^backoffice-/, ''));
                 item.envLinks.Prod = item.envLinks.Prod || this.urls.BackOfficeProdSwagger(item.jenkinsName.replace(/^backoffice-/, ''));
-                item.definitionIds[item.jenkinsName] = item.definitionIds[item.jenkinsName] || `${item.deployLinks.Jenkins}`;
+                if (item.hangfireLinks) {
+                    item.hangfireLinks.Test = item.envLinks.Test.match(/.*\/\/.*?\//)[0] + 'hangfire/jobs/processing';
+                    item.hangfireLinks.Prod = item.envLinks.Prod.match(/.*\/\/.*?\//)[0] + 'hangfire/jobs/processing';
+                }
+                item.definitionIds[item.jenkinsName] = item.definitionIds[item.jenkinsName] || `${item.CDLinks.Jenkins}`;
                 item.projectConfigFile = item.projectConfigFile || this.urls.BackOfficeConfigFile(item.projectName);
                 item.projectConfigFileDev = item.projectConfigFileDev || this.urls.BackOfficeConfigFileDev(item.projectName);
-                item.rancherLinks.Test = item.rancherLinks.Test || this.urls.RancherTest + item.jenkinsName;
-                item.rancherLinks.Prod = item.rancherLinks.Prod || this.urls.RancherProd + item.jenkinsName;
-
+                item.repoLinks = item.repoLinks || {};
+                item.repoLinks.Bitbucket = item.repoLinks.Bitbucket || this.urls.BitbucketRepo + item.name;
             }
         }
         this.cleanValues();
+    },
+    consts: {
+        'lymTMfinished': 'lymTMfinished'
     },
     keys: {
         'TfsBuildId': 'TfsBuildId', 'GMailBody': 'GMailBody', 'Tfs': 'Tfs', 'Jenkins': 'Jenkins', 'Swagger': 'Swagger'
     },
     swaggers: {
-        "https://client-rewards-backoffice.internal.iherbtest.io/rewards/create": [
+        "https://rewards-web.backoffice.iherbtest.net/rewards/create": [
+            "reward-portal-service.backoffice.iherbtest.net"
 
         ],
         "https://rewards-web.backoffice.iherb.net/rewards": [
-
+            "promos-backoffice-manager-reward-api.backoffice.iherb.net"
         ],
         "https://cs-portal.backoffice.iherbtest.net/rewards/hyperwallet": [
             "localhost:5000",
@@ -399,8 +434,14 @@ unsafeWindow.lymTM = window.lymTM = {
     },
     searchConfigByHost(location) {
         for (var a of this.serviceConfigs) {
-            for (var key in a.envLinks) {
+            for (let key in a.envLinks) {
                 if (this.sameHost(a.envLinks[key], location)) { return a; }
+            }
+            for (let key in a.hangfireLinks) {
+                if (this.sameHost(a.hangfireLinks[key], location)) { return a; }
+            }
+            for (let key in a.rancherLinks) {
+                if (this.samePath(a.rancherLinks[key], location)) { return a; }
             }
         }
         return null;
@@ -455,9 +496,9 @@ unsafeWindow.lymTM = window.lymTM = {
     },
     getRefreshLogLink: function (name) {
         var res = this.serviceConfigs.filter((a) => a.name == name);
-        if (res.length && res[0].buildLinks) {
-            var key = Object.keys(res[0].buildLinks);
-            var value = res[0].buildLinks[key];
+        if (res.length && res[0].CILinks) {
+            var key = Object.keys(res[0].CILinks);
+            var value = res[0].CILinks[key];
             if (value) {
                 return `${value}#refresh`;
             }
@@ -467,13 +508,13 @@ unsafeWindow.lymTM = window.lymTM = {
         var res = this.serviceConfigs.filter((a) => a.name == name);
         return res.length ? res[0].defaultBranch : 'master';
     },
-    getBuildLinks: function (name) {
+    getCILinks: function (name) {
         var res = this.serviceConfigs.filter((a) => a.name == name);
-        return res.length ? res[0].buildLinks : { 'N/A': 'javascript:alert("build link not found for service:' + name + '")' };
+        return res.length ? res[0].CILinks : { 'N/A': 'javascript:alert("build link not found for service:' + name + '")' };
     },
-    getDeployLinks: function (name) {
+    getCDLinks: function (name) {
         var res = this.serviceConfigs.filter((a) => a.name == name);
-        return res.length ? res[0].deployLinks : { 'N/A': 'javascript:alert("deploy link not found for service:' + name + '")' };
+        return res.length ? res[0].CDLinks : { 'N/A': 'javascript:alert("deploy link not found for service:' + name + '")' };
     },
     getConfigLinks: function (name) {
         var res = this.serviceConfigs.filter((a) => a.name == name);
@@ -807,49 +848,103 @@ unsafeWindow.lymTM = window.lymTM = {
             $.ajax(url, { success: resolve });
         }
     },
+    transferJenkinsName_can_delete_if_20200701(jenkinsName) {
+        switch (jenkinsName) {
+            case "promos-manager-api": return "promos-manager-reward-service";
+            default: return jenkinsName;
+        }
+    },
     getServiceNameByJenkinsName(jenkinsName) {
         var res = this.serviceConfigs.filter((a) => a.jenkinsName == jenkinsName);
         return res.length ? res[0].name : '';
     },
+    samePath(a, b) {
+        try {
+            var urlA = new URL(a);
+            var urlB = new URL(b);
+            if (urlA.host.includes('/rancher.') && urlB.host.includes('/rancher.')) {
+                let pathA = urlA.pathname.match(/\/[^\/]*\/[^\/]*/)[0];
+                let pathB = urlB.pathname.match(/\/[^\/]*\/[^\/]*/)[0];
+                if (pathA == null || pathB == null) {
+                    return false;
+                }
+                if (pathA == pathB) {
+                    return true;
+                }
+            }
+            var pathA = urlA.pathname.match(/\/[^\/]*/)[0];
+            var pathB = urlB.pathname.match(/\/[^\/]*/)[0];
+            if (pathA == '/hangfire' && pathB == '/hangfire') {
+                return true;
+            }
+            return a.startsWith(b);
+        } catch (e) {
+            console.log(e, a, b);
+            return false;
+        }
+    },
     generateRelativeLinks(serviceName, $, currentUrl = '') {
-        var buildDiv = $('<div style="margin-left:15px;font-weight:bold;display:inline">CI:</div>');
-        var deployDiv = $('<div style="margin-left:20px;font-weight:bold;display:inline">CD:</div>');
-        var configDiv = $('<div style="margin-left:20px;font-weight:bold;display:inline">Config:</div>');
-        var envDiv = $('<div style="margin-left:20px;font-weight:bold;display:inline">Env:</div>');
-        var logDiv = $('<div style="margin-left:20px;font-weight:bold;display:inline">Log:</div>');
-        var rancherDiv = $('<div style="margin-left:20px;font-weight:bold;display:inline">Rancher:</div>');
-
-        var wrapDiv = $('<div></div>').append(buildDiv).append(deployDiv).append(configDiv).append(envDiv).append(logDiv).append(rancherDiv);
-        var buildLinks = lymTM.getBuildLinks(serviceName);
-        for (let d in buildLinks) {
-            if (currentUrl.startsWith(buildLinks[d])) { continue; }
-            $(lymTM.createLink(d, buildLinks[d])).css({ 'margin-left': '6px', 'font-weight': 'normal' }).appendTo(buildDiv);
+        //         var buildDiv = $('<div style="margin-left:15px;font-weight:bold;display:inline">CI:</div>');
+        //         var deployDiv = $('<div style="margin-left:20px;font-weight:bold;display:inline">CD:</div>');
+        //         var configDiv = $('<div style="margin-left:20px;font-weight:bold;display:inline">Config:</div>');
+        //         var envDiv = $('<div style="margin-left:20px;font-weight:bold;display:inline">Env:</div>');
+        //         var logDiv = $('<div style="margin-left:20px;font-weight:bold;display:inline">Log:</div>');
+        //         var rancherDiv = $('<div style="margin-left:20px;font-weight:bold;display:inline">Rancher:</div>');
+        var wrapDiv = $('<div></div>');//.append(buildDiv).append(deployDiv).append(configDiv).append(envDiv).append(logDiv).append(rancherDiv);
+        var links = ['Repo', 'CI', 'CD', 'Config', 'Hangfire', 'Env', 'Log', 'Rancher'];
+        var curConfig = this.serviceConfigs.filter((a) => a.name == serviceName)[0] || {};
+        for (let key in curConfig) {
+            if (key.endsWith('Links')) {
+                var prefix = key.replace(/Links/g, '');
+                prefix = prefix.substring(0, 1).toUpperCase() + prefix.substring(1);
+                let div = $(`<div style="margin-left:20px;font-weight:bold;display:inline">${prefix}:</div>`);
+                let index = links.indexOf(prefix);
+                if (index == -1) {
+                    links.push(div);
+                } else {
+                    links[index] = div;
+                }
+                for (let d in curConfig[key]) {
+                    if (this.sameHost(currentUrl, curConfig[key][d]) && this.samePath(currentUrl, curConfig[key][d])) { continue; }
+                    //                     if (currentUrl.startsWith(curConfig[key][d])) { continue; }
+                    $(lymTM.createLink(d, curConfig[key][d])).css({ 'margin-left': '6px', 'font-weight': 'normal' }).appendTo(div);
+                }
+            }
         }
-        var deployLinks = lymTM.getDeployLinks(serviceName);
-        for (let d in deployLinks) {
-            if (currentUrl.startsWith(deployLinks[d])) { continue; }
-            $(lymTM.createLink(d, deployLinks[d])).css({ 'margin-left': '6px', 'font-weight': 'normal' }).appendTo(deployDiv);
+        for (let value of links.filter(a => typeof (a) != "string")) {
+            wrapDiv.append(value);
         }
-        var configLinks = lymTM.getConfigLinks(serviceName);
-        for (let d in configLinks) {
-            if (currentUrl.startsWith(configLinks[d])) { continue; }
-            $(lymTM.createLink(d, configLinks[d])).css({ 'margin-left': '6px', 'font-weight': 'normal' }).appendTo(configDiv);
-        }
-        var envLinks = lymTM.getEnvLinks(serviceName);
-        for (let d in envLinks) {
-            if (currentUrl.startsWith(envLinks[d])) { continue; }
-            $(lymTM.createLink(d, envLinks[d])).css({ 'margin-left': '6px', 'font-weight': 'normal' }).appendTo(envDiv);
-        }
-        var logLinks = lymTM.getLogLinks(serviceName);
-        for (let d in logLinks) {
-            if (currentUrl.startsWith(logLinks[d])) { continue; }
-            $(lymTM.createLink(d, logLinks[d])).css({ 'margin-left': '6px', 'font-weight': 'normal' }).appendTo(logDiv);
-        }
-        var rancherLinks = lymTM.getRancherLinks(serviceName);
-        for (let d in rancherLinks) {
-            if (currentUrl.startsWith(rancherLinks[d])) { continue; }
-            $(lymTM.createLink(d, rancherLinks[d])).css({ 'margin-left': '6px', 'font-weight': 'normal' }).appendTo(rancherDiv);
-        }
+        wrapDiv.children().first().css('margin-left', '15px');
+        //         var CILinks = lymTM.getCILinks(serviceName);
+        //         for (let d in CILinks) {
+        //             if (currentUrl.startsWith(CILinks[d])) { continue; }
+        //             $(lymTM.createLink(d, CILinks[d])).css({ 'margin-left': '6px', 'font-weight': 'normal' }).appendTo(buildDiv);
+        //         }
+        //         var CDLinks = lymTM.getCDLinks(serviceName);
+        //         for (let d in CDLinks) {
+        //             if (currentUrl.startsWith(CDLinks[d])) { continue; }
+        //             $(lymTM.createLink(d, CDLinks[d])).css({ 'margin-left': '6px', 'font-weight': 'normal' }).appendTo(deployDiv);
+        //         }
+        //         var configLinks = lymTM.getConfigLinks(serviceName);
+        //         for (let d in configLinks) {
+        //             if (currentUrl.startsWith(configLinks[d])) { continue; }
+        //             $(lymTM.createLink(d, configLinks[d])).css({ 'margin-left': '6px', 'font-weight': 'normal' }).appendTo(configDiv);
+        //         }
+        //         var envLinks = lymTM.getEnvLinks(serviceName);
+        //         for (let d in envLinks) {
+        //             if (currentUrl.startsWith(envLinks[d])) { continue; }
+        //             $(lymTM.createLink(d, envLinks[d])).css({ 'margin-left': '6px', 'font-weight': 'normal' }).appendTo(envDiv);
+        //         }
+        //         var logLinks = lymTM.getLogLinks(serviceName);
+        //         for (let d in logLinks) {
+        //             if (currentUrl.startsWith(logLinks[d])) { continue; }
+        //             $(lymTM.createLink(d, logLinks[d])).css({ 'margin-left': '6px', 'font-weight': 'normal' }).appendTo(logDiv);
+        //         }
+        //         var rancherLinks = lymTM.getRancherLinks(serviceName);
+        //         for (let d in rancherLinks) {
+        //             if (currentUrl.startsWith(rancherLinks[d])) { continue; }
+        //             $(lymTM.createLink(d, rancherLinks[d])).css({ 'margin-left': '6px', 'font-weight': 'normal' }).appendTo(rancherDiv);
+        //         }
         return wrapDiv;
     },
     async maskDiv(condition, action, $) {
@@ -932,7 +1027,14 @@ unsafeWindow.lymTM = window.lymTM = {
             setTimeout(job, 0);
         }
     },
-
+    alreadyDone(obj) {
+        var res = this.transferJqueryObj(obj);
+        return res.lymTMDone;
+    },
+    done(obj) {
+        var res = this.transferJqueryObj(obj);
+        res.lymTMDone = true;
+    },
 
 };
 lymTM.init();

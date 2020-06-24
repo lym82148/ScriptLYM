@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Swagger
 // @namespace    http://tampermonkey.net/
-// @version      12
+// @version      13
 // @description  swagger
 // @author       Yiming Liu
 // all swaggers
@@ -30,7 +30,7 @@
 
 async function process(func, time) {
     var authValue;
-    var isProd = !location.host.includes('test');
+    var isProd = !location.host.includes('test') && !location.host.includes('localhost');
     var authBtn = lymTM.createButton(isProd ? 'Auth Prod' : 'Auth', async function () {
         if (authValue) {
             lymTM.reactSet(this.previousSibling, authValue);
@@ -291,10 +291,14 @@ async function process(func, time) {
         return;
     } else {
         // cs portal page
-        if (location.host == 'client-rewards-backoffice.internal.iherbtest.io' || location.host == 'security-identity-test.iherb.net' || location.host == 'cs-portal.backoffice.iherbtest.net'
+        if (location.host == 'rewards-web.backoffice.iherbtest.net' || location.host == 'security-identity-test.iherb.net' || location.host == 'cs-portal.backoffice.iherbtest.net'
             || location.host == 'rewards-web.backoffice.iherb.net' || location.host == 'cs-portal.backoffice.iherb.net'
             || location.host == 'secauthext.iherb.net') {
             var value = $.cookie('AccessToken');
+            if (!value) { // for okta
+                await lymTM.async($('div>svg:not([data-qa-element]):first'));
+                value = JSON.parse(window.sessionStorage.getItem("okta-token-storage")).accessToken.value;
+            }
             console.log(value);
             if (value) {
                 lymTM.setValue(location.href, value);

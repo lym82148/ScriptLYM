@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         EnvironmentSwitch
 // @namespace    http://tampermonkey.net/
-// @version      2
+// @version      3
 // @description  test prod switch
 // @author       Yiming Liu
 // @include      https://*iherb*/*
@@ -26,6 +26,8 @@ async function process(func, time) {
         return;
     }
     var envLinks = config.envLinks;
+    var hangfireLinks = config.hangfireLinks;
+    var rancherLinks = config.rancherLinks;
     var wrapDiv = $('<div></div>')
     var targetContent = null;
     // all swagger
@@ -90,6 +92,42 @@ async function process(func, time) {
         }
         wrapDiv.css({ 'display': 'inline-block', 'padding': '11px', 'height': '50px' });
     }
+    else if (location.href.includes('/hangfire')) {
+        for (let key in hangfireLinks) {
+            let link = createLink();
+            addDataUrl(link, key, hangfireLinks[key]);
+            link.appendTo(wrapDiv);
+        }
+        wrapDiv.css({ 'float': 'left', 'margin': '11px 10px 11px 0px' });
+        targetContent = $('.navbar-header').css({ 'margin-left': '10px' });
+        $('.navbar-collapse').css({ 'background-color': '#e2e2e2', 'padding-right': '10px' });
+
+        let wrapDivEx = lymTM.generateRelativeLinks(config.name, $, location.href);
+        // 移除 env 链接 避免歧义
+        wrapDivEx.children(':contains(Hangfire)').remove();
+        wrapDivEx.css({ 'margin-top': '10px', 'margin-bottom': '0px', 'display': 'none' }).append($('<hr/>').css({ 'margin-top': '10px', 'margin-bottom': '0px', 'border': 'solid 1px #e7e7e7' }));
+        $('.container:first').prepend(wrapDivEx);
+        wrapDivEx.show(100);
+        for (var i = 0; i <= 40; i += 5) {
+            await lymTM.async(3);
+            $('body').css('margin-top', `${i}px`);
+        }
+    }
+    else if (location.href.includes('/rancher.')) {
+        for (let key in rancherLinks) {
+            let link = createLink();
+            addDataUrl(link, key, rancherLinks[key]);
+            link.appendTo(wrapDiv);
+        }
+        targetContent = $('<li style="padding-left:15px"></li>');
+        // use lamda here,cause new jquery version in rancher
+        var menu = await lymTM.async(() => $('ul.nav-main>li.nav-item.dropdown'));
+        menu.after(targetContent);
+    }
+    else {
+        // other site
+        return;
+    }
 
     wrapDiv.on('mouseout', function () {
         render(this);
@@ -103,10 +141,12 @@ async function process(func, time) {
     render(wrapDiv);
     targetContent.append(wrapDiv);
 }
+
 function addDataUrl(link, key, url) {
     link.html(key == 'Prod' ? 'Production' : key);
     link.data('url', url);
-    if (!lymTM.sameHost(url, location.href)) {
+    if (!lymTM.sameHost(url, location.href)
+        || url.includes('/rancher.') && location.origin.includes('/rancher.') && !lymTM.samePath(url, location.href)) {
         link.css('cursor', 'pointer');
         link.click(function () { lymTM.openActive($(this).data('url')) });
     } else {
@@ -131,7 +171,14 @@ function createLink() {
 }
 function render(div) {
     $(div).children().each(function () {
-        if (!lymTM.sameHost($(this).data('url'), location)) { $(this).css('opacity', '0.15'); } else { $(this).css('opacity', '1'); }
+        var url = $(this).data('url');
+        if (!lymTM.sameHost(url, location)
+            || url.includes('/rancher.') && location.origin.includes('/rancher.') && !lymTM.samePath(url, location.href)) {
+            $(this).css('opacity', '0.15');
+        }
+        else {
+            $(this).css('opacity', '1');
+        }
     });
 }
 function showAll(div) {

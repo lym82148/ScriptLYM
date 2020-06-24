@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Bitbucket
 // @namespace    http://tampermonkey.net/
-// @version      17
+// @version      18
 // @description  pull request approver、build link、deploy link
 // @author       Yiming Liu
 // @include      mailto:*
@@ -61,6 +61,7 @@ async function process(func, time) {
         //         jenkinsName = jenkinsName.replace(/^backoffice-/, '');
         console.log(jenkinsName);
         var copyConfigStr;
+        var copyConfigSortStr;
         var processing = false;
         var link = $(lymTM.createButton('', () => {
             if (processing) { return; } console.log(copyConfigStr);
@@ -68,9 +69,16 @@ async function process(func, time) {
             link.fadeOut(200);
             setTimeout(() => link.fadeIn(200), 200)
         })).css({ 'display': 'inline', 'outline': 'none', 'margin-left': '40px' });
+        var linkSort = $(lymTM.createButton('', () => {
+            if (processing) { return; } console.log(copyConfigSortStr);
+            lymTM.copy(copyConfigSortStr);
+            linkSort.fadeOut(200);
+            setTimeout(() => linkSort.fadeIn(200), 200)
+        })).css({ 'display': 'inline', 'outline': 'none', 'margin-left': '40px' });
         var selectBranchAction = async function () {
             processing = true;
             link.fadeOut();
+            linkSort.fadeOut();
             ClearRenderDiff();
             var branchName = this.value;
             var projectConfigs = Object.create(null);
@@ -89,6 +97,7 @@ async function process(func, time) {
             //             console.log("projectConfigs",projectConfigs);
             MergeConfig(projectConfigs);
             link.fadeIn();
+            linkSort.fadeIn();
             processing = false;
         }
         var projectNewAddConfig;
@@ -156,7 +165,7 @@ async function process(func, time) {
                 env = 'test';
             } else if (fileName.includes('preprod')) {
                 env = 'preprod';
-            } else if (fileName.includes('prod')) {
+            } else if (fileName.includes('central')) {
                 env = 'prod';
             }
             configLines.each((index, line) => {
@@ -208,20 +217,22 @@ async function process(func, time) {
             //             $.extend(projectConfigs, existConfigs);
             //             var keysArr = new Array(...Object.keys(projectConfigs)).sort();
             //             console.log(keysArr);
-            var configStr = '';
-            //             for (var key of Object.keys(existConfigs)) {
-            //                 var value = existConfigs[key];
-            //                 if (key == "ASPNETCORE_ENVIRONMENT") {
-            //                     configStr = `    ${key}: ${value}\n` + configStr;
-            //                 } else {
-            //                     configStr += `    ${key}: ${value}\n`;
-            //                 }
-            //             }
+            var configSortStr = '';
+            var keysArr = new Array(...Object.keys(existConfigs)).sort();
+            for (var key of keysArr) {
+                var value = existConfigs[key];
+                if (key == "ASPNETCORE_ENVIRONMENT") {
+                    configSortStr = `    ${key}: ${value}\n` + configSortStr;
+                } else {
+                    configSortStr += `    ${key}: ${value}\n`;
+                }
+            }
             //             for (key of Object.keys(projectConfigs)) {
             //                 if(key in existConfigs){continue;}
             //                 value = projectConfigs[key];
             //                 configStr += `    ${key}: ${value}\n`;
             //             }
+            var configStr = '';
             for (var entity of projectNewAddConfig) {
                 configStr += `    ${entity[0]}: ${entity[1]}\n`;
             }
@@ -230,6 +241,8 @@ async function process(func, time) {
             } else {
                 link.html(`No new config`);
             }
+            linkSort.html(`Copy sort exist config`);
+            copyConfigSortStr = headConfigs + configSortStr;
             copyConfigStr = configStr;
         }
         var branches = await lymTM.getBranchesByName(jenkinsName);
@@ -263,7 +276,7 @@ async function process(func, time) {
         var hr = $('<hr/>').css({ 'margin': '2px', 'border': 0 });
         var div = $('<div/>')
         var wrapDivEx = $('<div/>');
-        wrapDivEx.append(hr).append(selectBranch).append(div).append(useCustomer).append(link);
+        wrapDivEx.append(hr).append(selectBranch).append(div).append(useCustomer).append(link).append(linkSort);
         $('#source-path>div:last-child').append(wrapDivEx);
 
         selectBranch.change(selectBranchAction);
@@ -312,7 +325,7 @@ async function process(func, time) {
     var approveUsers = lymTM.getApproveUsers(curUserName, serviceName);
     console.table({ curUserName, serviceName });
 
-    if (serviceName.endsWith('.config')) {
+    if (serviceName.endsWith('config')) {
         var jenkinsNameFromConfigPage;
         var match1 = location.href.match(/.*\/(.*)\/override\/.*/);
         if (match1) {
@@ -467,7 +480,9 @@ async function createBranchThread() {
     var createBranchForm = $('#create-branch-form');
     var userName = $('#bb-bootstrap').data('current-user').displayName.split(' ')[0];
     var newBranchNameInput = $('input[name=branchName]');
-    lymTM.reactSet(newBranchNameInput, `${userName}/${newBranchNameInput.val()}`);
+    if (!newBranchNameInput.val().startsWith(`${userName}/`)) {
+        lymTM.reactSet(newBranchNameInput, `${userName}/${newBranchNameInput.val()}`);
+    }
     var currentBranchName = $('#select-branch>div').text();
     var repoName = $('#select-repository>div').text().replace('iherbllc/', '');
     var targetBranchName = lymTM.getDefaultBranch(repoName);
