@@ -274,15 +274,6 @@
     <None Include="Properties\PublishProfiles\lym - FTP.pubxml" />
     <None Include="Properties\PublishProfiles\lym - Web Deploy.pubxml" />
     <None Include="Scripts\jquery-1.10.2.intellisense.js" />
-    <Content Include="Scripts\myScriptFb.js" />
-    <Content Include="Scripts\myScriptConfluence.js" />
-    <Content Include="Scripts\myScriptOpsFilter.js" />
-    <Content Include="Scripts\myScriptJenkins.js" />
-    <Content Include="Scripts\myScriptBitbucket.js" />
-    <Content Include="Scripts\myScriptJira.js" />
-    <Content Include="Scripts\myScriptOps.js" />
-    <Content Include="Scripts\myScriptCxy.js" />
-    <Content Include="Scripts\myScript.js" />
     <Content Include="Scripts\useful.js" />
     <Content Include="Scripts\clipboard.js" />
     <Content Include="Scripts\jquery-1.10.2.js" />
