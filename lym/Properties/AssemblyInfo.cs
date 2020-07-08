@@ -8,9 +8,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("lym")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("BMW Group")]
+[assembly: AssemblyCompany("lym Group")]
 [assembly: AssemblyProduct("lym")]
-[assembly: AssemblyCopyright("版权所有(C) BMW Group 2017")]
+[assembly: AssemblyCopyright("版权所有(C) lym 2017")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
