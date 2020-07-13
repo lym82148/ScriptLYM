@@ -1,11 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29613.14
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "lym", "lym\lym.csproj", "{C712888A-E3EA-42DB-ACC8-7091E597FA91}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Service", "Service\Service.csproj", "{0065F33A-438F-4AFB-BFAD-D40DDFC28D1E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,12 +15,11 @@ Global
 		{C712888A-E3EA-42DB-ACC8-7091E597FA91}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C712888A-E3EA-42DB-ACC8-7091E597FA91}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C712888A-E3EA-42DB-ACC8-7091E597FA91}.Release|Any CPU.Build.0 = Release|Any CPU
-		{0065F33A-438F-4AFB-BFAD-D40DDFC28D1E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0065F33A-438F-4AFB-BFAD-D40DDFC28D1E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0065F33A-438F-4AFB-BFAD-D40DDFC28D1E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0065F33A-438F-4AFB-BFAD-D40DDFC28D1E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E16D7C3F-D3C0-4E66-9298-3552F25D11A0}
 	EndGlobalSection
 EndGlobal
