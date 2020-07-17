@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Jenkins
 // @namespace    http://tampermonkey.net/
-// @version      10
+// @version      11
 // @description  CI CD
 // @author       Yiming Liu
 // @match        https://jenkins-ci.iherb.net/*
@@ -275,7 +275,11 @@ async function getJenkinsLog() {
         var item = changeList.eq(i);
         var buildId = item.prev().text().trim().replace('#', '').replace(/\u200b/g, '');
         //var packageName = $(`.pane.build-name:has([href$="/${buildId}/"])`).closest('td').find('.pane.desc').text().trim().replace(/\u200b/g, '');
-        var packageName = Array.prototype.last.call($(`.pane.build-name:has([href$="/${buildId}/"])`).closest('td').find('.pane.desc')[0].childNodes).textContent.trim().replace(/\u200b/g, '');
+        var pane = $(`.pane.build-name:has([href$="/${buildId}/"])`).closest('td').find('.pane.desc');
+        var packageName;
+        if (pane.length) {
+            packageName = Array.prototype.last.call(pane[0].childNodes).textContent.trim().replace(/\u200b/g, '');
+        }
         if (item.find('.no-changes').length) {
             lymTM.setJenkinsLogNoChange(`${location.pathname}${buildId}`, `${packageName}`);
             if (!finishPackages.includes(buildId)) {

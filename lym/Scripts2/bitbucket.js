@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Bitbucket
 // @namespace    http://tampermonkey.net/
-// @version      18
+// @version      19
 // @description  pull request approver、build link、deploy link
 // @author       Yiming Liu
 // @include      mailto:*
@@ -168,6 +168,15 @@ async function process(func, time) {
             } else if (fileName.includes('central')) {
                 env = 'prod';
             }
+            var commitBtn = $('button.save-button:contains(Commit)');
+            if (jenkinsNameFromConfigPage && commitBtn.length && !commitBtn.data('add-click-tm')) {
+                commitBtn.click(async () => {
+                    console.log(3);
+                    var textarea = await lymTM.async($('#id_message:visible'));
+                    textarea.val(`${env} ${jenkinsNameFromConfigPage} `);
+                });
+                commitBtn.data('add-click-tm', 'add');
+            }
             configLines.each((index, line) => {
                 var $line = $(line);
                 var lineTag = $line.children('div>div');
@@ -325,8 +334,8 @@ async function process(func, time) {
     var approveUsers = lymTM.getApproveUsers(curUserName, serviceName);
     console.table({ curUserName, serviceName });
 
+    var jenkinsNameFromConfigPage;
     if (serviceName.endsWith('config')) {
-        var jenkinsNameFromConfigPage;
         var match1 = location.href.match(/.*\/(.*)\/override\/.*/);
         if (match1) {
             jenkinsNameFromConfigPage = match1[1];

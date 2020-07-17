@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Swagger
 // @namespace    http://tampermonkey.net/
-// @version      13
+// @version      14
 // @description  swagger
 // @author       Yiming Liu
 // all swaggers
@@ -295,15 +295,16 @@ async function process(func, time) {
             || location.host == 'rewards-web.backoffice.iherb.net' || location.host == 'cs-portal.backoffice.iherb.net'
             || location.host == 'secauthext.iherb.net') {
             var value = $.cookie('AccessToken');
-            if (!value) { // for okta
-                await lymTM.async($('div>svg:not([data-qa-element]):first'));
-                value = JSON.parse(window.sessionStorage.getItem("okta-token-storage")).accessToken.value;
-            }
             console.log(value);
             if (value) {
                 lymTM.setValue(location.href, value);
             } else {
+                if (!$('form').length) { // for okta
+                    await lymTM.async($('div>svg:not([data-qa-element]):first'));
+                    value = JSON.parse(window.sessionStorage.getItem("okta-token-storage")).accessToken.value;
+                }
                 var loginForm = await lymTM.async($('form:has(#password)'));
+
                 await lymTM.maskDiv(() => loginForm.find('#password').val(), () => loginForm.find('#rememberMe').prop('checked', true).end().submit());
             }
         }

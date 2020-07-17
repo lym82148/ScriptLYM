@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Rancher
 // @namespace    http://tampermonkey.net/
-// @version      3
+// @version      4
 // @description  link jenkins
 // @author       Yiming Liu
 // @include      https://rancher.iherb.io/*
@@ -25,10 +25,73 @@ async function process(func, time) {
     lymTM.runJob(configMapThread, 100);
     lymTM.runJob(refreshLogBtnThread, 100);
 
+    lymTM.runJob(configLinkThread, 100);
+    lymTM.runJob(workLoadLinkThread, 100);
+
+
     var url = `${location.origin}/v3/project/${location.href.match(/\/([^\/]*:[^\/]*)\//)[1]}/workloads`;
     console.log(url);
 
 }
+async function workLoadLinkThread() {
+    if (location.href.includes('/workload/')) {
+        return;
+    }
+    var h1Text = $('h1').text().trim();
+    if (!h1Text.includes(':')) { return; }
+    var statusLabel = $('h1');
+    if (!lymTM.alreadyDone(statusLabel)) {
+        var id = h1Text.split(':').pop().trim();
+        var namespace = $('label:contains(Namespace)').next('p').text();
+        var nodeId = `deployment:${namespace}:${id}`;
+        console.log('nodeId:', nodeId);
+        var link = lymTM.createLink(id);
+        link.target = '';
+        link.style.fontSize = '';
+        statusLabel.html(h1Text.split(':').shift() + ': ');
+        statusLabel.append(link);
+        link.onclick = async function () {
+            var ev = document.createEvent('HTMLEvents');
+            ev.initEvent('click', false, true);
+            $('ul.nav-main a:contains(Workloads)').click();
+            await lymTM.async($(`tr.main-row:has(input[nodeid="${nodeId}"])`).find('td[data-title="Name: "]>a:not([name])>i').click());
+        };
+        lymTM.done(statusLabel);
+    }
+}
+async function configLinkThread() {
+    if (!location.pathname.endsWith('/workloads')) {
+        return;
+    }
+    var statusLabel = await lymTM.async(() => $('table.sortable-table tr.main-row>td[data-title="Name: "]'));
+    if (!lymTM.alreadyDone(statusLabel)) {
+        var link = lymTM.createLink('config');
+        link.style.float = 'right';
+        link.name = 'tm_config_link'
+        link.target = '';
+        statusLabel.prepend(link);
+        statusLabel.on('click', `[name=${link.name}]`, getConfigEvent);
+
+        lymTM.done(statusLabel);
+    }
+}
+async function gotoConfig(nodeId) {
+    var ev = document.createEvent('HTMLEvents');
+    ev.initEvent('mouseenter', false, true);
+    $('a[role=button]:contains(Resources)').closest('div')[0].dispatchEvent(ev);
+    var menu = await lymTM.async(() => $('#ember-basic-dropdown-wormhole li:contains(Config Maps)>a'));
+    menu.click();
+    $(`input[nodeid="${nodeId}"]`).closest('tr').children('td[data-title="Name: "]').find('a').click();
+}
+async function getConfigEvent() {
+    var nodeId = $(this).closest('tr').find('input[nodeid]').attr('nodeid');
+    if (nodeId) {
+        nodeId = nodeId.replace('deployment:', '');
+    }
+    console.log('nodeId:', nodeId);
+    await gotoConfig(nodeId);
+}
+
 async function refreshLogBtnThread() {
     var statusLabel = await lymTM.async(() => $('div.container-log .console-status'));
     if (!lymTM.alreadyDone(statusLabel)) {
@@ -82,9 +145,13 @@ async function configMapThread() {
         if (!lymTM.alreadyDone(bulkActionsDiv)) {
             var configLink = bulkActionsDiv.children().last().clone();
             configLink.html('configMap').removeClass('btn-disabled bg-default').addClass('bg-primary').css({ 'float': 'right' });
-            configLink.click((e) => {
-                var newUrl = location.href.replace(/\/workload\/deployment:/, '/config-maps/');
-                lymTM.open(newUrl);
+            configLink.click(async (e) => {
+                var nodes = $('.bg-info label:contains("Namespace:")').closest('div')[0].childNodes;
+                var namespace = [].map.call(nodes, (a, b) => a.nodeType == 3 ? a.textContent.trim() : null).filter(a => a).join();
+                var id = $('h1').text().trim().replace('Workload: ', '');
+                var nodeId = `${namespace}:${id}`;
+                console.log(nodeId);
+                await gotoConfig(nodeId);
             });
             bulkActionsDiv.append(configLink).css('width', '100%');
             lymTM.done(bulkActionsDiv);
@@ -92,7 +159,8 @@ async function configMapThread() {
 
         $('td .more-actions').each((a, b) => {
             if (!lymTM.alreadyDone(b)) {
-                var viewLogLink = $('<a href="javascript:void(0);" class="icon icon-file pull-left" style="font-size: 18px;"></a>').mousedown(async function () {
+                var viewLogLink = $('<a href="javascript:void(0);" class="icon icon-file pull-left" style="font-size: 18px;"></a>').mousedown(async function (e) {
+                    if (e.button != 0) { return; }
                     var menuBtn = $(this).next()[0];
                     $(menuBtn).mousedown(function () {
                         lastClickBtn = this;

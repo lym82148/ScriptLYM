@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Common
 // @namespace    http://tampermonkey.net/
-// @version      18
+// @version      19
 // @description  configs & util
 // @author       Yiming Liu
 // @include      *
@@ -303,6 +303,7 @@ unsafeWindow.lymTM = window.lymTM = {
                 }
             },
             { "name": "backoffice.cs.reward.core.service" },
+            { "name": "backoffice.cs.reward.bonus.service" },
             {
                 "name": "backoffice.infrastructure.mailservice",
                 "jenkinsName": "backoffice-infrastructure-mailservice",
@@ -424,7 +425,8 @@ unsafeWindow.lymTM = window.lymTM = {
             "localhost:56322",
             "backoffice-cs-customer-service.internal.iherbtest.io",
             "localhost:44300",
-            "backoffice-cs-reward-service.internal.iherbtest.io"
+            "backoffice-cs-reward-service.internal.iherbtest.io",
+            "localhost:44312",
         ],
         "https://cs-portal.backoffice.iherb.net/rewards/hyperwallet": [
             "backoffice-cs-reward-core-service.central.iherb.io",
@@ -877,7 +879,7 @@ unsafeWindow.lymTM = window.lymTM = {
             if (pathA == '/hangfire' && pathB == '/hangfire') {
                 return true;
             }
-            return a.startsWith(b);
+            return urlA.href.startsWith(urlB.href);
         } catch (e) {
             console.log(e, a, b);
             return false;
