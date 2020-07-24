@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Bitbucket
 // @namespace    http://tampermonkey.net/
-// @version      19
+// @version      20
 // @description  pull request approver、build link、deploy link
 // @author       Yiming Liu
 // @include      mailto:*
@@ -348,6 +348,9 @@ async function process(func, time) {
     }
     // Build Links Deploy Links
     var wrapDiv = lymTM.generateRelativeLinks(serviceName, $, location.href);
+    if (!bread.is(':visible')) {
+        bread = await lymTM.async($('ol.aui-nav-breadcrumbs,div:has(div>a[type]):not(:has(div>div>a[type]),:has(div[data-qa])):visible'));
+    }
     bread.append(wrapDiv);
     $('div[offset][aria-hidden]>div>div:first').append(wrapDiv.clone().css('line-height', 3).children().css('margin', 5).end());
 
@@ -446,7 +449,7 @@ function makeWeeklyReport(arr) {
     var willDoList = Object.create(null);
     for (var item of arr) {
         item.serviceName = item.serviceName || '&nbsp;';
-        if (item.statusText == 'Not Started') {
+        if (item.statusText == 'Not Started' || item.statusText == 'Sprint Ready') {
             if (!(item.serviceName in willDoList)) {
                 willDoList[item.serviceName] = [];
             }

@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Common
 // @namespace    http://tampermonkey.net/
-// @version      19
+// @version      20
 // @description  configs & util
 // @author       Yiming Liu
 // @include      *
@@ -105,11 +105,11 @@ unsafeWindow.lymTM = window.lymTM = {
     approvers: {
         automation: [{ "userName": "Jane (Wenjing) Liu" }]
     },
-    localConfigs: { "swaggerTMConfig": "swaggerTMConfig" },
+    localConfigs: { "swaggerTMConfig": "swaggerTMConfig", "idTMConfig": "idTMConfig" },
     urls: {
         "OctopusShop": "https://deploy.iherb.net/app#/projects/shop",
         "OctopusCSPortal": "https://deploy.iherb.net/app#/projects/cs-portal",
-        "CDJenkinsCS": "https://jenkins.iherb.io/job/backoffice/job/CS/job",
+        "CDJenkinsCS": "https://jenkins.iherb.io/job/backoffice-cs/job",
         "CDJenkinsBuildNow": "build?delay=0sec",
         "CIJenkinsCSSearch": "https://jenkins-ci.iherb.net/job/backoffice/job/CS/search/?q=",
         "CIJenkinsPromosSearch": "https://jenkins-ci.iherb.net/job/backoffice/job/promos/search/?q=",
@@ -408,7 +408,7 @@ unsafeWindow.lymTM = window.lymTM = {
         'lymTMfinished': 'lymTMfinished'
     },
     keys: {
-        'TfsBuildId': 'TfsBuildId', 'GMailBody': 'GMailBody', 'Tfs': 'Tfs', 'Jenkins': 'Jenkins', 'Swagger': 'Swagger'
+        'TfsBuildId': 'TfsBuildId', 'GMailBody': 'GMailBody', 'Tfs': 'Tfs', 'Jenkins': 'Jenkins', 'Swagger': 'Swagger', 'swaggerBodyTextArea': 'swaggerBodyTextArea'
     },
     swaggers: {
         "https://rewards-web.backoffice.iherbtest.net/rewards/create": [
@@ -427,6 +427,7 @@ unsafeWindow.lymTM = window.lymTM = {
             "localhost:44300",
             "backoffice-cs-reward-service.internal.iherbtest.io",
             "localhost:44312",
+            "backoffice-cs-reward-bonus-service.internal.iherbtest.io"
         ],
         "https://cs-portal.backoffice.iherb.net/rewards/hyperwallet": [
             "backoffice-cs-reward-core-service.central.iherb.io",

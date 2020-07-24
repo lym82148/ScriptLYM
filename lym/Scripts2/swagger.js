@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Swagger
 // @namespace    http://tampermonkey.net/
-// @version      14
+// @version      15
 // @description  swagger
 // @author       Yiming Liu
 // all swaggers
@@ -16,6 +16,7 @@
 // auto login reward portal
 // @match        https://security-identity-test.iherb.net/core/login*
 // @match        https://secauthext.iherb.net/core/login*
+// @match        https://iherb.okta.com/login/login.htm*
 // @require      file://c:\iHerb\tmConfig.js
 // ==/UserScript==
 
@@ -91,8 +92,10 @@ async function process(func, time) {
         $('body').on('click', 'button.execute', async function () {
             await lymTM.async();
             var $this = $(this);
-            var table = $this.parent().prev('.opblock-section').find('table.parameters');
-            if (!table.length) { return; }
+            var bodySection = $this.parent().prev('.opblock-section');
+            var table = bodySection.find('table.parameters');
+            var bodyArea = bodySection.find('div.body-param>textarea');
+            if (!table.length && !bodyArea.length) { return; }
             if (table.find('td.parameters-col_description>.invalid').length) {
                 console.log('invalid');
                 return;
@@ -120,6 +123,9 @@ async function process(func, time) {
                         body[key] = value;
                     }
                 });
+                if (bodyArea.length) {
+                    body[lymTM.keys.swaggerBodyTextArea] = bodyArea.val();
+                }
                 console.log(id);
                 console.log(body);
                 swaggerCache = lymTM.setSwaggerCache(id, body);
@@ -198,7 +204,7 @@ async function process(func, time) {
                             mainValue = item.value[mainKey];
                             break;
                         }
-                        if (/id$/i.test(field) && !mainKey) {
+                        if (/id$/i.test(field) && field != 'storeid' && !mainKey) {
                             mainKey = field;
                             mainValue = item.value[mainKey];
                         }
@@ -218,7 +224,7 @@ async function process(func, time) {
                                 res[0] = item;
                                 res[1] = obj[item];
                             }
-                            if (/id$/i.test(item)) {
+                            if (/id$/i.test(item) && item != 'storeid') {
                                 res[2] = item;
                                 res[3] = obj[item];
                             }
@@ -246,6 +252,10 @@ async function process(func, time) {
                                 break;
                         }
 
+                    }
+                    var textArea = block.find('div.body-param>textarea');
+                    if (textArea.length) {
+                        lymTM.reactSet(textArea, body.value[lymTM.keys.swaggerBodyTextArea] || '');
                     }
                 }
                 select.change(function () {
@@ -306,6 +316,13 @@ async function process(func, time) {
                 var loginForm = await lymTM.async($('form:has(#password)'));
 
                 await lymTM.maskDiv(() => loginForm.find('#password').val(), () => loginForm.find('#rememberMe').prop('checked', true).end().submit());
+            }
+        } else if (location.host == 'iherb.okta.com') {
+            await lymTM.async(() => jQueryCourage('form:has(input[name=password])').length);
+            var oktaForm = jQueryCourage('form:has(input[name=password])');
+            if (window[lymTM.localConfigs.idTMConfig]) {
+                lymTM.reactSet(oktaForm.find('input[name=password]')[0], window[lymTM.localConfigs.idTMConfig]);
+                await lymTM.maskDiv(() => oktaForm.find('input[name=password]').val(), () => oktaForm.submit(), jQueryCourage);
             }
         }
 
