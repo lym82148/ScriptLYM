@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Jenkins
 // @namespace    http://tampermonkey.net/
-// @version      11
+// @version      12
 // @description  CI CD
 // @author       Yiming Liu
 // @match        https://jenkins-ci.iherb.net/*
@@ -74,9 +74,11 @@ async function process(wrap, time) {
         console.log(`CDjobName:${CDjobName}`);
         var processList = Object.create(null);
         var deployList = Object.create(null);
-        $('tr.build-row div.build-controls>div.build-badge').toArray().forEach((b) => {
-            var $b = $(b);
-            var td = $b.closest('td');
+        var deployNodes = await lymTM.async(() => $('tr.build-row div.build-controls>div.build-badge').closest('td').has('img[title]'));
+        deployNodes.toArray().forEach((b) => {
+            //             var $b = $(b);
+            //             var td = $b.closest('td');
+            var td = $(b);
             var successResult = td.find('img').attr('title');
             if (!successResult) { return; }
             successResult = successResult.split(' ').first();

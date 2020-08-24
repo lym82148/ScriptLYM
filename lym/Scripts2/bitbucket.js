@@ -1,11 +1,14 @@
 ﻿// ==UserScript==
 // @name         Bitbucket
 // @namespace    http://tampermonkey.net/
-// @version      20
+// @version      21
 // @description  pull request approver、build link、deploy link
 // @author       Yiming Liu
 // @include      mailto:*
 // @match        https://bitbucket.org/*
+// @match        https://iherbglobal.atlassian.net/secure/RapidBoard.jspa*
+// @match        https://iherbglobal.atlassian.net/browse/*
+// @match        https://iherbglobal.atlassian.net/rest*
 // @match        https://iherbglobal.atlassian.net/issues/?filter=*
 // @match        https://bitbucket.org/iherbllc/*config*.yaml?*mode=edit*
 // ==/UserScript==
@@ -20,6 +23,14 @@
 })();
 
 async function process(func, time) {
+    setTimeout(repositoryFilterThread, 0);
+    setTimeout(refreshRepositoryListThread, 0);
+    lymTM.runJob(rapidBoardStoryTransmitThread, 300);
+    lymTM.runJob(findRepositoryTableThread, 300);
+    lymTM.runJob(updateRepositoryLinkThread, 300);
+    if (location.href.startsWith('https://bitbucket.org/dashboard/repositories')) {
+        findInputAndFocus();
+    }
     // error url from source tree
     if (location.href.startsWith('https://bitbucket.org//')) {
         $('#error').prepend($(lymTM.createLabel('Redirecting')).css('font-size', '36px'));
@@ -85,12 +96,14 @@ async function process(func, time) {
             var configUrl = lymTM.getProjectConfigFile(jenkinsName, branchName);
             console.log(configUrl);
             await lymTM.get(configUrl, (res) => {
+                res = res.replace(/\n\s*\/\/.*/g, '');
                 var json = JSON.parse(res);
                 projectConfigs = lymTM.transferConfigJson(json);
             });
             var configUrlDev = lymTM.getProjectConfigFileDev(jenkinsName, branchName);
             console.log(configUrlDev);
             await lymTM.get(configUrlDev, (res) => {
+                res = res.replace(/\n\s*\/\/.*/g, '');
                 var json = JSON.parse(res);
                 $.extend(projectConfigs, lymTM.transferConfigJson(json));
             });
@@ -136,8 +149,11 @@ async function process(func, time) {
                         preChild.find('span:lt(2)').css('background-color', redundantAdjustment);
                         preChild.css('background-color', newTransparent).attr('title', `original value【${existRedundantConfig.get(key)}】`);
                     } else {
-                        // 未变更状态 多余的 key
-                        preChild.css('background-color', redundantTransparent).attr('title', 'the config is not in project');
+                        if (key == 'ASPNETCORE_ENVIRONMENT') {
+                        } else {
+                            // 未变更状态 多余的 key
+                            preChild.css('background-color', redundantTransparent).attr('title', 'the config is not in project');
+                        }
                     }
                 } else if (key in existConfigs) {
                     if (value != existConfigs[key]) {
@@ -149,7 +165,9 @@ async function process(func, time) {
                         var entity = differentConfig.get(key);
                         if (entity != undefined) {
                             preChild.find('span:lt(2)').css('background-color', white);
-                            preChild.css('background-color', redundantTransparent).attr('title', `the value in project is 【${entity[1]}】`).mousedown(((a) => () => lymTM.copy(a))(entity[1]));
+                            preChild.css('background-color', redundantTransparent).attr('title', `the value in project is 【${entity[1]}】`).dblclick(((a) => () => lymTM.copy(a))(entity[1]));
+                        } else {
+                            preChild.css('background-color', '').attr('title', '').find('span:lt(2)').css('background-color', '');
                         }
                     }
                 } else {
@@ -161,19 +179,21 @@ async function process(func, time) {
             var errKeyList = keyList.filter(i => keyList.indexOf(i) != keyList.lastIndexOf(i));
             var fileName = location.pathname.split('/').pop();
             var env = 'test';
+            var envConfig = 'Development';
+            var envName = 'test';
             if (fileName.includes('test')) {
-                env = 'test';
+                env = 'test'; envConfig = 'Development'; envName = 'test';
             } else if (fileName.includes('preprod')) {
-                env = 'preprod';
+                env = 'preprod'; envConfig = 'Staging'; envName = 'preprod';
             } else if (fileName.includes('central')) {
-                env = 'prod';
+                env = 'central'; envConfig = 'Production'; envName = 'prod';
             }
             var commitBtn = $('button.save-button:contains(Commit)');
             if (jenkinsNameFromConfigPage && commitBtn.length && !commitBtn.data('add-click-tm')) {
                 commitBtn.click(async () => {
                     console.log(3);
                     var textarea = await lymTM.async($('#id_message:visible'));
-                    textarea.val(`${env} ${jenkinsNameFromConfigPage} `);
+                    textarea.val(`${envName} ${jenkinsNameFromConfigPage} `);
                 });
                 commitBtn.data('add-click-tm', 'add');
             }
@@ -202,12 +222,19 @@ async function process(func, time) {
                     }
                     lineTag.addClass('aui-message aui-message-warning').css(cssObj).attr('title', titleContent);
                 }
+                else if (key == 'ASPNETCORE_ENVIRONMENT' && value != envConfig) {
+                    lineTag.addClass('aui-message aui-message-warning').css(cssObj).attr('title', `error value ${value}, should be ${envConfig} `);
+                }
                 else if (value == '*') {
-                    lineTag.addClass('aui-message aui-message-warning').css(cssObj).attr('title', 'error value *');
+                    lineTag.addClass('aui-message aui-message-warning').css(cssObj).attr('title', 'error value *, should be "*" ');
                 } else if (/ConnectionString/i.test(key) && /Data *Source|Server/i.test(value)) {
                     lineTag.addClass('aui-message aui-message-warning').css(cssObj).attr('title', 'ConnectionString should be in scret');
                 } else if (/^https?:\/\/.*iherb.*/.test(value.toLowerCase()) && !value.toLowerCase().includes(env)) {
-                    lineTag.addClass('aui-message aui-message-warning').css(cssObj).attr('title', `url does not contain ${env}`);
+                    if (value.includes('//iherb.okta.com/oauth2')
+                        || value.includes('//iherb.zendesk.com/api')) {
+                    } else {
+                        lineTag.addClass('aui-message aui-message-warning').css(cssObj).attr('title', `url does not contain ${env}`);
+                    }
                 }
                 else {
                     lineTag.removeClass('aui-message aui-message-warning').attr('title', '');
@@ -217,7 +244,12 @@ async function process(func, time) {
         function MergeConfig(projectConfigs) {
             projectNewAddConfig = new Map(Object.keys(projectConfigs).filter(x => !(x in existConfigs)).map(x => [x, projectConfigs[x]]));
             existRedundantConfig = new Map(Object.keys(existConfigs).filter(x => !(x in projectConfigs)).map(x => [x, existConfigs[x]]));
-            differentConfig = new Map(Object.keys(projectConfigs).filter(x => x in existConfigs && existConfigs[x] != projectConfigs[x].toString()).map(x => [x, [existConfigs[x], projectConfigs[x]]]));
+            differentConfig = new Map(Object.keys(projectConfigs).filter(
+                x => x in existConfigs
+                    && existConfigs[x] != projectConfigs[x].toString()
+                    && existConfigs[x] != `'${projectConfigs[x].toString()}'`
+                    && existConfigs[x] != `"${projectConfigs[x].toString()}"`
+            ).map(x => [x, [existConfigs[x], projectConfigs[x]]]));
             console.log("existRedundantConfig", existRedundantConfig);
             console.log("projectNewAddConfig", projectNewAddConfig);
             console.log("differentConfig", differentConfig);
@@ -228,8 +260,8 @@ async function process(func, time) {
             //             console.log(keysArr);
             var configSortStr = '';
             var keysArr = new Array(...Object.keys(existConfigs)).sort();
-            for (var key of keysArr) {
-                var value = existConfigs[key];
+            for (let key of keysArr) {
+                let value = existConfigs[key];
                 if (key == "ASPNETCORE_ENVIRONMENT") {
                     configSortStr = `    ${key}: ${value}\n` + configSortStr;
                 } else {
@@ -242,8 +274,13 @@ async function process(func, time) {
             //                 configStr += `    ${key}: ${value}\n`;
             //             }
             var configStr = '';
-            for (var entity of projectNewAddConfig) {
-                configStr += `    ${entity[0]}: ${entity[1]}\n`;
+            for (let entity of projectNewAddConfig) {
+                let value = entity[1].toString();
+                if (value == '*' ||
+                    value.startsWith('{') && value.endsWith('}')) {
+                    value = `'${value}'`;
+                }
+                configStr += `    ${entity[0]}: ${value}\n`;
             }
             if (projectNewAddConfig.size) {
                 link.html(`Copy ${projectNewAddConfig.size} new config`);
@@ -342,6 +379,9 @@ async function process(func, time) {
         } else {
             var match2 = location.href.match(/.*\/(.*)\//);
             jenkinsNameFromConfigPage = match2[1];
+            if (jenkinsNameFromConfigPage == 'commits') {
+                jenkinsNameFromConfigPage = $('div.commit-message>p:first').text().split(' ')[1];
+            }
         }
         console.log('jenkinsNameFromConfigPage:', jenkinsNameFromConfigPage);
         serviceName = lymTM.getServiceNameByJenkinsName(jenkinsNameFromConfigPage);
@@ -391,7 +431,7 @@ async function process(func, time) {
     // 隐藏搜索列表
     $('#select2-drop-mask').click();
     // 等待搜索结果加载准备
-    await lymTM.async(1000);
+    await lymTM.async(1500);
 
     var tabFun = async function (e) {
         if (e.key == 'Tab') {
@@ -404,7 +444,10 @@ async function process(func, time) {
     await tabFun({ key: 'Tab' });
 
 }
-
+async function findInputAndFocus() {
+    var searchInput = await lymTM.async($('#search-repository-input'));
+    searchInput.focus();
+}
 var event = document.createEvent('HTMLEvents');
 // 事件类型，是否冒泡，是否阻止浏览器的默认行为
 event.initEvent("input", false, true);
@@ -483,7 +526,328 @@ function makeWeeklyReport(arr) {
     }
     return res;
 }
+async function updateRepositoryLinkThread() {
+    if (location.href.includes('bitbucket.org/dashboard')) {
+        var links = await lymTM.async($('a[href$="/dashboard/repositories"]'));
+        for (var i = 0; i < links.length; i++) {
+            let link = links.eq(i);
+            if (lymTM.alreadyDone(link)) { continue; }
+            link.click(findInputAndFocus);
+            lymTM.done(link);
+        }
+    }
+}
+async function focusOnFirstRow() {
+    var table = this;
+    console.log($(table).find('tr').length);
+}
+var repositoryTable;
+async function findRepositoryTableThread() {
+    var color = 'lightgrey';
+    if (location.href.includes('bitbucket.org/dashboard/repositories')) {
+        await lymTM.doOnceBy(document, function () {
+            $(document).keydown(function (e) {
+                if (e.keyCode != 38 && e.keyCode != 40 && e.keyCode != 13) { return; }
+                var cur = $(repositoryTable).find('tbody>tr[style*="background-color"]');
+                var next;
+                if (e.keyCode == 13) {
+                    var link = cur.find('a>span:first');
+                    if (e.ctrlKey) {
+                        lymTM.openActive(location.origin + link.closest('a').attr('href'));
+                    } else {
+                        link.click();
+                    }
+                    return;
+                }
+                if (e.keyCode == 38) {
+                    next = cur.prev();
+                    if (next.length == 0) {
+                        next = cur.siblings().last();
+                    }
+                } else if (e.keyCode == 40) {
+                    next = cur.next();
+                    if (next.length == 0) {
+                        next = cur.siblings().first();
+                    }
+                }
+                cur.css('background-color', '');
+                next.css('background-color', color);
+            });
+        });
 
+        repositoryTable = await lymTM.async($('table:first'));
+        await lymTM.doOnceBy(repositoryTable, function () {
+            $(repositoryTable).find('tbody>tr:first').css('background-color', color);
+            lymTM.nodeRemoveCallback(repositoryTable, focusOnFirstRow);
+        });
+    }
+}
+async function rapidBoardStoryTransmitThread() {
+    if (location.href.includes('/secure/RapidBoard')) {
+        let workLogInput = await lymTM.async($('#issue-workflow-transition #log-work-time-logged:visible'));
+        let estimate = +$('div.ghx-selected aui-badge.ghx-estimate').text();
+        if (estimate > 0) {
+            await lymTM.doOnceBy(workLogInput, function () {
+                lymTM.reactSet(workLogInput, `${estimate}d`)
+            });
+        } else {
+            await lymTM.doOnceBy(workLogInput, function () {
+                workLogInput.attr('placeholder', '0 point')
+            });
+        }
+    }
+    else if (location.href.includes('iherbglobal.atlassian.net/browse/') || location.href.includes('iherbglobal.atlassian.net/rest')) {
+        let workLogInput = await lymTM.async(() => jQuery('#issue-workflow-transition #log-work-time-logged:visible'));
+        let estimate = +jQuery('h2:contains(Story Points)').closest('div').next().find('span:last').text();
+        if (estimate > 0) {
+            await lymTM.doOnceBy(workLogInput, function () {
+                lymTM.reactSet(workLogInput, `${estimate}d`)
+            });
+        } else {
+            await lymTM.doOnceBy(workLogInput, function () {
+                workLogInput.attr('placeholder', '0 point')
+            });
+        }
+    }
+}
+async function repositoryFilterThread(input) {
+    var repositoryList = lymTM.getValue(lymTM.keys.RepositoryList);
+    if (!repositoryList) {
+        console.log('repositoryList is null');
+        repositoryList = [];
+    }
+    var div = document.createElement('div');
+    div.style.color = 'red';
+    div.style.fontSize = '16px';
+    div.innerHTML = 'Filter: ';
+    div.style.marginLeft = '10px';
+    var divWrap = document.createElement('div');
+    divWrap.setAttribute('name', 'div-filter-wrap')
+    divWrap.append(div);
+    var listDiv = document.createElement('div');
+    listDiv.id = 'listDivFilterRes';
+    var res = repositoryList;
+    var regK = /\/[^\/]*\/repos\/[^\/]*/i;
+    for (var i = 0; i < res.length; i++) {
+        var item = res[i];
+        var divItem = document.createElement('div');
+        divItem.style.margin = '2px';
+        var a = document.createElement('a');
+        a.style.fontSize = '16px';
+        a.style.margin = '5px';
+        a.style.padding = '2px';
+        a.href = item.link;
+        a.innerHTML = item.name;
+        a.lid = item.name.toLowerCase();
+        a.style.display = 'none';
+        divItem.append(a);
+        listDiv.append(divItem);
+        item.a = a;
+        var relativeLinksDiv = lymTM.generateRelativeLinks(item.name, $);
+        relativeLinksDiv.hide();
+        divItem.append(relativeLinksDiv[0]);
+    }
+    res = res.map(function (a) { return a.a; });
+    div.after(listDiv);
+    var divOther = document.createElement('div');
+    divOther.style.fontSize = '16px';
+    divOther.style.marginTop = '3px';
+    divOther.style.marginLeft = '10px';
+    divOther.style.fontWeight = 'bold';
+    listDiv.after(divOther);
+    var divRefresh = document.createElement('div');
+    var aRefresh = document.createElement('a');
+    aRefresh.innerHTML = 'No repository found. Refresh cache?';
+    aRefresh.style.color = '#ff6e6e'
+    aRefresh.style.display = 'none';
+    aRefresh.style.marginLeft = '10px';
+    aRefresh.target = '_blank';
+    aRefresh.href = 'javascript:void(0);';
+    aRefresh.onclick = async (e) => {
+        e.preventDefault();
+        var jq = $(aRefresh).hide(100);
+        await refreshRepositoryListThread(str);
+        jq.show(100);
+    };
+    divRefresh.append(aRefresh);
+    listDiv.after(divRefresh);
+    if (location.href.includes('//bitbucket.org/')) {
+        let header = await lymTM.async($('div:has(div>header:not([id])):last'));
+        header.children(`div[name=${divWrap.getAttribute('name')}]`).remove();
+        header.prepend(divWrap);
+    }
+    var filterFun = function () {
+        div.innerHTML = 'Filter: ' + str;
+        var first = true;
+        curList = [];
+        var maxCount = 2;
+        var otherCount = 0;
+        for (var i = 0; i < res.length; i++) {
+            if (str != '' && res[i].lid.indexOf(str) >= 0) {
+                if (first) {
+                    res[i].style.backgroundColor = lineColor;
+                    first = false;
+                    curList.curIndex = 0;
+                } else {
+                    res[i].style.backgroundColor = '';
+                }
+                if (curList.length <= maxCount) {
+                    res[i].style.display = '';
+                    res[i].nextSibling.style.display = 'inline';
+                    curList.push(res[i]);
+                } else {
+                    res[i].style.display = 'none';
+                    res[i].nextSibling.style.display = 'none';
+                    otherCount++;
+                }
+            } else {
+                res[i].style.display = 'none';
+                res[i].nextSibling.style.display = 'none';
+            }
+        }
+        if (otherCount) {
+            divOther.innerHTML = 'other ' + otherCount + ' records...';
+        }
+        else {
+            divOther.innerHTML = '';
+        }
+        if (curList.length || str.length == 0) {
+            aRefresh.style.display = 'none';
+        } else {
+            aRefresh.style.display = '';
+        }
+    };
+    var str = '';
+    var ignoreKey = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
+    var curList = [];
+    var lineColor = 'lightgrey';
+    var moveFun = function (a) {
+        if (curList.length == 0) { return; }
+        var nextIndex = curList.curIndex + a;
+        if (nextIndex < 0) {
+            nextIndex = curList.length - 1;
+        } else if (nextIndex >= curList.length) {
+            nextIndex = 0;
+        }
+        curList[curList.curIndex].style.backgroundColor = '';
+        curList[nextIndex].style.backgroundColor = lineColor;
+        curList.curIndex = nextIndex;
+    };
+    document.onkeydown = function (e) {
+        if (e.target.tagName == 'INPUT' || e.target.tagName == 'TEXTAREA') {
+            return;
+        }
+        if (e.ctrlKey && e.key != 'Enter') {
+            return;
+        }
+        var arrow;
+        if (e.key.length > 1) {
+            if (e.key == 'Backspace') {
+                str = str.substr(0, str.length - 1);
+            } else if ((arrow = ignoreKey.indexOf(e.key)) >= 0) {
+                if (arrow == 0 || arrow == 2) {
+                    moveFun(-1);
+                } else if (arrow == 1 || arrow == 3) {
+                    moveFun(1);
+                }
+                return false;
+            }
+            else if (e.key == 'Enter') {
+                if (curList.length) {
+                    if (curList[curList.curIndex].tagName == 'A') {
+                        if (e.ctrlKey) {
+                            curList[curList.curIndex].target = '_blank';
+                        } else {
+                            curList[curList.curIndex].target = '';
+                        }
+                        curList[curList.curIndex].click();
+                    } else {
+                        if (e.ctrlKey) {
+                            curList[curList.curIndex].getElementsByTagName('a')[1].target = '_blank';
+                        } else {
+                            curList[curList.curIndex].getElementsByTagName('a')[1].target = '';
+                        }
+                        curList[curList.curIndex].getElementsByTagName('a')[1].click();
+                    }
+                }
+                return false;
+            }
+            else {
+                str = '';
+            }
+        } else {
+            if (e.key == 'v' && e.ctrlKey) {
+                return;
+            }
+            else if (e.key == ' ') {
+                return false;
+            } else {
+                str += e.key.toLowerCase();
+            }
+        }
+        filterFun();
+        if (e.key.length <= 1) {
+            return false;
+        }
+    };
+
+    document.onpaste = (e) => {
+        if (e.target.tagName == 'INPUT' || e.target.tagName == 'TEXTAREA') {
+            return;
+        }
+        str = e.clipboardData.getData('Text').toLowerCase();
+        filterFun();
+    };
+    if (input != null) {
+        str = input;
+        filterFun();
+    }
+}
+async function refreshRepositoryListThread(refresh) {
+    var repositoryList = lymTM.getValue(lymTM.keys.RepositoryList);
+    if (!repositoryList || refresh) {
+        var list = [];
+        var curRes;
+        var callApi = async function (page) {
+            await lymTM.get(lymTM.urls.RepositoryListApi(page), a => {
+                var nameList = a.values.map(b => {
+                    var res = Object.create(null);
+                    res.name = b.name;
+                    res.link = b.links.html.href;
+                    return res;
+                });
+                list.push(...nameList);
+                curRes = a;
+            });
+        }
+        var page = 1;
+        do {
+            await callApi(page);
+            page++;
+        } while (curRes.values.length == 100);
+        lymTM.setValue(lymTM.keys.RepositoryList, list, 86400 * 1000);
+        if (refresh) {
+            await repositoryFilterThread(refresh);
+        }
+    }
+}
+// var refreshCount = 0;
+// async function refreshWhenDashboardInactive(){
+//     console.log(refreshCount);
+//     if(location.href.endsWith('//bitbucket.org/dashboard/overview')){
+//         var hours = new Date().getHours();
+//         if(hours<8 || hours>18){return;}
+//         if(document.hidden){
+//             refreshCount++;
+//             if(refreshCount>120){
+//                 refreshCount = 0;
+//                 location.reload();
+//             }
+//         }else{
+//             //refreshCount = 0;
+//         }
+//     }
+// }
 async function createBranchThread() {
     // as a job thread,force async a at first
     await lymTM.async();

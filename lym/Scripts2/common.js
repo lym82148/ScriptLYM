@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Common
 // @namespace    http://tampermonkey.net/
-// @version      20
+// @version      21
 // @description  configs & util
 // @author       Yiming Liu
 // @include      *
@@ -121,8 +121,8 @@ unsafeWindow.lymTM = window.lymTM = {
         PromosConfigValueProdEdit: (a) => `https://bitbucket.org/iherbllc/backoffice.reward.config/src/master/${a}/override/values.oregon-central-0.yaml?mode=edit&spa=0&at=master&fileviewer=file-view-default`,
         //         CSConfigValue:(a)=>`https://bitbucket.org/iherbllc/backoffice.cs.config/src/master/${a}/override/values.la-test.yaml`,
         "DataDog": "https://app.datadoghq.com/infrastructure?filter=",
-        BackOfficeTestSwagger: (a) => `https://backoffice-${a}.internal.iherbtest.io/swagger/index.html`,
-        BackOfficeProdSwagger: (a) => `https://backoffice-${a}.central.iherb.io/swagger/index.html`,
+        BackOfficeTestSwagger: (a) => `https://${a}.backoffice.iherbtest.net/swagger/index.html`,
+        BackOfficeProdSwagger: (a) => `https://${a}.backoffice.iherb.net/swagger/index.html`,
         TfsLog: (a) => `https://tfs.iherb.net/tfs/iHerb%20Projects%20Collection/8c0065ee-bf13-4864-b26d-6c887fc45f05/_apis/build/builds/${a}/logs/3`,
         JenkinsLog: (a) => `https://jenkins-ci.iherb.net${a}/wfapi/changesets`,
         JiraStoryLink: (a) => `https://iherbglobal.atlassian.net/browse/${a}`,
@@ -130,12 +130,17 @@ unsafeWindow.lymTM = window.lymTM = {
         JiraSprintLink: (a) => `https://iherbglobal.atlassian.net/secure/RapidBoard.jspa?rapidView=374&assignee=${a}`,
         BackOfficeConfigFile: (a) => (b) => `https://bitbucket.org/iherbllc/backoffice.${a}/raw/${b}/src/${a}.API/appsettings.json`,
         BackOfficeConfigFileDev: (a) => (b) => `https://bitbucket.org/iherbllc/backoffice.${a}/raw/${b}/src/${a}.API/appsettings.Development.json`,
+        RepositoryListApi: (a) => `https://bitbucket.org/!api/internal/dashboard/repositories?pagelen=100&page=${a}&q=`,
         BranchListApi: (a) => `https://bitbucket.org/!api/internal/repositories/iherbllc/${a}/branch-list/?sort=ahead&pagelen=30&fields=values.name`,
+        //         RancherTest: "https://rancher.iherb.io/p/c-djzp4:p-pccbf/workloads#deployment:backoffice-cs:",
         RancherTest: "https://rancher.iherb.io/p/c-djzp4:p-pccbf/workload/deployment:backoffice-cs:",
+        //         RancherProd: "https://rancher.iherb.io/p/c-457vx:p-n6tcc/workloads#deployment:backoffice-cs:",
         RancherProd: "https://rancher.iherb.io/p/c-457vx:p-n6tcc/workload/deployment:backoffice-cs:",
-        RancherPromosTest: "https://rancher.iherb.io/p/c-djzp4:p-pccbf/workload/deployment:backoffice-cs:",
-        RancherPromosProd: "https://rancher.iherb.io/p/c-457vx:p-n6tcc/workload/deployment:backoffice-cs:",
-        BitbucketRepo: "https://bitbucket.org/iherbllc/"
+        RancherPromosTest: "https://rancher.iherb.io/p/c-djzp4:p-pccbf/workloads#deployment:backoffice-cs:",
+        RancherPromosProd: "https://rancher.iherb.io/p/c-457vx:p-n6tcc/workloads#deployment:backoffice-cs:",
+        BitbucketRepo: "https://bitbucket.org/iherbllc/",
+        KibanaTest: (a) => `https://es-test.iherb.net/_plugin/kibana/app/kibana#/discover?_g=(filters:!(),refreshInterval:(display:Off,pause:!f,value:0),time:(from:now-15m,mode:quick,to:now))&_a=(columns:!(kubernetes.container_name,message,log),filters:!(('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'backoffice-cs-*',key:kubernetes.container_name,negate:!f,type:phrase,value:${a}),query:(match:(kubernetes.container_name:(query:${a},type:phrase))))),index:'backoffice-cs-*',interval:auto,query:(match_all:()),sort:!('@timestamp',desc))`,
+        KibanaProd: (a) => `https://es-prod.iherb.net/_plugin/kibana/app/kibana#/discover?_g=(refreshInterval:(pause:!t,value:0),time:(from:now-15m,mode:quick,to:now))&_a=(columns:!(kubernetes.container_name,message,log),filters:!(('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'!'backoffice-cs!'',key:kubernetes.container_name,negate:!f,params:(query:${a},type:phrase),type:phrase,value:${a}),query:(match:(kubernetes.container_name:(query:${a},type:phrase))))),index:'!'backoffice-cs!'',interval:auto,query:(language:lucene,query:''),sort:!('@timestamp',desc))`
     },
     serviceConfigs: {},
     init: async function () {
@@ -263,7 +268,7 @@ unsafeWindow.lymTM = window.lymTM = {
                 "name": "NewCsPortal",
                 "envLinks": {
                     "Test": "https://cs-portal.backoffice.iherbtest.net/rewards/hyperwallet",
-                    "Prod": "https://cs-portal.backoffice.iherb.net/rewards/hyperwallet"
+                    "Prod": "https://cs-portal.iherb.net/rewards/hyperwallet"
                 },
             },
             {
@@ -281,6 +286,18 @@ unsafeWindow.lymTM = window.lymTM = {
                 },
             },
             { "name": "backoffice.cs.reward.service" },
+            {
+                "name": "backoffice.cs.job",
+                "projectConfigFile": (a) => `https://bitbucket.org/iherbllc/backoffice.cs.job/raw/${a}/src/backoffice.cs.job/appsettings.json`,
+                "projectConfigFileDev": (a) => `https://bitbucket.org/iherbllc/backoffice.cs.job/raw/${a}/src/backoffice.cs.job/appsettings.Development.json`,
+                "hangfireLinks": {}
+            },
+            {
+                "name": "users.privacy.syncjob",
+                "projectConfigFile": (b) => `https://bitbucket.org/iherbllc/users.privacy.syncjob/raw/${b}/src/Users.Privacy.SyncJob/appsettings.json`,
+                "projectConfigFileDev": (b) => `https://bitbucket.org/iherbllc/users.privacy.syncjob/raw/${b}/src/Users.Privacy.SyncJob/appsettings.Development.json`,
+                "hangfireLinks": {}
+            },
             {
                 "name": "backoffice.cs.zendesk.syncjob",
                 "projectConfigFile": (b) => `https://bitbucket.org/iherbllc/backoffice.cs.zendesk.syncjob/raw/${b}/src/CS.Zendesk.SyncJob/appsettings.json`,
@@ -302,8 +319,33 @@ unsafeWindow.lymTM = window.lymTM = {
                     "Prod": "https://es-prod.iherb.net/_plugin/kibana/app/kibana#/discover?_g=(refreshInterval:(pause:!t,value:0),time:(from:now-15m,mode:quick,to:now))&_a=(columns:!(kubernetes.container_name,message,log),filters:!(('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'!'backoffice-cs!'',key:kubernetes.container_name,negate:!f,params:(query:cs-customer-service,type:phrase),type:phrase,value:cs-customer-service),query:(match:(kubernetes.container_name:(query:cs-customer-service,type:phrase))))),index:'!'backoffice-cs!'',interval:auto,query:(language:lucene,query:''),sort:!('@timestamp',desc))"
                 }
             },
-            { "name": "backoffice.cs.reward.core.service" },
+            {
+                "name": "backoffice.cs.reward.core.service",
+                "logLinks": {
+                    "Test": "https://es-test.iherb.net/_plugin/kibana/app/kibana#/discover?_g=(filters:!(),refreshInterval:(display:Off,pause:!f,value:0),time:(from:now-15m,mode:quick,to:now))&_a=(columns:!(kubernetes.container_name,message,log),filters:!(('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'backoffice-cs-*',key:kubernetes.container_name,negate:!f,type:phrase,value:cs-reward-core-service),query:(match:(kubernetes.container_name:(query:cs-reward-core-service,type:phrase))))),index:'backoffice-cs-*',interval:auto,query:(match_all:()),sort:!('@timestamp',desc))",
+                    "Prod": "https://es-prod.iherb.net/_plugin/kibana/app/kibana#/discover?_g=(refreshInterval:(pause:!t,value:0),time:(from:now-15m,mode:quick,to:now))&_a=(columns:!(kubernetes.container_name,message,log),filters:!(('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'!'backoffice-cs!'',key:kubernetes.container_name,negate:!f,params:(query:cs-reward-core-service,type:phrase),type:phrase,value:cs-reward-core-service),query:(match:(kubernetes.container_name:(query:cs-reward-core-service,type:phrase))))),index:'!'backoffice-cs!'',interval:auto,query:(language:lucene,query:''),sort:!('@timestamp',desc))"
+                }
+            },
             { "name": "backoffice.cs.reward.bonus.service" },
+            {
+                "name": "backoffice.cs.user.authentication",
+                "CILinks": {
+                    "Jenkins": "https://jenkins-ci.iherb.net/search/?q=iherb.cs.user.authentication"
+                },
+                "CDLinks": {
+                    "Jenkins": "https://jenkins-ci.iherb.net/search/?q=iherb.cs.user.authentication"
+                },
+            },
+            {
+                "name": "backoffice.cs.user.authentication.ui",
+                "jenkinsName": "NuGet%20iHerb.CS.User.Authentication.UI",
+                "CILinks": {
+                    "Jenkins": "https://jenkins-ci.iherb.net/search/?q=iherb.cs.user.authentication.ui"
+                },
+                "CDLinks": {
+                    "Jenkins": "https://jenkins-ci.iherb.net/search/?q=iherb.cs.user.authentication.ui"
+                },
+            },
             {
                 "name": "backoffice.infrastructure.mailservice",
                 "jenkinsName": "backoffice-infrastructure-mailservice",
@@ -360,7 +402,7 @@ unsafeWindow.lymTM = window.lymTM = {
             }
         ];
         for (var item of this.serviceConfigs) {
-            if (item.name.startsWith('backoffice.')) {
+            if (item.name.startsWith('backoffice.') || item.name == 'users.privacy.syncjob') {
                 item.nameEx = item.name.replace('backoffice.', '');
                 item.projectName = item.nameEx.replace(/\.\w/g, (word) => word.toUpperCase()).replace(/^cs./, 'CS.');
                 item.jenkinsName = item.jenkinsName || item.nameEx.replace(/\./g, '-');
@@ -374,7 +416,7 @@ unsafeWindow.lymTM = window.lymTM = {
                 item.rancherLinks = item.rancherLinks || {};
                 item.definitionIds = item.definitionIds || {};
                 item.CDLinks.Jenkins = item.CDLinks.Jenkins || `${this.urls.CDJenkinsCS}/${item.jenkinsName}/${this.urls.CDJenkinsBuildNow}`;
-                if (item.name.startsWith('backoffice.cs.')) {
+                if (item.name.startsWith('backoffice.cs.') || item.name == 'users.privacy.syncjob') {
                     item.CILinks.Jenkins = item.CILinks.Jenkins || `${this.urls.CIJenkinsCSSearch}${item.jenkinsName}`;
                     item.configLinks.Test = item.configLinks.Test || this.urls.CSConfigValueEdit(item.jenkinsName);
                     item.configLinks.Preprod = item.configLinks.Preprod || this.urls.CSConfigValuePreprodEdit(item.jenkinsName);
@@ -400,6 +442,9 @@ unsafeWindow.lymTM = window.lymTM = {
                 item.projectConfigFileDev = item.projectConfigFileDev || this.urls.BackOfficeConfigFileDev(item.projectName);
                 item.repoLinks = item.repoLinks || {};
                 item.repoLinks.Bitbucket = item.repoLinks.Bitbucket || this.urls.BitbucketRepo + item.name;
+                item.logLinks.Test = item.logLinks.Test || this.urls.KibanaTest(item.jenkinsName);
+                item.logLinks.Prod = item.logLinks.Prod || this.urls.KibanaProd(item.jenkinsName);
+
             }
         }
         this.cleanValues();
@@ -408,7 +453,7 @@ unsafeWindow.lymTM = window.lymTM = {
         'lymTMfinished': 'lymTMfinished'
     },
     keys: {
-        'TfsBuildId': 'TfsBuildId', 'GMailBody': 'GMailBody', 'Tfs': 'Tfs', 'Jenkins': 'Jenkins', 'Swagger': 'Swagger', 'swaggerBodyTextArea': 'swaggerBodyTextArea'
+        'TfsBuildId': 'TfsBuildId', 'GMailBody': 'GMailBody', 'Tfs': 'Tfs', 'Jenkins': 'Jenkins', 'Swagger': 'Swagger', 'swaggerBodyTextArea': 'swaggerBodyTextArea', 'RepositoryList': 'RepositoryList'
     },
     swaggers: {
         "https://rewards-web.backoffice.iherbtest.net/rewards/create": [
@@ -422,17 +467,27 @@ unsafeWindow.lymTM = window.lymTM = {
             "localhost:5000",
             "localhost:54319",
             "backoffice-cs-reward-core-service.internal.iherbtest.io",
+            "cs-reward-core-service.backoffice.iherbtest.net",
             "localhost:56322",
             "backoffice-cs-customer-service.internal.iherbtest.io",
+            "cs-customer-service.backoffice.iherbtest.net",
             "localhost:44300",
             "backoffice-cs-reward-service.internal.iherbtest.io",
+            "cs-reward-service.backoffice.iherbtest.net",
             "localhost:44312",
-            "backoffice-cs-reward-bonus-service.internal.iherbtest.io"
+            "backoffice-cs-reward-bonus-service.internal.iherbtest.io",
+            "cs-reward-bonus-service.backoffice.iherbtest.net",
+            "backoffice-cs-gateway.internal.iherbtest.io",
+            "cs-zendesk-syncjob.backoffice.iherbtest.net"
         ],
-        "https://cs-portal.backoffice.iherb.net/rewards/hyperwallet": [
+        "https://cs-portal.iherb.net/rewards/hyperwallet": [
             "backoffice-cs-reward-core-service.central.iherb.io",
+            "cs-reward-core-service.backoffice.iherb.net",
             "backoffice-cs-customer-service.central.iherb.io",
-            "backoffice-cs-reward-service.central.iherb.io"
+            "cs-customer-service.backoffice.iherb.net",
+            "backoffice-cs-reward-service.central.iherb.io",
+            "cs-reward-service.backoffice.iherb.net",
+            "cs-reward-bonus-service.backoffice.iherb.net",
         ]
     },
     searchConfigByHost(location) {
@@ -559,14 +614,19 @@ unsafeWindow.lymTM = window.lymTM = {
         return null;
     },
     getSwaggerEnv: function (swagger) {
-        for (var key in this.swaggers) {
-            for (var item of this.swaggers[key]) {
-                if (item == swagger) {
-                    return key;
-                }
-            }
+        if (swagger.startsWith('localhost') || swagger.endsWith('.iherbtest.net') || swagger.endsWith('.internal.iherbtest.io')) {
+            return 'https://cs-portal.backoffice.iherbtest.net/customers';
+        } else {
+            return 'https://cs-portal.iherb.net/customers'
         }
-        return null;
+        //         for (var key in this.swaggers) {
+        //             for (var item of this.swaggers[key]) {
+        //                 if (item == swagger) {
+        //                     return key;
+        //                 }
+        //             }
+        //         }
+        //         return null;
     },
     nodeRemoveCallback: function (node, callback) {
         node.on('DOMNodeRemovedFromDocument', callback);
@@ -858,6 +918,7 @@ unsafeWindow.lymTM = window.lymTM = {
         }
     },
     getServiceNameByJenkinsName(jenkinsName) {
+        if (jenkinsName == null) { return ''; }
         var res = this.serviceConfigs.filter((a) => a.jenkinsName == jenkinsName);
         return res.length ? res[0].name : '';
     },
@@ -1038,6 +1099,11 @@ unsafeWindow.lymTM = window.lymTM = {
         var res = this.transferJqueryObj(obj);
         res.lymTMDone = true;
     },
-
+    async doOnceBy(obj, func) {
+        if (!this.alreadyDone(obj)) {
+            await func();
+            this.done(obj);
+        }
+    },
 };
 lymTM.init();

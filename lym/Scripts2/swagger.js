@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Swagger
 // @namespace    http://tampermonkey.net/
-// @version      15
+// @version      16
 // @description  swagger
 // @author       Yiming Liu
 // all swaggers
@@ -12,7 +12,9 @@
 // @match        https://rewards-web.backoffice.iherb.net/rewards*
 // get token from new cs portal
 // @match        https://cs-portal.backoffice.iherbtest.net/rewards*
+// @match        https://cs-portal.backoffice.iherbtest.net/customers*
 // @match        https://cs-portal.backoffice.iherb.net/rewards/hyperwallet*
+// @match        https://cs-portal.iherb.net/customers*
 // auto login reward portal
 // @match        https://security-identity-test.iherb.net/core/login*
 // @match        https://secauthext.iherb.net/core/login*
@@ -47,26 +49,35 @@ async function process(func, time) {
     authBtn.style.marginLeft = '10px';
     // all swagger
     if (location.href.includes('/swagger/')) {
+        lymTM.runJob(async () => {
+            var node = await lymTM.async($('button.btn.authorize'));
+            lymTM.doOnceBy(node, () => {
+                var link = $('<button>');
+                link.html('User auth list');
+                link.click(() => window.open(location.origin + '/api/user/authorizations'));
+                link.addClass("btn").css('margin-right', '5px');
+                node.before(link);
+
+            });
+        }, 300);
         var swagger = location.host;
         var env = lymTM.getSwaggerEnv(swagger);
-        if (!env) {
-            console.log(`config not found for swagger:${swagger}`);
-            var swaggerAuth = window[lymTM.localConfigs.swaggerTMConfig][location.host];
-            if (swaggerAuth) {
-                authValue = swaggerAuth;
-                if (!isProd) {
-                    var btn = await lymTM.async($('button.authorize'));
-                    // open auth popup
-                    btn.click();
-                    var input = await lymTM.async($('div.auth-container input'));
-                    lymTM.reactSet(input, swaggerAuth);
-                    // confirm auth
-                    $('button.auth.authorize').click();
-                    // close auth popup
-                    $('button.auth.btn-done').click();
-                }
+        var swaggerAuth = window[lymTM.localConfigs.swaggerTMConfig][location.host];
+        if (swaggerAuth) {
+            authValue = swaggerAuth;
+            if (!isProd) {
+                var btn = await lymTM.async($('button.authorize'));
+                // open auth popup
+                btn.click();
+                var input = await lymTM.async($('div.auth-container input'));
+                lymTM.reactSet(input, swaggerAuth);
+                // confirm auth
+                $('button.auth.authorize').click();
+                // close auth popup
+                $('button.auth.btn-done').click();
             }
-        } else {
+        }
+        else {
             var tab = lymTM.open(env);
             // callback and close window
             lymTM.listenOnce(env, async (a, b, c) => {
@@ -235,6 +246,10 @@ async function process(func, time) {
                 function setFields() {
                     var key = `${envKey}_${block.attr('id')}`;
                     var body = swaggerCache[key][swaggerCache[key].length - 1 - select.prop('selectedIndex')];
+                    var textArea = block.find('div.body-param>textarea');
+                    if (textArea.length) {
+                        lymTM.reactSet(textArea, body.value[lymTM.keys.swaggerBodyTextArea] || '');
+                    }
                     //                     console.log(body);
                     var table = block.find('table.parameters');
                     for (var field of Object.keys(body.value)) {
@@ -252,10 +267,6 @@ async function process(func, time) {
                                 break;
                         }
 
-                    }
-                    var textArea = block.find('div.body-param>textarea');
-                    if (textArea.length) {
-                        lymTM.reactSet(textArea, body.value[lymTM.keys.swaggerBodyTextArea] || '');
                     }
                 }
                 select.change(function () {
@@ -302,19 +313,21 @@ async function process(func, time) {
     } else {
         // cs portal page
         if (location.host == 'rewards-web.backoffice.iherbtest.net' || location.host == 'security-identity-test.iherb.net' || location.host == 'cs-portal.backoffice.iherbtest.net'
-            || location.host == 'rewards-web.backoffice.iherb.net' || location.host == 'cs-portal.backoffice.iherb.net'
+            || location.host == 'rewards-web.backoffice.iherb.net' || location.host == 'cs-portal.iherb.net'
             || location.host == 'secauthext.iherb.net') {
-            var value = $.cookie('AccessToken');
+            await lymTM.async($('div>svg:not([data-qa-element]):first'));
+            var oktaStorage = JSON.parse(window.sessionStorage.getItem("okta-token-storage"));
+            var value;
+            if (oktaStorage) {
+                value = oktaStorage.accessToken.value;
+            } else {
+                value = $.cookie('AccessToken');
+            }
             console.log(value);
             if (value) {
                 lymTM.setValue(location.href, value);
             } else {
-                if (!$('form').length) { // for okta
-                    await lymTM.async($('div>svg:not([data-qa-element]):first'));
-                    value = JSON.parse(window.sessionStorage.getItem("okta-token-storage")).accessToken.value;
-                }
                 var loginForm = await lymTM.async($('form:has(#password)'));
-
                 await lymTM.maskDiv(() => loginForm.find('#password').val(), () => loginForm.find('#rememberMe').prop('checked', true).end().submit());
             }
         } else if (location.host == 'iherb.okta.com') {

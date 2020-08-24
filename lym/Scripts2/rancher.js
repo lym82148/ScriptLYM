@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Rancher
 // @namespace    http://tampermonkey.net/
-// @version      4
+// @version      5
 // @description  link jenkins
 // @author       Yiming Liu
 // @include      https://rancher.iherb.io/*
@@ -19,6 +19,12 @@
 
 
 async function process(func, time) {
+    var hash = location.hash.substr(1);
+    if (hash) {
+        var checkbox = await lymTM.async(() => $(`input[nodeid="${hash}"]:checkbox`));
+        var link = checkbox.closest('tr').find('td[data-title^="Name:"]>a>i');
+        link.click();
+    }
     lymTM.runJob(relativeDivThread, 100);
     // generate configMap button
     // generate viewLog button
@@ -54,7 +60,8 @@ async function workLoadLinkThread() {
             var ev = document.createEvent('HTMLEvents');
             ev.initEvent('click', false, true);
             $('ul.nav-main a:contains(Workloads)').click();
-            await lymTM.async($(`tr.main-row:has(input[nodeid="${nodeId}"])`).find('td[data-title="Name: "]>a:not([name])>i').click());
+            debugger;
+            $(`tr.main-row:has(input[nodeid="${nodeId}"])`).find('td[data-title="Name: "]>a:not([name])>i').click();
         };
         lymTM.done(statusLabel);
     }
@@ -153,6 +160,8 @@ async function configMapThread() {
                 console.log(nodeId);
                 await gotoConfig(nodeId);
             });
+            await lymTM.async(() => bulkActionsDiv.closest('thead').width() != 0);
+            bulkActionsDiv.parent().width(bulkActionsDiv.closest('thead').width());
             bulkActionsDiv.append(configLink).css('width', '100%');
             lymTM.done(bulkActionsDiv);
         }

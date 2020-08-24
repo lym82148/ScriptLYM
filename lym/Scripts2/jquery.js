@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         jQuery
 // @namespace    http://tampermonkey.net/
-// @version      7
+// @version      8
 // @description  try to take over the world!
 // @author       You
 // @match        https://deploy.iherb.net/app*
@@ -10,7 +10,7 @@
 // @match        https://rewards-web.backoffice.iherbtest.net/*
 // @match        https://rewards-web.backoffice.iherb.net/*
 // @match        https://cs-portal.backoffice.iherbtest.net/*
-// @match        https://cs-portal.backoffice.iherb.net/*
+// @match        https://cs-portal.iherb.net/*
 // @match        https://tfs.iherb.net/tfs/iHerb%20Projects%20Collection/*/_apis/build/builds/*/logs/3
 // @match        https://jenkins-ci.iherb.net/*/wfapi/changesets
 // @match        https://jenkins.iherb.io/login*
@@ -35,6 +35,7 @@
 
 
 (function (global, factory) {
+
 	if (typeof module === "object" && typeof module.exports === "object") {
 		// For CommonJS and CommonJS-like environments where a proper window is present,
 		// execute the factory and get jQuery
