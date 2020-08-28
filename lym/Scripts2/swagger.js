@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Swagger
 // @namespace    http://tampermonkey.net/
-// @version      16
+// @version      17
 // @description  swagger
 // @author       Yiming Liu
 // all swaggers
@@ -32,6 +32,12 @@
 })();
 
 async function process(func, time) {
+    if (location.hostname != 'iherb.okta.com' && $('body>pre:contains(default backend - 404)').length) {
+        checkDefaultBackend404Thread();
+        return;
+    }
+
+    setTimeout(repositoryFilterThread, 1000);
     var authValue;
     var isProd = !location.host.includes('test') && !location.host.includes('localhost');
     var authBtn = lymTM.createButton(isProd ? 'Auth Prod' : 'Auth', async function () {
@@ -342,4 +348,30 @@ async function process(func, time) {
     }
 }
 
+async function checkDefaultBackend404Thread() {
+    var node = await lymTM.async($('body>pre:contains(default backend - 404)'));
+    if (location.hostname.endsWith('.net')) {
+        var serviceName = location.hostname.split('.').shift();
+        var newUrl;
+        if (location.hostname.endsWith('test.net')) {
+            newUrl = lymTM.urls.BackOfficeTestSwaggerOld(serviceName);
+        } else {
+            newUrl = lymTM.urls.BackOfficeProdSwaggerOld(serviceName);
+        }
+        var url = new URL(newUrl);
+        url.pathname = location.pathname;
+        var link = lymTM.createLink(`${url}`, url);
+        link.target = '_self';
+        $('body').append('try ');
+        $('body').append(link);
+    }
+}
+async function repositoryFilterThread() {
+    var divWrap = lymTM.generateFilter($);
+    var aRefresh = $(divWrap).find('[name=div-filter-refresh]').css({ 'cursor': 'default', 'text-decoration': 'none' }).attr('target', '_self').html('No repository found.');
+    let header = await lymTM.async($('hgroup.main'));
+    header.children(`div[name=${divWrap.getAttribute('name')}]`).remove();
+    header.prepend(divWrap);
+    divWrap.style.paddingTop = '15px';
+}
 

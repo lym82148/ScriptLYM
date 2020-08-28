@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Rancher
 // @namespace    http://tampermonkey.net/
-// @version      5
+// @version      6
 // @description  link jenkins
 // @author       Yiming Liu
 // @include      https://rancher.iherb.io/*
@@ -19,6 +19,7 @@
 
 
 async function process(func, time) {
+    setTimeout(repositoryFilterThread, 1000);
     var hash = location.hash.substr(1);
     if (hash) {
         var checkbox = await lymTM.async(() => $(`input[nodeid="${hash}"]:checkbox`));
@@ -182,3 +183,15 @@ async function configMapThread() {
         });
     }
 }
+
+async function repositoryFilterThread() {
+    if ($._data(document, 'events').keydown && $._data(document, 'events').keydown[0]) {
+        $._data(document, 'events').keydown[0] = null;
+    }
+    var divWrap = lymTM.generateFilter($);
+    var aRefresh = $(divWrap).find('[name=div-filter-refresh]').css({ 'cursor': 'default', 'text-decoration': 'none' }).attr('target', '_self').html('No repository found.');
+    let header = await lymTM.async(() => $('main'));
+    header.children(`div[name=${divWrap.getAttribute('name')}]`).remove();
+    header.prepend(divWrap);
+}
+

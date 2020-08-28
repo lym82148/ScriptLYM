@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Jenkins
 // @namespace    http://tampermonkey.net/
-// @version      12
+// @version      13
 // @description  CI CD
 // @author       Yiming Liu
 // @match        https://jenkins-ci.iherb.net/*
@@ -50,7 +50,7 @@ async function process(wrap, time) {
         lymTM.setValue(location.href, commits);
         return;
     }
-
+    setTimeout(repositoryFilterThread, 1000);
     // CI job name
     //     CIjobName = $('title').text().split(/\s|\(/).shift();
     //      CIjobName = $('title').text().replace(/(\w|\s|»)*» /,'').split(/\s|\(/).shift()
@@ -307,4 +307,14 @@ async function getJenkinsLog() {
             }
         }
     }
+}
+async function repositoryFilterThread() {
+    var divWrap = lymTM.generateFilter($);
+    var aRefresh = $(divWrap).find('[name=div-filter-refresh]').css({ 'cursor': 'default', 'text-decoration': 'none' }).attr('target', '_self').html('No repository found.');
+    let header = await lymTM.async($('div.top-sticker-inner'));
+    header.children(`div[name=${divWrap.getAttribute('name')}]`).remove();
+    header.prepend(divWrap);
+    divWrap.style.paddingTop = '15px';
+    window.scrollBy(0, 1);
+    window.scrollBy(0, -1);
 }

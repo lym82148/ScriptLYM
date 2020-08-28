@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Common
 // @namespace    http://tampermonkey.net/
-// @version      21
+// @version      22
 // @description  configs & util
 // @author       Yiming Liu
 // @include      *
@@ -121,6 +121,8 @@ unsafeWindow.lymTM = window.lymTM = {
         PromosConfigValueProdEdit: (a) => `https://bitbucket.org/iherbllc/backoffice.reward.config/src/master/${a}/override/values.oregon-central-0.yaml?mode=edit&spa=0&at=master&fileviewer=file-view-default`,
         //         CSConfigValue:(a)=>`https://bitbucket.org/iherbllc/backoffice.cs.config/src/master/${a}/override/values.la-test.yaml`,
         "DataDog": "https://app.datadoghq.com/infrastructure?filter=",
+        BackOfficeTestSwaggerOld: (a) => `https://backoffice-${a}.internal.iherbtest.io/swagger/index.html`,
+        BackOfficeProdSwaggerOld: (a) => `https://backoffice-${a}.central.iherb.io/swagger/index.html`,
         BackOfficeTestSwagger: (a) => `https://${a}.backoffice.iherbtest.net/swagger/index.html`,
         BackOfficeProdSwagger: (a) => `https://${a}.backoffice.iherb.net/swagger/index.html`,
         TfsLog: (a) => `https://tfs.iherb.net/tfs/iHerb%20Projects%20Collection/8c0065ee-bf13-4864-b26d-6c887fc45f05/_apis/build/builds/${a}/logs/3`,
@@ -1011,6 +1013,283 @@ unsafeWindow.lymTM = window.lymTM = {
         //         }
         return wrapDiv;
     },
+    generateFilter($, input) {
+        var repositoryList = lymTM.getValue(lymTM.keys.RepositoryList);
+        if (!repositoryList) {
+            console.log('repositoryList is null');
+            repositoryList = [];
+        }
+        var div = document.createElement('div');
+        div.style.color = 'red';
+        div.style.fontSize = '16px';
+        div.innerHTML = 'Filter: ';
+        div.style.marginLeft = '10px';
+        var divWrap = document.createElement('div');
+        divWrap.setAttribute('name', 'div-filter-wrap')
+        divWrap.append(div);
+        var listDiv = document.createElement('div');
+        listDiv.id = 'listDivFilterRes';
+        var res = repositoryList;
+        var regK = /\/[^\/]*\/repos\/[^\/]*/i;
+        for (var i = 0; i < res.length; i++) {
+            var item = res[i];
+            var divItem = document.createElement('div');
+            divItem.style.margin = '2px';
+            var a = document.createElement('a');
+            a.style.fontSize = '16px';
+            a.style.margin = '5px';
+            a.style.padding = '2px';
+            a.href = item.link;
+            a.innerHTML = item.name;
+            a.lid = item.name.toLowerCase();
+            a.style.display = 'none';
+            divItem.append(a);
+            listDiv.append(divItem);
+            item.a = a;
+            var relativeLinksDiv = lymTM.generateRelativeLinks(item.name, $);
+            relativeLinksDiv.hide();
+            divItem.append(relativeLinksDiv[0]);
+        }
+        res = res.map(function (a) { return a.a; });
+        var $listDiv = $(listDiv);
+        $listDiv.find('div').css({ 'font-size': '14px', 'margin-left': '10px' });
+        $listDiv.children('div').children('div').css({ 'margin-left': '0px' });
+        $listDiv.find('a').css({ 'font-size': '14px', 'margin-left': '3px' });
+        div.after(listDiv);
+        var divOther = document.createElement('div');
+        divOther.style.fontSize = '14px';
+        divOther.style.marginTop = '3px';
+        divOther.style.marginLeft = '10px';
+        divOther.style.fontWeight = 'bold';
+        listDiv.after(divOther);
+        var divRefresh = document.createElement('div');
+        var aRefresh = document.createElement('a');
+        aRefresh.setAttribute('name', 'div-filter-refresh');
+        aRefresh.innerHTML = 'No repository match exactly. Refresh cache?';
+        aRefresh.style.color = '#ff6e6e'
+        aRefresh.style.display = 'none';
+        aRefresh.style.marginLeft = '10px';
+        aRefresh.target = '_blank';
+        aRefresh.href = 'javascript:void(0);';
+        divRefresh.append(aRefresh);
+        listDiv.after(divRefresh);
+        var hr = document.createElement('hr');
+        hr.style.marginBottom = '0px';
+        divOther.after(hr);
+
+        var filterFun = function () {
+            div.innerHTML = 'Filter: ' + str;
+            var first = true;
+            curList = [];
+            var maxCount = 2;
+            var otherCount = 0;
+            for (var i = 0; i < res.length; i++) {
+                if (str != '' && res[i].lid.indexOf(str) >= 0) {
+                    if (first) {
+                        res[i].style.backgroundColor = lineColor;
+                        first = false;
+                        curList.curIndex = 0;
+                    } else {
+                        res[i].style.backgroundColor = '';
+                    }
+                    if (curList.length <= maxCount) {
+                        res[i].style.display = '';
+                        res[i].nextSibling.style.display = 'inline';
+                        curList.push(res[i]);
+                    } else {
+                        res[i].style.display = 'none';
+                        res[i].nextSibling.style.display = 'none';
+                        otherCount++;
+                    }
+                } else {
+                    res[i].style.display = 'none';
+                    res[i].nextSibling.style.display = 'none';
+                }
+            }
+            if (otherCount) {
+                divOther.innerHTML = 'other ' + otherCount + ' records...';
+            }
+            else {
+                divOther.innerHTML = '';
+            }
+            if (curList.length || str.length == 0) {
+                aRefresh.style.display = 'none';
+            } else {
+                aRefresh.style.display = '';
+                var srcArr = [];
+                for (i = 0; i < res.length; i++) {
+                    let distance = lymTM.levenshtein(str, res[i].lid);
+                    let distanceEx = distance;
+                    if (str.length < res[i].lid.length) {
+                        distanceEx = distance - Math.abs(str.length - res[i].lid.length);
+                    }
+                    srcArr.push({ i: i, distanceEx: distanceEx, lid: res[i].lid });
+                }
+                srcArr.sort((a, b) => a.distanceEx - b.distanceEx);
+                var filtered = srcArr.filter(a => a.distanceEx == srcArr[0].distanceEx);
+                var renderArr = [];
+                if (filtered.length == 1) {
+                    renderArr.push(filtered[0]);
+                }
+                else {
+                    var filteredEx = filtered.filter(a => a.lid.length >= str.length);
+                    if (filteredEx.length > 0) {
+                        renderArr.push(filteredEx[0], filteredEx[1]);
+                    }
+                    else {
+                        renderArr.push(filtered[0], filtered[1]);
+                    }
+                }
+                first = true;
+                for (let i = 0; i < renderArr.length; i++) {
+                    if (first) {
+                        res[renderArr[i].i].style.backgroundColor = lineColor;
+                        first = false;
+                        curList.curIndex = 0;
+                    } else {
+                        res[renderArr[i].i].style.backgroundColor = '';
+                    }
+                    res[renderArr[i].i].style.display = '';
+                    res[renderArr[i].i].nextSibling.style.display = 'inline';
+                    curList.push(res[renderArr[i].i]);
+                }
+            }
+        };
+        var str = '';
+        var ignoreKey = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Tab'];
+        var curList = [];
+        var lineColor = 'lightgrey';
+        var moveFun = function (a) {
+            if (curList.length == 0) { return; }
+            let className = 'curtmlink';
+            if (curList.subLink) {
+                curList.subLink.removeClass(className).css('background-color', '');
+            }
+            curList[curList.curIndex].style.backgroundColor = '';
+            if (a < 2) {
+                var nextIndex = curList.curIndex + a;
+                if (nextIndex < 0) {
+                    nextIndex = curList.length - 1;
+                } else if (nextIndex >= curList.length) {
+                    nextIndex = 0;
+                }
+                curList[nextIndex].style.backgroundColor = lineColor;
+                curList.curIndex = nextIndex;
+                curList.subLink = null;
+            } else {
+                let links = $(curList[curList.curIndex]).next('div').find('a');
+                let nextIndex = 0;
+                let curIndex = links.index($(curList.subLink));
+                if (a == 2) {
+                    if (curIndex == -1) {
+                        nextIndex = links.length - 1;
+                    } else {
+                        nextIndex = curIndex - 1;
+                    }
+                }
+                else if (a == 3) {
+                    if (curIndex == -1) {
+                        nextIndex = 0;
+                    } else {
+                        nextIndex = curIndex + 1;
+                    }
+                }
+                if ((nextIndex < 0 || nextIndex >= links.length)) {
+                    curList[curList.curIndex].style.backgroundColor = lineColor;
+                    curList.subLink = null;
+                } else {
+                    curList.subLink = links.eq(nextIndex).addClass(className).css('background-color', lineColor);
+                }
+            }
+
+        };
+        document.onkeydown = function (e) {
+            e.stopPropagation();
+            if (e.target.tagName == 'INPUT' || e.target.tagName == 'TEXTAREA') {
+                return;
+            }
+            if (e.key == 'Shift' || e.ctrlKey && e.key != 'Enter') {
+                return;
+            }
+            var arrow;
+            if (e.key.length > 1) {
+                if (e.key == 'Backspace') {
+                    str = str.substr(0, str.length - 1);
+                } else if ((arrow = ignoreKey.indexOf(e.key)) >= 0) {
+                    if (arrow == 0) {
+                        moveFun(-1);
+                    } else if (arrow == 1) {
+                        moveFun(1);
+                    } else if (arrow == 2 || arrow == 4 && e.shiftKey) {
+                        moveFun(2);
+                    } else if (arrow == 3 || arrow == 4) {
+                        moveFun(3);
+                    }
+                    return false;
+                }
+                else if (e.key == 'Enter') {
+                    if (curList.length) {
+                        if (curList.subLink) {
+                            if (e.ctrlKey) {
+                                curList.subLink[0].target = '_blank';
+                            } else {
+                                curList.subLink[0].target = '';
+                            }
+                            curList.subLink[0].click();
+                        } else {
+                            if (curList[curList.curIndex].tagName == 'A') {
+                                if (e.ctrlKey) {
+                                    curList[curList.curIndex].target = '_blank';
+                                } else {
+                                    curList[curList.curIndex].target = '';
+                                }
+                                curList[curList.curIndex].click();
+                            } else {
+                                if (e.ctrlKey) {
+                                    curList[curList.curIndex].getElementsByTagName('a')[1].target = '_blank';
+                                } else {
+                                    curList[curList.curIndex].getElementsByTagName('a')[1].target = '';
+                                }
+                                curList[curList.curIndex].getElementsByTagName('a')[1].click();
+                            }
+                        }
+                    }
+                    return false;
+                }
+                else if (e.key.startsWith('F')) {
+                }
+                else {
+                    str = '';
+                }
+            } else {
+                if (e.key == 'v' && e.ctrlKey) {
+                    return;
+                }
+                else if (e.key == ' ') {
+                    str = '';
+                } else {
+                    str += e.key.toLowerCase();
+                }
+            }
+            filterFun();
+            if (e.key.length <= 1) {
+                return false;
+            }
+        };
+
+        document.onpaste = (e) => {
+            if (e.target.tagName == 'INPUT' || e.target.tagName == 'TEXTAREA') {
+                return;
+            }
+            str = e.clipboardData.getData('Text').toLowerCase();
+            filterFun();
+        };
+        if (input != null) {
+            str = input;
+            filterFun();
+        }
+        return divWrap;
+    },
     async maskDiv(condition, action, $) {
         $ = $ || unsafeWindow.$;
         var maskDiv = $('<div style="background-color: #ade2ff99;height: 5000px;position: absolute;z-index: 9999;width: 65%;top: 0px;left: 0px;"></div>');
@@ -1105,5 +1384,22 @@ unsafeWindow.lymTM = window.lymTM = {
             this.done(obj);
         }
     },
+    levenshtein(a, b) {
+        var dp = [0];
+        for (let j = 1; j <= b.length; j++) dp[j] = j;
+        var t1, t2;
+        for (let i = 1; i <= a.length; i++) {
+            t1 = dp[0]++;
+            for (let j = 1; j <= b.length; j++) {
+                t2 = dp[j];
+                if (a[i - 1] == b[j - 1])
+                    dp[j] = t1;
+                else
+                    dp[j] = Math.min(t1, Math.min(dp[j - 1], dp[j])) + 1;
+                t1 = t2;
+            }
+        }
+        return dp[b.length];
+    }
 };
 lymTM.init();

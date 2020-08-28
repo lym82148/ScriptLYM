@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Bitbucket
 // @namespace    http://tampermonkey.net/
-// @version      21
+// @version      22
 // @description  pull request approver、build link、deploy link
 // @author       Yiming Liu
 // @include      mailto:*
@@ -611,196 +611,35 @@ async function rapidBoardStoryTransmitThread() {
     }
 }
 async function repositoryFilterThread(input) {
-    var repositoryList = lymTM.getValue(lymTM.keys.RepositoryList);
-    if (!repositoryList) {
-        console.log('repositoryList is null');
-        repositoryList = [];
-    }
-    var div = document.createElement('div');
-    div.style.color = 'red';
-    div.style.fontSize = '16px';
-    div.innerHTML = 'Filter: ';
-    div.style.marginLeft = '10px';
-    var divWrap = document.createElement('div');
-    divWrap.setAttribute('name', 'div-filter-wrap')
-    divWrap.append(div);
-    var listDiv = document.createElement('div');
-    listDiv.id = 'listDivFilterRes';
-    var res = repositoryList;
-    var regK = /\/[^\/]*\/repos\/[^\/]*/i;
-    for (var i = 0; i < res.length; i++) {
-        var item = res[i];
-        var divItem = document.createElement('div');
-        divItem.style.margin = '2px';
-        var a = document.createElement('a');
-        a.style.fontSize = '16px';
-        a.style.margin = '5px';
-        a.style.padding = '2px';
-        a.href = item.link;
-        a.innerHTML = item.name;
-        a.lid = item.name.toLowerCase();
-        a.style.display = 'none';
-        divItem.append(a);
-        listDiv.append(divItem);
-        item.a = a;
-        var relativeLinksDiv = lymTM.generateRelativeLinks(item.name, $);
-        relativeLinksDiv.hide();
-        divItem.append(relativeLinksDiv[0]);
-    }
-    res = res.map(function (a) { return a.a; });
-    div.after(listDiv);
-    var divOther = document.createElement('div');
-    divOther.style.fontSize = '16px';
-    divOther.style.marginTop = '3px';
-    divOther.style.marginLeft = '10px';
-    divOther.style.fontWeight = 'bold';
-    listDiv.after(divOther);
-    var divRefresh = document.createElement('div');
-    var aRefresh = document.createElement('a');
-    aRefresh.innerHTML = 'No repository found. Refresh cache?';
-    aRefresh.style.color = '#ff6e6e'
-    aRefresh.style.display = 'none';
-    aRefresh.style.marginLeft = '10px';
-    aRefresh.target = '_blank';
-    aRefresh.href = 'javascript:void(0);';
+    var divWrap = lymTM.generateFilter($, input);
+    var aRefresh = $(divWrap).find('[name=div-filter-refresh]')[0];
     aRefresh.onclick = async (e) => {
         e.preventDefault();
         var jq = $(aRefresh).hide(100);
-        await refreshRepositoryListThread(str);
+        await refreshRepositoryListThread(divWrap.firstChild.innerHTML.split(' ').pop());
         jq.show(100);
     };
-    divRefresh.append(aRefresh);
-    listDiv.after(divRefresh);
-    if (location.href.includes('//bitbucket.org/')) {
-        let header = await lymTM.async($('div:has(div>header:not([id])):last'));
+    let header;
+    if (location.href.includes('//bitbucket.org/dashboard')) {
+        header = await lymTM.async($('div[data-testid=Content]'));
         header.children(`div[name=${divWrap.getAttribute('name')}]`).remove();
         header.prepend(divWrap);
     }
-    var filterFun = function () {
-        div.innerHTML = 'Filter: ' + str;
-        var first = true;
-        curList = [];
-        var maxCount = 2;
-        var otherCount = 0;
-        for (var i = 0; i < res.length; i++) {
-            if (str != '' && res[i].lid.indexOf(str) >= 0) {
-                if (first) {
-                    res[i].style.backgroundColor = lineColor;
-                    first = false;
-                    curList.curIndex = 0;
-                } else {
-                    res[i].style.backgroundColor = '';
-                }
-                if (curList.length <= maxCount) {
-                    res[i].style.display = '';
-                    res[i].nextSibling.style.display = 'inline';
-                    curList.push(res[i]);
-                } else {
-                    res[i].style.display = 'none';
-                    res[i].nextSibling.style.display = 'none';
-                    otherCount++;
-                }
-            } else {
-                res[i].style.display = 'none';
-                res[i].nextSibling.style.display = 'none';
-            }
-        }
-        if (otherCount) {
-            divOther.innerHTML = 'other ' + otherCount + ' records...';
-        }
-        else {
-            divOther.innerHTML = '';
-        }
-        if (curList.length || str.length == 0) {
-            aRefresh.style.display = 'none';
-        } else {
-            aRefresh.style.display = '';
-        }
-    };
-    var str = '';
-    var ignoreKey = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
-    var curList = [];
-    var lineColor = 'lightgrey';
-    var moveFun = function (a) {
-        if (curList.length == 0) { return; }
-        var nextIndex = curList.curIndex + a;
-        if (nextIndex < 0) {
-            nextIndex = curList.length - 1;
-        } else if (nextIndex >= curList.length) {
-            nextIndex = 0;
-        }
-        curList[curList.curIndex].style.backgroundColor = '';
-        curList[nextIndex].style.backgroundColor = lineColor;
-        curList.curIndex = nextIndex;
-    };
-    document.onkeydown = function (e) {
-        if (e.target.tagName == 'INPUT' || e.target.tagName == 'TEXTAREA') {
-            return;
-        }
-        if (e.ctrlKey && e.key != 'Enter') {
-            return;
-        }
-        var arrow;
-        if (e.key.length > 1) {
-            if (e.key == 'Backspace') {
-                str = str.substr(0, str.length - 1);
-            } else if ((arrow = ignoreKey.indexOf(e.key)) >= 0) {
-                if (arrow == 0 || arrow == 2) {
-                    moveFun(-1);
-                } else if (arrow == 1 || arrow == 3) {
-                    moveFun(1);
-                }
-                return false;
-            }
-            else if (e.key == 'Enter') {
-                if (curList.length) {
-                    if (curList[curList.curIndex].tagName == 'A') {
-                        if (e.ctrlKey) {
-                            curList[curList.curIndex].target = '_blank';
-                        } else {
-                            curList[curList.curIndex].target = '';
-                        }
-                        curList[curList.curIndex].click();
-                    } else {
-                        if (e.ctrlKey) {
-                            curList[curList.curIndex].getElementsByTagName('a')[1].target = '_blank';
-                        } else {
-                            curList[curList.curIndex].getElementsByTagName('a')[1].target = '';
-                        }
-                        curList[curList.curIndex].getElementsByTagName('a')[1].click();
-                    }
-                }
-                return false;
-            }
-            else {
-                str = '';
-            }
-        } else {
-            if (e.key == 'v' && e.ctrlKey) {
-                return;
-            }
-            else if (e.key == ' ') {
-                return false;
-            } else {
-                str += e.key.toLowerCase();
-            }
-        }
-        filterFun();
-        if (e.key.length <= 1) {
-            return false;
-        }
-    };
-
-    document.onpaste = (e) => {
-        if (e.target.tagName == 'INPUT' || e.target.tagName == 'TEXTAREA') {
-            return;
-        }
-        str = e.clipboardData.getData('Text').toLowerCase();
-        filterFun();
-    };
-    if (input != null) {
-        str = input;
-        filterFun();
+    else if (location.href.includes('/pull-requests/')) {
+        header = await lymTM.async($('main>header:first'));
+        header.children(`div[name=${divWrap.getAttribute('name')}]`).remove();
+        header.prepend(divWrap);
+    }
+    else if (location.href.includes('//bitbucket.org/')) {
+        header = await lymTM.async($('div:has(div>header:not([id])):last'));
+        header.children(`div[name=${divWrap.getAttribute('name')}]`).remove();
+        header.prepend(divWrap);
+    }
+    if (lymTM.getQueryString('fileviewer') == 'file-view-default' && lymTM.getQueryString('mode') == 'edit') {
+        await lymTM.async(() => document.activeElement.tagName == 'TEXTAREA');
+        await lymTM.async(500);
+        document.activeElement.blur();
+        window.scrollBy(0, -300);
     }
 }
 async function refreshRepositoryListThread(refresh) {
