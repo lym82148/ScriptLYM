@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Common
 // @namespace    http://tampermonkey.net/
-// @version      22
+// @version      23
 // @description  configs & util
 // @author       Yiming Liu
 // @include      *
@@ -101,6 +101,7 @@ unsafeWindow.lymTM = window.lymTM = {
         { "userName": "Yiming Liu" },
         //         { "userName": "Tony (Sichao) Qian" },
         { "userName": "Diri (Jianwei) Guo" },
+        { "userName": "Beny (Jing) Chen" },
     ],
     approvers: {
         automation: [{ "userName": "Jane (Wenjing) Liu" }]
@@ -135,7 +136,8 @@ unsafeWindow.lymTM = window.lymTM = {
         RepositoryListApi: (a) => `https://bitbucket.org/!api/internal/dashboard/repositories?pagelen=100&page=${a}&q=`,
         BranchListApi: (a) => `https://bitbucket.org/!api/internal/repositories/iherbllc/${a}/branch-list/?sort=ahead&pagelen=30&fields=values.name`,
         //         RancherTest: "https://rancher.iherb.io/p/c-djzp4:p-pccbf/workloads#deployment:backoffice-cs:",
-        RancherTest: "https://rancher.iherb.io/p/c-djzp4:p-pccbf/workload/deployment:backoffice-cs:",
+        //               RancherTest: "https://rancher.iherb.io/p/c-djzp4:p-pccbf/workload/deployment:backoffice-cs:",
+        RancherTest: "https://rancher-nonprod.iherb.net/p/c-dxjtg:p-9q9nw/workload/deployment:backoffice-cs:",
         //         RancherProd: "https://rancher.iherb.io/p/c-457vx:p-n6tcc/workloads#deployment:backoffice-cs:",
         RancherProd: "https://rancher.iherb.io/p/c-457vx:p-n6tcc/workload/deployment:backoffice-cs:",
         RancherPromosTest: "https://rancher.iherb.io/p/c-djzp4:p-pccbf/workloads#deployment:backoffice-cs:",
@@ -166,6 +168,10 @@ unsafeWindow.lymTM = window.lymTM = {
                 },
                 "envLinks": {
                     "DataDog": `${this.urls.DataDog}SHOP%24SFV`
+                },
+                "metricsLinks": {
+                    "Test": 'http://172.16.121.194/shopservicewcf/metrics-text',
+                    "Preprod": 'http://preshop1ora.iherb.net/shopservicewcf/metrics-text'
                 },
             },
             {
@@ -309,6 +315,11 @@ unsafeWindow.lymTM = window.lymTM = {
                     "Prod": "https://es-prod.iherb.net/_plugin/kibana/app/kibana#/discover?_g=(filters:!(),refreshInterval:(display:Off,pause:!f,value:0),time:(from:now-12h,mode:quick,to:now))&_a=(columns:!(kubernetes.container_name,message,log),filters:!(('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'backoffice-cs-*',key:kubernetes.container_name,negate:!f,params:(query:cs-zendesk-syncjob,type:phrase),type:phrase,value:cs-zendesk-syncjob),query:(match:(kubernetes.container_name:(query:cs-zendesk-syncjob,type:phrase)))),('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'backoffice-cs-*',key:log,negate:!t,params:(query:HttpClientDelegatingHandler,type:phrase),type:phrase,value:HttpClientDelegatingHandler),query:(match:(log:(query:HttpClientDelegatingHandler,type:phrase)))),('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'backoffice-cs-*',key:log,negate:!t,params:!(AddTicket,AddChat,AddUser),type:phrases,value:'AddTicket,%20AddChat,%20AddUser'),query:(bool:(minimum_should_match:1,should:!((match_phrase:(log:AddTicket)),(match_phrase:(log:AddChat)),(match_phrase:(log:AddUser)))))),('$state':(store:appState),meta:(alias:!n,disabled:!t,index:'backoffice-cs-*',key:log,negate:!t,params:!(SyncTicket,SyncChat,SyncUser),type:phrases,value:'SyncTicket,%20SyncChat,%20SyncUser'),query:(bool:(minimum_should_match:1,should:!((match_phrase:(log:SyncTicket)),(match_phrase:(log:SyncChat)),(match_phrase:(log:SyncUser))))))),index:'!'backoffice-cs!'',interval:auto,query:(language:lucene,query:''),sort:!('@timestamp',desc))"
                 },
                 "hangfireLinks": {}
+            },
+            {
+                "name": "backoffice.cs.zendesk.service",
+                "logLinks": {
+                },
             },
             {
                 "name": "backoffice.cs.proxy.service",
@@ -512,7 +523,7 @@ unsafeWindow.lymTM = window.lymTM = {
             var urlB = new URL(b);
             return urlA.host == urlB.host;
         } catch (e) {
-            console.log(e, a, b);
+            //             console.log(e, a, b);
             return false;
         }
     },
@@ -809,11 +820,12 @@ unsafeWindow.lymTM = window.lymTM = {
         var alwaysTopIndex = val[id].findIndex(b => b.alwaysTop);
         if (alwaysTopIndex == -1) { alwaysTopIndex = val[id].length; }
         val[id].splice(alwaysTopIndex, 0, newItem);
+        var resIndex = val[id].length - 1 - alwaysTopIndex;
         while (val[id].length > 10) {
             val[id].shift();
         }
         this.setValueNotExpired(this.keys.Swagger, val);
-        return val;
+        return [val, resIndex];
     },
     getSwaggerCache(id) {
         var val = this.getSwaggerCacheFromCache(id);
@@ -869,6 +881,7 @@ unsafeWindow.lymTM = window.lymTM = {
         var title = '';
         for (var line of lines) {
             if (line.includes('Previous HEAD position was')) { flag = true; }
+            if (line.includes('HEAD is now at')) { flag = true; }
             if (flag) {
                 var arr = line.split(' ');
                 var date = new Date(arr[0]);
@@ -945,7 +958,7 @@ unsafeWindow.lymTM = window.lymTM = {
             }
             return urlA.href.startsWith(urlB.href);
         } catch (e) {
-            console.log(e, a, b);
+            //             console.log(e, a, b);
             return false;
         }
     },
@@ -1134,7 +1147,10 @@ unsafeWindow.lymTM = window.lymTM = {
                 else {
                     var filteredEx = filtered.filter(a => a.lid.length >= str.length);
                     if (filteredEx.length > 0) {
-                        renderArr.push(filteredEx[0], filteredEx[1]);
+                        renderArr.push(filteredEx[0]);
+                        if (filteredEx[1]) {
+                            renderArr.push(filteredEx[1]);
+                        }
                     }
                     else {
                         renderArr.push(filtered[0], filtered[1]);

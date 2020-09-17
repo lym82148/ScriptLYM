@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Bitbucket
 // @namespace    http://tampermonkey.net/
-// @version      22
+// @version      23
 // @description  pull request approver、build link、deploy link
 // @author       Yiming Liu
 // @include      mailto:*
@@ -466,9 +466,9 @@ async function search(list, isWarmUp) {
 function transferRowToModel(row) {
     var link = $(row).find('td a');
     var href = link.attr('href');
-    var textNode = link.prop('lastChild');
+    var textNode = link.prop('lastChild').getElementsByTagName('span')[1];
     var arr = (textNode.wholeText || textNode.textContent).split('-');
-    var serviceName = arr.length == 1 ? '' : arr[0].trim();
+    var serviceName = arr.length == 1 ? 'Backend' : arr[0].trim();
     var content = (textNode.wholeText || textNode.textContent).replace(serviceName, '').replace('-', '').trim();
     var storyId = link.find('span:first').text();
     var statusText = link.end().find('td>div>span').text();
@@ -480,7 +480,7 @@ function transferRowToModelEx(row) {
     var href = location.origin + link.attr('href');
     var textNode = $row.find('td.summary a.issue-link').text();
     var arr = textNode.split('-');
-    var serviceName = arr.length == 1 ? '' : arr[0].trim();
+    var serviceName = arr.length == 1 ? 'Backend' : arr[0].trim();
     var content = textNode.replace(serviceName, '').replace('-', '').trim();
     var storyId = link.data('issue-key');
     var statusText = $row.find('td.status').text().trim();
@@ -537,10 +537,10 @@ async function updateRepositoryLinkThread() {
         }
     }
 }
-async function focusOnFirstRow() {
-    var table = this;
-    console.log($(table).find('tr').length);
-}
+// async function focusOnFirstRow() {
+//     var table = this;
+//     console.log($(table).find('tr').length);
+// }
 var repositoryTable;
 async function findRepositoryTableThread() {
     var color = 'lightgrey';
@@ -578,7 +578,7 @@ async function findRepositoryTableThread() {
         repositoryTable = await lymTM.async($('table:first'));
         await lymTM.doOnceBy(repositoryTable, function () {
             $(repositoryTable).find('tbody>tr:first').css('background-color', color);
-            lymTM.nodeRemoveCallback(repositoryTable, focusOnFirstRow);
+            //             lymTM.nodeRemoveCallback(repositoryTable, focusOnFirstRow);
         });
     }
 }
@@ -664,7 +664,7 @@ async function refreshRepositoryListThread(refresh) {
             await callApi(page);
             page++;
         } while (curRes.values.length == 100);
-        lymTM.setValue(lymTM.keys.RepositoryList, list, 86400 * 1000);
+        lymTM.setValue(lymTM.keys.RepositoryList, list, 10 * 365 * 86400 * 1000);
         if (refresh) {
             await repositoryFilterThread(refresh);
         }

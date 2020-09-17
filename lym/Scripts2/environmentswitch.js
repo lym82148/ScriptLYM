@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         EnvironmentSwitch
 // @namespace    http://tampermonkey.net/
-// @version      3
+// @version      4
 // @description  test prod switch
 // @author       Yiming Liu
 // @include      https://*iherb*/*
@@ -113,7 +113,7 @@ async function process(func, time) {
             $('body').css('margin-top', `${i}px`);
         }
     }
-    else if (location.href.includes('/rancher.')) {
+    else if (location.href.includes('//rancher')) {
         for (let key in rancherLinks) {
             let link = createLink();
             addDataUrl(link, key, rancherLinks[key]);

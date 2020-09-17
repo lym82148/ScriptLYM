@@ -1,10 +1,11 @@
 ﻿// ==UserScript==
 // @name         Rancher
 // @namespace    http://tampermonkey.net/
-// @version      6
+// @version      7
 // @description  link jenkins
 // @author       Yiming Liu
 // @include      https://rancher.iherb.io/*
+// @include      https://rancher-nonprod.iherb.net/*
 // @grant        none
 // ==/UserScript==
 
@@ -189,7 +190,7 @@ async function repositoryFilterThread() {
         $._data(document, 'events').keydown[0] = null;
     }
     var divWrap = lymTM.generateFilter($);
-    var aRefresh = $(divWrap).find('[name=div-filter-refresh]').css({ 'cursor': 'default', 'text-decoration': 'none' }).attr('target', '_self').html('No repository found.');
+    var aRefresh = $(divWrap).find('[name=div-filter-refresh]').css({ 'cursor': 'default', 'text-decoration': 'none' }).attr('target', '_self').html('No repository match exactly.');
     let header = await lymTM.async(() => $('main'));
     header.children(`div[name=${divWrap.getAttribute('name')}]`).remove();
     header.prepend(divWrap);

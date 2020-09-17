@@ -1,11 +1,12 @@
 ﻿// ==UserScript==
 // @name         Swagger
 // @namespace    http://tampermonkey.net/
-// @version      17
+// @version      18
 // @description  swagger
 // @author       Yiming Liu
 // all swaggers
 // @match        *://*/swagger/*
+// @match        *://*/swagger
 // get token from reward portal
 // @match        https://client-rewards-backoffice.internal.iherbtest.io/rewards/create*
 // @match        https://rewards-web.backoffice.iherbtest.net/rewards/create*
@@ -106,6 +107,7 @@ async function process(func, time) {
 
         var envKey = location.host.includes('central.iherb.io') ? 'prod' : 'test';
         var swaggerCache = lymTM.getSwaggerCacheFromCache();
+        var swaggerIndex = -1;
         $('body').on('click', 'button.execute', async function () {
             await lymTM.async();
             var $this = $(this);
@@ -145,7 +147,7 @@ async function process(func, time) {
                 }
                 console.log(id);
                 console.log(body);
-                swaggerCache = lymTM.setSwaggerCache(id, body);
+                [swaggerCache, swaggerIndex] = lymTM.setSwaggerCache(id, body);
                 $this.closest('div.opblock').find('div.try-out').attr('lymtm-processed', null).prev('div:has(select)').remove();
             }
         });
@@ -306,7 +308,13 @@ async function process(func, time) {
                 var $b = $(b);
                 $b.attr('lymtm-processed', '');
                 initLine($b);
-                $b.prev('div:not([class])').find('select').prop('selectedIndex', 0).change();
+                let select = $b.prev('div:not([class])').find('select');
+                if (swaggerIndex != -1) {
+                    select.prop('selectedIndex', swaggerIndex).change();
+                    swaggerIndex = -1;
+                } else {
+                    select.prop('selectedIndex', 0).change();
+                }
             });
         }, 100);
         lymTM.runJob(async () => {
@@ -364,11 +372,25 @@ async function checkDefaultBackend404Thread() {
         link.target = '_self';
         $('body').append('try ');
         $('body').append(link);
+    } else if (location.hostname.endsWith('.io')) {
+        let serviceName = location.hostname.split('.').shift().replace(/backoffice-/i, '');
+        let newUrl;
+        if (location.hostname.endsWith('test.io')) {
+            newUrl = lymTM.urls.BackOfficeTestSwagger(serviceName);
+        } else {
+            newUrl = lymTM.urls.BackOfficeTestSwagger(serviceName);
+        }
+        let url = new URL(newUrl);
+        url.pathname = location.pathname;
+        let link = lymTM.createLink(`${url}`, url);
+        link.target = '_self';
+        $('body').append('try ');
+        $('body').append(link);
     }
 }
 async function repositoryFilterThread() {
     var divWrap = lymTM.generateFilter($);
-    var aRefresh = $(divWrap).find('[name=div-filter-refresh]').css({ 'cursor': 'default', 'text-decoration': 'none' }).attr('target', '_self').html('No repository found.');
+    var aRefresh = $(divWrap).find('[name=div-filter-refresh]').css({ 'cursor': 'default', 'text-decoration': 'none' }).attr('target', '_self').html('No repository match exactly.');
     let header = await lymTM.async($('hgroup.main'));
     header.children(`div[name=${divWrap.getAttribute('name')}]`).remove();
     header.prepend(divWrap);

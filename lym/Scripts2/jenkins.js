@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Jenkins
 // @namespace    http://tampermonkey.net/
-// @version      13
+// @version      14
 // @description  CI CD
 // @author       Yiming Liu
 // @match        https://jenkins-ci.iherb.net/*
@@ -310,7 +310,7 @@ async function getJenkinsLog() {
 }
 async function repositoryFilterThread() {
     var divWrap = lymTM.generateFilter($);
-    var aRefresh = $(divWrap).find('[name=div-filter-refresh]').css({ 'cursor': 'default', 'text-decoration': 'none' }).attr('target', '_self').html('No repository found.');
+    var aRefresh = $(divWrap).find('[name=div-filter-refresh]').css({ 'cursor': 'default', 'text-decoration': 'none' }).attr('target', '_self').html('No repository match exactly.');
     let header = await lymTM.async($('div.top-sticker-inner'));
     header.children(`div[name=${divWrap.getAttribute('name')}]`).remove();
     header.prepend(divWrap);
