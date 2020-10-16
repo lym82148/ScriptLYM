@@ -330,6 +330,7 @@ async function process(func, time) {
             || location.host == 'rewards-web.backoffice.iherb.net' || location.host == 'cs-portal.iherb.net'
             || location.host == 'secauthext.iherb.net') {
             await lymTM.async($('div>svg:not([data-qa-element]):first'));
+            await lymTM.async(3000);
             var oktaStorage = JSON.parse(window.sessionStorage.getItem("okta-token-storage"));
             var value;
             if (oktaStorage) {
@@ -378,7 +379,7 @@ async function checkDefaultBackend404Thread() {
         if (location.hostname.endsWith('test.io')) {
             newUrl = lymTM.urls.BackOfficeTestSwagger(serviceName);
         } else {
-            newUrl = lymTM.urls.BackOfficeTestSwagger(serviceName);
+            newUrl = lymTM.urls.BackOfficeProdSwagger(serviceName);
         }
         let url = new URL(newUrl);
         url.pathname = location.pathname;

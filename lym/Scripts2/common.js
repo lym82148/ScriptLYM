@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Common
 // @namespace    http://tampermonkey.net/
-// @version      23
+// @version      24
 // @description  configs & util
 // @author       Yiming Liu
 // @include      *
@@ -16,6 +16,7 @@
 // @grant        GM_openInTab
 // @grant        GM_addValueChangeListener
 // @grant        GM_removeValueChangeListener
+// @grant        GM_xmlhttpRequest
 // ==/UserScript==
 
 // unsafeWindow for Chrome console, window for other UserScript
@@ -99,9 +100,10 @@ unsafeWindow.lymTM = window.lymTM = {
     teamMembers: [
         { "userName": "Terry (Xiaoyu) Luo" },
         { "userName": "Yiming Liu" },
-        //         { "userName": "Tony (Sichao) Qian" },
+        { "userName": "Tony (Sichao) Qian" },
         { "userName": "Diri (Jianwei) Guo" },
         { "userName": "Beny (Jing) Chen" },
+        { "userName": "Chris (Min) Zhang" },
     ],
     approvers: {
         automation: [{ "userName": "Jane (Wenjing) Liu" }]
@@ -320,6 +322,9 @@ unsafeWindow.lymTM = window.lymTM = {
                 "name": "backoffice.cs.zendesk.service",
                 "logLinks": {
                 },
+            },
+            {
+                "name": "backoffice.cs.gl.service",
             },
             {
                 "name": "backoffice.cs.proxy.service",
@@ -707,6 +712,9 @@ unsafeWindow.lymTM = window.lymTM = {
     openActive: function (url) {
         return GM_openInTab(url, { 'active': true });
     },
+    ajax: function (request) {
+        return GM_xmlhttpRequest({ url: request.url, method: request.method, data: request.data });
+    },
     addListener: function (key, callback) {
         // function(name, old_value, new_value, remote)
         return GM_addValueChangeListener(key, callback);
@@ -753,6 +761,13 @@ unsafeWindow.lymTM = window.lymTM = {
         try {
             await $.ajax({
                 url: url, success: success, error: error
+            }).promise();
+        } catch (e) { console.log(e); }
+    },
+    async post(url, data, success, error) {
+        try {
+            await $.ajax({
+                url: url, data: data, type: 'post', success: success, error: error
             }).promise();
         } catch (e) { console.log(e); }
     },

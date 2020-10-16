@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Bitbucket
 // @namespace    http://tampermonkey.net/
-// @version      23
+// @version      24
 // @description  pull request approver、build link、deploy link
 // @author       Yiming Liu
 // @include      mailto:*
@@ -23,6 +23,7 @@
 })();
 
 async function process(func, time) {
+    lymTM.runJob(pullrequestNotifyThread, 100);
     setTimeout(repositoryFilterThread, 0);
     setTimeout(refreshRepositoryListThread, 0);
     lymTM.runJob(rapidBoardStoryTransmitThread, 300);
@@ -426,6 +427,16 @@ async function process(func, time) {
     element.append(lymTM.createButton('Add  ' + approveUsers.map((a, b) => a.userName).join(' 、 '), () => tabFun({ key: 'Tab' })));
     $('#id_reviewers_group').before(element);
 
+    let submitAndNotifyButton = $('<button class="aui-button aui-button-warning">Submit and notify</button>');
+    let submitPrButton = $('#submitPrButton');
+    submitPrButton.after(submitAndNotifyButton);
+    submitAndNotifyButton.click(function () {
+        let key = serviceName + $('span.select2-chosen:even').text();
+        console.log(key);
+        lymTM.setValue(key, key);
+        //         submitPrButton.click();
+    });
+
     // 预热搜索列表
     await search(approveUsers, true);;
     // 隐藏搜索列表
@@ -526,6 +537,64 @@ function makeWeeklyReport(arr) {
     }
     return res;
 }
+function openPostWindow(url, params) {
+    var newWin = window.open(),
+        formStr = '';
+    //设置样式为隐藏，打开新标签再跳转页面前，如果有可现实的表单选项，用户会看到表单内容数据
+    formStr = '<form style="visibility:hidden;" method="POST" action="' + url + '">' +
+        '<input type="hidden" name="params" value="' + params + '" />' +
+        '</form>';
+    newWin.document.body.innerHTML = formStr;
+    newWin.document.forms[0].submit();
+    return newWin;
+}
+var timestamp;
+var buttonOk;
+async function pullrequestNotifyThread() {
+    if (location.href.includes('/pull-requests/')) {
+        var body = $('body');
+        if (lymTM.alreadyDone(body)) {
+            if (timestamp) {
+                var counter = Math.floor((timestamp - new Date()) / 1000);
+                if (counter <= 0) {
+                    timestamp = null;
+                    buttonOk.click();
+                    return;
+                }
+                buttonOk.html(`Ok ${counter}`);
+            }
+            return;
+        }
+        var serviceName = await lymTM.async(() => $('div.css-1xaaz5m').html());
+        var keyNode = await lymTM.async($('[data-qa=pr-branches-and-state-styles]:first>div:even'));
+        var key = serviceName + keyNode.text();
+        if (lymTM.getValue(key)) {
+            var seconds = 20;
+            timestamp = +new Date() + seconds * 1000;
+            console.log(key);
+            lymTM.removeValue(key);
+            var mask = $('<div style="background-color: #ade2ff99;position: fixed;z-index: 9999;top: 104px;left: 75%;padding:5px;font-size:20px;">Notify?</div>');
+            buttonOk = $('<button style="font-size:20px;margin:5px">Ok</button>');
+            buttonOk.html(`Ok ${seconds}`);
+            var buttonCancel = $('<button style="font-size:20px;margin:5px">Cancel</button>');
+            buttonOk.click(async function () {
+                lymTM.ajax({
+                    url: "https://chat.googleapis.com/v1/spaces/AAAAgv0QhHM/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=imYSxIxeds3PwaT-m1C18TyAcmO2WNFIEkTEJAcL5FY%3D",
+                    method: 'post', data: JSON.stringify({ text: `PR ${location.href}` })
+                });
+                timestamp = null;
+                mask.hide();
+            });
+            buttonCancel.click(function () {
+                timestamp = null;
+                mask.hide();
+            });
+            mask.append(buttonOk, buttonCancel);
+            body.append(mask);
+        }
+        lymTM.done(body);
+    }
+}
 async function updateRepositoryLinkThread() {
     if (location.href.includes('bitbucket.org/dashboard')) {
         var links = await lymTM.async($('a[href$="/dashboard/repositories"]'));
@@ -621,6 +690,7 @@ async function repositoryFilterThread(input) {
     };
     let header;
     if (location.href.includes('//bitbucket.org/dashboard')) {
+        var preCon = await lymTM.async($('h2:contains("Jira Software issues")'));
         header = await lymTM.async($('div[data-testid=Content]'));
         header.children(`div[name=${divWrap.getAttribute('name')}]`).remove();
         header.prepend(divWrap);
@@ -728,7 +798,7 @@ async function createMailLinkThread() {
     // dashboard mail link
     if (location.href.includes('//bitbucket.org/dashboard/overview')) {
         lymTM.nodeRemoveCallback(rows.closest('table'), createMailLinkThread);
-        var mailto = lymTM.getMailTo({ to: 'xiaoyu.luo@iherb.com', subject: 'Weekly Report ' + getFriday() });
+        var mailto = lymTM.getMailTo({ to: 'tony.qian@iherb.com', subject: 'Weekly Report ' + getFriday() });
         var mailLink = $(lymTM.createLink('Mail All', mailto)).attr('target', '_blank').css({ 'margin-left': '20px', 'font-size': '20px', 'font-weight': 'normal' });
         mailLink.click(async function () {
             var rows = $('tr[data-qa=jira-issue-row]');
@@ -761,7 +831,7 @@ async function createMailLinkThreadEx() {
             }
         });
 
-        var mailto = lymTM.getMailTo({ to: 'xiaoyu.luo@iherb.com', subject: 'Weekly Report ' + getFriday() });
+        var mailto = lymTM.getMailTo({ to: 'tony.qian@iherb.com', subject: 'Weekly Report ' + getFriday() });
         var mailLink = $(lymTM.createLink('Mail All', mailto)).attr('target', '_blank').css({ 'margin-left': '20px', 'font-size': '20px', 'font-weight': 'normal' });
         mailLink.click(async function () {
             var rows = $('tr.issuerow');
