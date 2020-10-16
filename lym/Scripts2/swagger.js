@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Swagger
 // @namespace    http://tampermonkey.net/
-// @version      18
+// @version      19
 // @description  swagger
 // @author       Yiming Liu
 // all swaggers
