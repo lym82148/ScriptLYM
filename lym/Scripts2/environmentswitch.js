@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         EnvironmentSwitch
 // @namespace    http://tampermonkey.net/
-// @version      4
+// @version      5
 // @description  test prod switch
 // @author       Yiming Liu
 // @include      https://*iherb*/*
@@ -50,7 +50,7 @@ async function process(func, time) {
         targetContent.closest('div.topbar').css({ 'position': 'fixed', 'width': '100%', 'margin-top': '-52px' });
     }
     // new cs portal & reward portal
-    else if (location.host == 'cs-portal.backoffice.iherbtest.net' || location.host == 'cs-portal.backoffice.iherb.net'
+    else if (location.host == 'cs-portal.backoffice.iherbtest.net' || location.host == 'cs-portal.backoffice.iherb.net' || location.host == 'cs-portal.iherb.net'
         || location.host == 'client-rewards-backoffice.internal.iherbtest.io' || location.host == 'rewards-web.backoffice.iherb.net'
         || location.host == 'rewards-web.backoffice.iherbtest.net') {
         targetContent = await lymTM.async($('div>svg:not([data-qa-element]):first'));

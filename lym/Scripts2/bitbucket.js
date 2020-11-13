@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Bitbucket
 // @namespace    http://tampermonkey.net/
-// @version      24
+// @version      25
 // @description  pull request approver、build link、deploy link
 // @author       Yiming Liu
 // @include      mailto:*
@@ -350,6 +350,7 @@ async function process(func, time) {
     // not need await
     lymTM.runJob(createMailLinkThread, 300);
     lymTM.runJob(createMailLinkThreadEx, 300);
+    lymTM.runJob(copyLinkThread, 300);
     // 当前用户Id
     var curUserId = $('#bb-bootstrap').data('atlassian-id');
     sprintLink.attr('href', lymTM.urls.JiraSprintLink(curUserId));
@@ -442,7 +443,7 @@ async function process(func, time) {
     // 隐藏搜索列表
     $('#select2-drop-mask').click();
     // 等待搜索结果加载准备
-    await lymTM.async(1500);
+    //     await lymTM.async(1500);
 
     var tabFun = async function (e) {
         if (e.key == 'Tab') {
@@ -464,13 +465,14 @@ var event = document.createEvent('HTMLEvents');
 event.initEvent("input", false, true);
 async function search(list, isWarmUp) {
     for (var i in list) {
-        var input = $('#id_reviewers_group ul.select2-choices>li.select2-search-field>input').click();
+        //         var input = $('#id_reviewers_group ul.select2-choices>li.select2-search-field>input').click();
         console.log('search for username:' + list[i].userName);
-        input.val(list[i].userName).get(0).dispatchEvent(event);
-        await lymTM.async();
+        //         input.val(list[i].userName).get(0).dispatchEvent(event);
+        //         await lymTM.async();
         if (!isWarmUp) {
-            // 选择搜索结果的第一项
-            $('#select2-drop>ul>li').mouseup();
+            $(`.suggested-reviewer-list>li[data-display-name="${list[i].userName}"]>button`).click();
+            //             选择搜索结果的第一项
+            //             $('#select2-drop>ul>li').mouseup();
         }
     }
 }
@@ -496,6 +498,18 @@ function transferRowToModelEx(row) {
     var storyId = link.data('issue-key');
     var statusText = $row.find('td.status').text().trim();
     return { storyId, href, serviceName, content, statusText };
+}
+function transferRowToXls(row) {
+    var $row = $(row);
+    var link = $row.find('td a.issue-link');
+    var href = location.origin + link.attr('href');
+    var textNode = $row.find('td.summary a.issue-link').text();
+    var arr = textNode.split('-');
+    var serviceName = arr.length == 1 ? 'Backend' : arr[0].trim();
+    var content = textNode.replace(serviceName, '').replace('-', '').trim();
+    var storyId = link.data('issue-key');
+    var statusText = $row.find('td.status').text().trim();
+    return { storyId, href, serviceName, content, statusText, title: textNode };
 }
 function makeWeeklyReport(arr) {
     var res = '<p style="font-weight:normal;font-size:20px">What we did:</p>';
@@ -766,7 +780,7 @@ async function createBranchThread() {
     var userName = $('#bb-bootstrap').data('current-user').displayName.split(' ')[0];
     var newBranchNameInput = $('input[name=branchName]');
     if (!newBranchNameInput.val().startsWith(`${userName}/`)) {
-        lymTM.reactSet(newBranchNameInput, `${userName}/${newBranchNameInput.val()}`);
+        lymTM.reactSet(newBranchNameInput, `${userName}/${newBranchNameInput.val().replace(/\//g, '-')}`);
     }
     var currentBranchName = $('#select-branch>div').text();
     var repoName = $('#select-repository>div').text().replace('iherbllc/', '');
@@ -799,7 +813,7 @@ async function createMailLinkThread() {
     if (location.href.includes('//bitbucket.org/dashboard/overview')) {
         lymTM.nodeRemoveCallback(rows.closest('table'), createMailLinkThread);
         var mailto = lymTM.getMailTo({ to: 'tony.qian@iherb.com', subject: 'Weekly Report ' + getFriday() });
-        var mailLink = $(lymTM.createLink('Mail All', mailto)).attr('target', '_blank').css({ 'margin-left': '20px', 'font-size': '20px', 'font-weight': 'normal' });
+        var mailLink = $(lymTM.createLink('Mail All', mailto)).attr('target', '_blank').css({ 'margin-left': '20px', 'font-size': '20px', 'font-weight': 'normal', 'display': 'none' });
         mailLink.click(async function () {
             var rows = $('tr[data-qa=jira-issue-row]');
             rows.closest('div').next('p').find('button').click();
@@ -832,7 +846,7 @@ async function createMailLinkThreadEx() {
         });
 
         var mailto = lymTM.getMailTo({ to: 'tony.qian@iherb.com', subject: 'Weekly Report ' + getFriday() });
-        var mailLink = $(lymTM.createLink('Mail All', mailto)).attr('target', '_blank').css({ 'margin-left': '20px', 'font-size': '20px', 'font-weight': 'normal' });
+        var mailLink = $(lymTM.createLink('Mail All', mailto)).attr('target', '_blank').css({ 'margin-left': '20px', 'font-size': '20px', 'font-weight': 'normal', 'display': 'none' });
         mailLink.click(async function () {
             var rows = $('tr.issuerow');
             var arr = rows.map((a, b) => transferRowToModelEx(b)).sort(a => a.serviceName + a.storyId).toArray();
@@ -845,6 +859,48 @@ async function createMailLinkThreadEx() {
         var node = await lymTM.async(() => $('tr.issuerow').closest('table').closest('div.issue-table-container').prev().children(':eq(0)'));
         if (!node.has('a[href^=mailto]').length) {
             node.append(mailLink);
+        }
+    }
+}
+async function copyLinkThread() {
+    // as a job thread,force async a at first
+    await lymTM.async();
+    // filter mail link
+    if (location.href.includes('iherbglobal.atlassian.net/issues/?filter=')) {
+        lymTM.nodeInsertCallback($('div.navigator-content'), copyLinkThread);
+        var rows = await lymTM.async($('tr.issuerow'));
+        rows.on('click', '[name=hide]', function () { var node = $(this).closest('tr').hide(300); setTimeout(() => node.remove(), 300); });
+        rows.each((a, b) => {
+            var row = $(b).find('td.summary>p:first');
+            if (!row.find('a[name=hide]').length) {
+                row.append($('<a name="hide"href="javascript:void(0);">hide</a>').css({ 'color': '#ff6e6e', 'font-size': '22px', 'float': 'right', 'margin-right': '5px' }));
+            }
+        });
+
+        var link = $(lymTM.createLink('Weekly Report ' + getFriday(), 'https://docs.google.com/spreadsheets/d/1lsaju8rtKsPUlQK7xR0LsUyIY9iwOjmbkNe_iBNU-TQ/edit#gid=1294713185')).attr('target', '_blank').css({ 'margin-left': '20px', 'font-size': '20px', 'font-weight': 'normal' });
+        link.click(async function () {
+            var rows = $('tr.issuerow');
+            var arr = rows.map((a, b) => transferRowToXls(b)).sort((a, b) => {
+                if (a.serviceName + a.statusText == b.serviceName + b.statusText) {
+                    return 0;
+                }
+                return 2 * (a.serviceName + a.statusText > b.serviceName + b.statusText) - 1;
+            }).toArray();
+            console.log(arr);
+            var res = '<table>';
+            for (let i in arr) {
+                let item = arr[i];
+                if (item.statusText == 'Not Started') { continue; }
+                res += `<tr><td><a href="${item.href}">${item.storyId}</a></td><td>${item.title}</td><td>${item.statusText}</td></tr>`;
+            }
+            res += '</table>';
+            console.log(res);
+            lymTM.copy(res, 'html');
+            //             lymTM.setValue(lymTM.keys.GMailBody, res);
+        });
+        var node = await lymTM.async(() => $('tr.issuerow').closest('table').closest('div.issue-table-container').prev().children(':eq(0)'));
+        if (!node.has('a:contains(Weekly Report)').length) {
+            node.append(link);
         }
     }
 }

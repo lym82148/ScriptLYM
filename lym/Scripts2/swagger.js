@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Swagger
 // @namespace    http://tampermonkey.net/
-// @version      19
+// @version      20
 // @description  swagger
 // @author       Yiming Liu
 // all swaggers
@@ -43,6 +43,10 @@ async function process(func, time) {
     var isProd = !location.host.includes('test') && !location.host.includes('localhost');
     var authBtn = lymTM.createButton(isProd ? 'Auth Prod' : 'Auth', async function () {
         if (authValue) {
+            var autoBearer = [].filter.call($('div.auth-container h4')[0].childNodes, a => a.nodeType == 3)[0];
+            if (autoBearer != null && autoBearer.nodeValue.includes('Bearer')) {
+                authValue = authValue.replace('Bearer ', '');
+            }
             lymTM.reactSet(this.previousSibling, authValue);
             await lymTM.async(200);
             // confirm auth
@@ -96,6 +100,10 @@ async function process(func, time) {
                     // open auth popup
                     btn.click();
                     var input = await lymTM.async($('div.auth-container input'));
+                    var autoBearer = [].filter.call($('div.auth-container h4')[0].childNodes, a => a.nodeType == 3)[0];
+                    if (autoBearer != null && autoBearer.nodeValue.includes('Bearer')) {
+                        authValue = c.value;
+                    }
                     lymTM.reactSet(input, authValue);
                     // confirm auth
                     $('button.auth.authorize').click();

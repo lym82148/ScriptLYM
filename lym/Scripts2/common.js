@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Common
 // @namespace    http://tampermonkey.net/
-// @version      24
+// @version      25
 // @description  configs & util
 // @author       Yiming Liu
 // @include      *
@@ -101,9 +101,9 @@ unsafeWindow.lymTM = window.lymTM = {
         { "userName": "Terry (Xiaoyu) Luo" },
         { "userName": "Yiming Liu" },
         { "userName": "Tony (Sichao) Qian" },
-        { "userName": "Diri (Jianwei) Guo" },
-        { "userName": "Beny (Jing) Chen" },
-        { "userName": "Chris (Min) Zhang" },
+        //         { "userName": "Diri (Jianwei) Guo" },
+        //         { "userName": "Beny (Jing) Chen" },
+        //         { "userName": "Chris (Min) Zhang" },
     ],
     approvers: {
         automation: [{ "userName": "Jane (Wenjing) Liu" }]
@@ -326,6 +326,13 @@ unsafeWindow.lymTM = window.lymTM = {
             {
                 "name": "backoffice.cs.gl.service",
             },
+            {
+                "name": "backoffice.cs.gateway",
+            },
+            {
+                "name": "backoffice.cs.cart.service",
+            },
+
             {
                 "name": "backoffice.cs.proxy.service",
                 "projectConfigFileDev": (b) => `https://bitbucket.org/iherbllc/backoffice.cs.proxy.service/raw/${b}/src/Backoffice.CS.Proxy.Service.API/appsettings.Development.json`
@@ -680,8 +687,8 @@ unsafeWindow.lymTM = window.lymTM = {
             this.getValue(a);
         }
     },
-    copy: function (data) {
-        GM_setClipboard(data, 'text');
+    copy: function (data, info = 'text') {
+        GM_setClipboard(data, info);
     },
     getMailTo: function (obj) {
         var to = escape(obj.to || '');

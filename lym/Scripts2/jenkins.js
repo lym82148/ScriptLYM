@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Jenkins
 // @namespace    http://tampermonkey.net/
-// @version      14
+// @version      15
 // @description  CI CD
 // @author       Yiming Liu
 // @match        https://jenkins-ci.iherb.net/*
@@ -70,6 +70,7 @@ async function process(wrap, time) {
         lymTM.runJob(getJenkinsLog, 1000);
     } else if (location.host == 'jenkins.iherb.io') { // CD
         //         var CDjobName = $('a.breadcrumbBarAnchor:last').text().split(/\s|\(/).shift();
+        lymTM.runJob(renderCopyApproveLink, 1000);
         var CDjobName = CIjobName;
         console.log(`CDjobName:${CDjobName}`);
         var processList = Object.create(null);
@@ -226,6 +227,24 @@ function transferLog(title) {
 // page has already used $
 var $ = jQuery;
 var CIjobName;
+async function renderCopyApproveLink(){
+    $('tr.build-row div.build-controls>div.build-badge').each(async (a, b) => {
+        var $b = $(b);
+        var buildNo = $b.closest('td').find('a.display-name').text().replace(/\u200B/g, '').trim();
+        var leftNeedCopyApprove = !$b.find('a:contains(copy)').length;
+        var copyApproveLink = lymTM.createButton('copy',()=>{
+            var content = location.origin+ location.pathname+buildNo.replace('#','')+'/input\r\n\r\n';
+            content =  CIjobName + ' CD PROD need approve\r\n' + content;
+            lymTM.copy(content);
+            $(copyApproveLink).fadeOut(300);
+            $(copyApproveLink).fadeIn(300)
+        });
+        copyApproveLink.style.float = 'left';
+        if (leftNeedCopyApprove) {
+            $b.prepend(copyApproveLink);
+        }
+    });
+}
 async function renderDeployLink() {
     $('tr.build-row div.build-controls>div.build-badge').each(async (a, b) => {
         var $b = $(b);
