@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Jenkins
 // @namespace    http://tampermonkey.net/
-// @version      15
+// @version      16
 // @description  CI CD
 // @author       Yiming Liu
 // @match        https://jenkins-ci.iherb.net/*
@@ -54,7 +54,7 @@ async function process(wrap, time) {
     // CI job name
     //     CIjobName = $('title').text().split(/\s|\(/).shift();
     //      CIjobName = $('title').text().replace(/(\w|\s|»)*» /,'').split(/\s|\(/).shift()
-    CIjobName = jQuery('a[title="Back to Project"],a[title=Up]').attr('href').split('/').filter(a => a && a != '..').last().split(/\s|\(/).shift();
+    CIjobName = unescape(jQuery('a[title="Back to Project"],a[title=Up]').attr('href').split('/').filter(a => a && a != '..').last()).split(/\s|\(/).shift();
     console.log(`CIjobName:${CIjobName}`);
     if (!CIjobName) { return; }
     var serviceName = lymTM.getServiceNameByJenkinsName(CIjobName);
@@ -66,6 +66,7 @@ async function process(wrap, time) {
     //     jQuery('#main-panel').prepend(wrapDiv);
     // CI
     if (location.host == 'jenkins-ci.iherb.net') {
+        renderSonarLink();
         lymTM.runJob(renderDeployLink, 1000);
         lymTM.runJob(getJenkinsLog, 1000);
     } else if (location.host == 'jenkins.iherb.io') { // CD
@@ -227,14 +228,14 @@ function transferLog(title) {
 // page has already used $
 var $ = jQuery;
 var CIjobName;
-async function renderCopyApproveLink(){
+async function renderCopyApproveLink() {
     $('tr.build-row div.build-controls>div.build-badge').each(async (a, b) => {
         var $b = $(b);
         var buildNo = $b.closest('td').find('a.display-name').text().replace(/\u200B/g, '').trim();
         var leftNeedCopyApprove = !$b.find('a:contains(copy)').length;
-        var copyApproveLink = lymTM.createButton('copy',()=>{
-            var content = location.origin+ location.pathname+buildNo.replace('#','')+'/input\r\n\r\n';
-            content =  CIjobName + ' CD PROD need approve\r\n' + content;
+        var copyApproveLink = lymTM.createButton('copy', () => {
+            var content = location.origin + location.pathname + buildNo.replace('#', '') + '/input\r\n\r\n';
+            content = CIjobName + ' CD PROD need approve\r\n' + content;
             lymTM.copy(content);
             $(copyApproveLink).fadeOut(300);
             $(copyApproveLink).fadeIn(300)
@@ -244,6 +245,15 @@ async function renderCopyApproveLink(){
             $b.prepend(copyApproveLink);
         }
     });
+}
+async function renderSonarLink() {
+    var div = $('<div></div>');
+    var sonarProjectLink = lymTM.createLink("SonarProject", lymTM.urls.SonarProject(`backoffice.${CIjobName.replace(/-/g, '.')}`));
+    var sonarConfigLink = lymTM.createLink("SonarConfig", lymTM.urls.SonarConfig(`backoffice.${CIjobName.replace(/-/g, '.')}`));
+    $(sonarConfigLink).css({ 'margin-left': '10px', 'font-weight': 'normal' });
+    $(sonarProjectLink).css({ 'margin-left': '10px', 'font-weight': 'normal' });
+    div.append(sonarProjectLink, sonarConfigLink);
+    $('h1').append(div);
 }
 async function renderDeployLink() {
     $('tr.build-row div.build-controls>div.build-badge').each(async (a, b) => {

@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         jQuery
 // @namespace    http://tampermonkey.net/
-// @version      9
+// @version      10
 // @description  try to take over the world!
 // @author       You
 // @match        https://deploy.iherb.net/app*
@@ -17,6 +17,7 @@
 // @match        https://jenkins-ci.iherb.net/login*
 // @match        *://*/swagger/*
 // @match        *://*/swagger
+// @match        https://sonarcloud.io/project/configuration?analysisMode=BitbucketManual*
 // @grant        none
 // ==/UserScript==
 
@@ -36,7 +37,6 @@
 
 
 (function (global, factory) {
-
 
 	if (typeof module === "object" && typeof module.exports === "object") {
 		// For CommonJS and CommonJS-like environments where a proper window is present,

@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Common
 // @namespace    http://tampermonkey.net/
-// @version      25
+// @version      26
 // @description  configs & util
 // @author       Yiming Liu
 // @include      *
@@ -136,7 +136,7 @@ unsafeWindow.lymTM = window.lymTM = {
         BackOfficeConfigFile: (a) => (b) => `https://bitbucket.org/iherbllc/backoffice.${a}/raw/${b}/src/${a}.API/appsettings.json`,
         BackOfficeConfigFileDev: (a) => (b) => `https://bitbucket.org/iherbllc/backoffice.${a}/raw/${b}/src/${a}.API/appsettings.Development.json`,
         RepositoryListApi: (a) => `https://bitbucket.org/!api/internal/dashboard/repositories?pagelen=100&page=${a}&q=`,
-        BranchListApi: (a) => `https://bitbucket.org/!api/internal/repositories/iherbllc/${a}/branch-list/?sort=ahead&pagelen=30&fields=values.name`,
+        BranchListApi: (a) => `https://bitbucket.org/!api/internal/repositories/iherbllc/${a}/branch-list/?sort=ahead&pagelen=300&fields=values.name`,
         //         RancherTest: "https://rancher.iherb.io/p/c-djzp4:p-pccbf/workloads#deployment:backoffice-cs:",
         //               RancherTest: "https://rancher.iherb.io/p/c-djzp4:p-pccbf/workload/deployment:backoffice-cs:",
         RancherTest: "https://rancher-nonprod.iherb.net/p/c-dxjtg:p-9q9nw/workload/deployment:backoffice-cs:",
@@ -146,7 +146,9 @@ unsafeWindow.lymTM = window.lymTM = {
         RancherPromosProd: "https://rancher.iherb.io/p/c-457vx:p-n6tcc/workloads#deployment:backoffice-cs:",
         BitbucketRepo: "https://bitbucket.org/iherbllc/",
         KibanaTest: (a) => `https://es-test.iherb.net/_plugin/kibana/app/kibana#/discover?_g=(filters:!(),refreshInterval:(display:Off,pause:!f,value:0),time:(from:now-15m,mode:quick,to:now))&_a=(columns:!(kubernetes.container_name,message,log),filters:!(('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'backoffice-cs-*',key:kubernetes.container_name,negate:!f,type:phrase,value:${a}),query:(match:(kubernetes.container_name:(query:${a},type:phrase))))),index:'backoffice-cs-*',interval:auto,query:(match_all:()),sort:!('@timestamp',desc))`,
-        KibanaProd: (a) => `https://es-prod.iherb.net/_plugin/kibana/app/kibana#/discover?_g=(refreshInterval:(pause:!t,value:0),time:(from:now-15m,mode:quick,to:now))&_a=(columns:!(kubernetes.container_name,message,log),filters:!(('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'!'backoffice-cs!'',key:kubernetes.container_name,negate:!f,params:(query:${a},type:phrase),type:phrase,value:${a}),query:(match:(kubernetes.container_name:(query:${a},type:phrase))))),index:'!'backoffice-cs!'',interval:auto,query:(language:lucene,query:''),sort:!('@timestamp',desc))`
+        KibanaProd: (a) => `https://es-prod.iherb.net/_plugin/kibana/app/kibana#/discover?_g=(refreshInterval:(pause:!t,value:0),time:(from:now-15m,mode:quick,to:now))&_a=(columns:!(kubernetes.container_name,message,log),filters:!(('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'!'backoffice-cs!'',key:kubernetes.container_name,negate:!f,params:(query:${a},type:phrase),type:phrase,value:${a}),query:(match:(kubernetes.container_name:(query:${a},type:phrase))))),index:'!'backoffice-cs!'',interval:auto,query:(language:lucene,query:''),sort:!('@timestamp',desc))`,
+        SonarProject: (a) => `https://sonarcloud.io/project/activity?id=iherbllc_${a}`,
+        SonarConfig: (a) => `https://sonarcloud.io/project/configuration?analysisMode=BitbucketManual&id=iherbllc_${a}`
     },
     serviceConfigs: {},
     init: async function () {
@@ -295,6 +297,7 @@ unsafeWindow.lymTM = window.lymTM = {
                     "Prod": "https://rewards-web.backoffice.iherb.net/rewards"
                 },
             },
+            { "name": "backoffice.cs.portal" },
             { "name": "backoffice.cs.reward.service" },
             {
                 "name": "backoffice.cs.job",
@@ -332,7 +335,9 @@ unsafeWindow.lymTM = window.lymTM = {
             {
                 "name": "backoffice.cs.cart.service",
             },
-
+            {
+                "name": "backoffice.cs.order.service",
+            },
             {
                 "name": "backoffice.cs.proxy.service",
                 "projectConfigFileDev": (b) => `https://bitbucket.org/iherbllc/backoffice.cs.proxy.service/raw/${b}/src/Backoffice.CS.Proxy.Service.API/appsettings.Development.json`
@@ -384,11 +389,15 @@ unsafeWindow.lymTM = window.lymTM = {
                     "Jenkins": "https://jenkins-ci.iherb.net/search/?q=backoffice-infrastructure-mailservice"
                 },
                 "CDLinks": {
-                    "Jenkins": "https://jenkins.iherb.io/job/backoffice/job/RewardCampaign/job/backoffice-infrastructure-mailservice/build?delay=0sec"
+                    "Jenkins": "https://jenkins.iherb.io/job/backoffice-reward/job/backoffice-infrastructure-mailservice/build?delay=0sec"
                 },
                 "logLinks": {
                     "Test": "https://es-test.iherb.net/_plugin/kibana/app/kibana#/discover?_g=(filters:!(),refreshInterval:(display:Off,pause:!f,value:0),time:(from:now-15m,mode:quick,to:now))&_a=(columns:!(kubernetes.container_name,message,log),filters:!(('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'backoffice-cs-*',key:kubernetes.container_name,negate:!f,type:phrase,value:backoffice-infrastructure-mailservice),query:(match:(kubernetes.container_name:(query:backoffice-infrastructure-mailservice,type:phrase))))),index:'backoffice-reward-*',interval:auto,query:(match_all:()),sort:!('@timestamp',desc))",
                     "Prod": "https://es-prod.iherb.net/_plugin/kibana/app/kibana#/discover?_g=(refreshInterval:(pause:!t,value:0),time:(from:now-15m,mode:quick,to:now))&_a=(columns:!(kubernetes.container_name,message,log),filters:!(('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'!'backoffice-cs!'',key:kubernetes.container_name,negate:!f,params:(query:cs-reward-core-service,type:phrase),type:phrase,value:cs-reward-core-service),query:(match:(kubernetes.container_name:(query:cs-reward-core-service,type:phrase))))),index:'!'backoffice-cs!'',interval:auto,query:(language:lucene,query:''),sort:!('@timestamp',desc))"
+                },
+                "rancherLinks": {
+                    "Test": "https://rancher-nonprod.iherb.net/p/c-dxjtg:p-krrt2/workload/deployment:backoffice-reward:backoffice-infrastructure-mailservice",
+                    "Prod": "https://rancher.iherb.io/p/c-457vx:p-ndbxv/workload/deployment:backoffice-reward:backoffice-infrastructure-mailservice"
                 }
             },
             {
@@ -1438,6 +1447,13 @@ unsafeWindow.lymTM = window.lymTM = {
             }
         }
         return dp[b.length];
+    },
+    alert(msg) {
+        var mask = $('<div style="background-color: #ade2ff;position: fixed;z-index: 9999;top: 20%;left: 33%;width:33%;min-height:80px;padding:15px;font-size:20px;font-weight:bold;display:none"></div>');
+        mask.html(msg);
+        $('body').append(mask);
+        mask.fadeIn(200);
+        setTimeout(() => mask.fadeOut(500), 1500);
     }
 };
 lymTM.init();

@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Swagger
 // @namespace    http://tampermonkey.net/
-// @version      20
+// @version      21
 // @description  swagger
 // @author       Yiming Liu
 // all swaggers
@@ -127,7 +127,7 @@ async function process(func, time) {
                 console.log('invalid');
                 return;
             } else {
-                var id = `${envKey}_${table.closest('div.opblock').attr('id')}`;
+                var id = `${envKey}_${table.closest('div.opblock').attr('id') || bodySection.closest('div.opblock').attr('id')}`;
                 var body = Object.create(null);
                 table.find('tbody>tr').each((a, b) => {
                     var key = $(b).data('param-name');

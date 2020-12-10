@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Bitbucket
 // @namespace    http://tampermonkey.net/
-// @version      25
+// @version      26
 // @description  pull request approver、build link、deploy link
 // @author       Yiming Liu
 // @include      mailto:*
@@ -81,6 +81,14 @@ async function process(func, time) {
             link.fadeOut(200);
             setTimeout(() => link.fadeIn(200), 200)
         })).css({ 'display': 'inline', 'outline': 'none', 'margin-left': '40px' });
+        var lastProjectConfigs;
+        var checkboxSmartFilter = $('<label><input type="checkbox"/>SmartFilter</label>');
+        checkboxSmartFilter.css({ 'background-color': 'lightgrey', 'padding': '2px 5px 2px 0px', 'font-size': '16px', 'margin-left': '15px' });
+        checkboxSmartFilter.children().prop('checked', true).change(() => {
+            if (lastProjectConfigs) {
+                MergeConfig(lastProjectConfigs);
+            }
+        });
         var linkSort = $(lymTM.createButton('', () => {
             if (processing) { return; } console.log(copyConfigSortStr);
             lymTM.copy(copyConfigSortStr);
@@ -166,7 +174,13 @@ async function process(func, time) {
                         var entity = differentConfig.get(key);
                         if (entity != undefined) {
                             preChild.find('span:lt(2)').css('background-color', white);
-                            preChild.css('background-color', redundantTransparent).attr('title', `the value in project is 【${entity[1]}】`).dblclick(((a) => () => lymTM.copy(a))(entity[1]));
+                            preChild.css('background-color', redundantTransparent).attr('title', `the value in project is 【${entity[1]}】`);
+                            if ($._data(preChild[0], 'events') == null || !$._data(preChild[0], 'events').dblclick) {
+                                preChild.dblclick(((a) => () => {
+                                    lymTM.copy(a);
+                                    lymTM.alert(`copy value ${a}`)
+                                })(entity[1]));
+                            }
                         } else {
                             preChild.css('background-color', '').attr('title', '').find('span:lt(2)').css('background-color', '');
                         }
@@ -243,6 +257,7 @@ async function process(func, time) {
             });
         }
         function MergeConfig(projectConfigs) {
+            lastProjectConfigs = projectConfigs;
             projectNewAddConfig = new Map(Object.keys(projectConfigs).filter(x => !(x in existConfigs)).map(x => [x, projectConfigs[x]]));
             existRedundantConfig = new Map(Object.keys(existConfigs).filter(x => !(x in projectConfigs)).map(x => [x, existConfigs[x]]));
             differentConfig = new Map(Object.keys(projectConfigs).filter(
@@ -275,16 +290,37 @@ async function process(func, time) {
             //                 configStr += `    ${key}: ${value}\n`;
             //             }
             var configStr = '';
+            var smartFilter = checkboxSmartFilter.children().prop('checked');
+            var keyFilterList = [
+                "UserAuthorizationSyncConfig__SyncIntervalSeconds",
+                "UserAuthorizationSyncConfig__UserAuthorizationEndpointUri",
+            ];
+            var smartFilterRes = "";
+            var configCount = 0;
+            var smartFilterCount = 0;
+            var configStrTitle = "";
             for (let entity of projectNewAddConfig) {
                 let value = entity[1].toString();
                 if (value == '*' ||
                     value.startsWith('{') && value.endsWith('}')) {
                     value = `'${value}'`;
                 }
+                if (smartFilter) {
+                    if (keyFilterList.includes(entity[0])
+                        || entity[0].startsWith("ConnectionStrings__")) {
+                        smartFilterCount++;
+                        smartFilterRes += `+    ${entity[0]}: ${value}\n`;
+                        continue;
+                    }
+                }
+                configCount++;
                 configStr += `    ${entity[0]}: ${value}\n`;
+                configStrTitle += `+    ${entity[0]}: ${value}\n`;
             }
+            checkboxSmartFilter[0].childNodes[1].nodeValue = `SmartFilter ${smartFilterCount} config`;
+            checkboxSmartFilter.attr('title', smartFilterRes);
             if (projectNewAddConfig.size) {
-                link.html(`Copy ${projectNewAddConfig.size} new config`);
+                link.html(`Copy ${configCount} new config`).attr('title', configStrTitle);
             } else {
                 link.html(`No new config`);
             }
@@ -323,7 +359,7 @@ async function process(func, time) {
         var hr = $('<hr/>').css({ 'margin': '2px', 'border': 0 });
         var div = $('<div/>')
         var wrapDivEx = $('<div/>');
-        wrapDivEx.append(hr).append(selectBranch).append(div).append(useCustomer).append(link).append(linkSort);
+        wrapDivEx.append(hr).append(selectBranch).append(div).append(useCustomer).append(link).append(checkboxSmartFilter).append(linkSort);
         $('#source-path>div:last-child').append(wrapDivEx);
 
         selectBranch.change(selectBranchAction);
@@ -439,11 +475,9 @@ async function process(func, time) {
     });
 
     // 预热搜索列表
-    await search(approveUsers, true);;
-    // 隐藏搜索列表
-    $('#select2-drop-mask').click();
+    await search(approveUsers, true);
     // 等待搜索结果加载准备
-    //     await lymTM.async(1500);
+    await lymTM.async(2000);
 
     var tabFun = async function (e) {
         if (e.key == 'Tab') {
@@ -460,21 +494,18 @@ async function findInputAndFocus() {
     var searchInput = await lymTM.async($('#search-repository-input'));
     searchInput.focus();
 }
-var event = document.createEvent('HTMLEvents');
-// 事件类型，是否冒泡，是否阻止浏览器的默认行为
-event.initEvent("input", false, true);
+
 async function search(list, isWarmUp) {
+    var input = await lymTM.async($('#react-select-BitbucketPullRequestReviewers-input'));
+    input.focus();
     for (var i in list) {
-        //         var input = $('#id_reviewers_group ul.select2-choices>li.select2-search-field>input').click();
         console.log('search for username:' + list[i].userName);
-        //         input.val(list[i].userName).get(0).dispatchEvent(event);
-        //         await lymTM.async();
+        lymTM.reactSet(input, list[i].userName);
         if (!isWarmUp) {
-            $(`.suggested-reviewer-list>li[data-display-name="${list[i].userName}"]>button`).click();
-            //             选择搜索结果的第一项
-            //             $('#select2-drop>ul>li').mouseup();
+            $(`.reviewers-react-container .fabric-user-picker__option>span>div>span>span:not([role]):contains("${list[i].userName}")`).click();
         }
     }
+    input.blur();
 }
 function transferRowToModel(row) {
     var link = $(row).find('td a');
