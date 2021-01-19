@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Rancher
 // @namespace    http://tampermonkey.net/
-// @version      7
+// @version      8
 // @description  link jenkins
 // @author       Yiming Liu
 // @include      https://rancher.iherb.io/*
@@ -62,7 +62,6 @@ async function workLoadLinkThread() {
             var ev = document.createEvent('HTMLEvents');
             ev.initEvent('click', false, true);
             $('ul.nav-main a:contains(Workloads)').click();
-            debugger;
             $(`tr.main-row:has(input[nodeid="${nodeId}"])`).find('td[data-title="Name: "]>a:not([name])>i').click();
         };
         lymTM.done(statusLabel);

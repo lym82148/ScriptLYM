@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         EnvironmentSwitch
 // @namespace    http://tampermonkey.net/
-// @version      5
+// @version      6
 // @description  test prod switch
 // @author       Yiming Liu
 // @include      https://*iherb*/*
@@ -38,6 +38,9 @@ async function process(func, time) {
             link.appendTo(wrapDiv);
         }
         targetContent = $('a.link:first').css('max-width', '360px');
+        if (!targetContent.length) {
+            targetContent = $('#logo').parent();
+        }
         wrapDiv.css({ 'width': '250px' });
         var serviceName = config.name;
         console.log(`serviceName:${serviceName}`)
@@ -45,7 +48,7 @@ async function process(func, time) {
         // 移除 env 链接 避免歧义
         wrapDivEx.children(':contains(Env)').remove();
         wrapDivEx.css('margin', '8px');
-        var node = await lymTM.async($('h2.title'));
+        var node = await lymTM.async($('h2.title,.info_title'));
         node.after(wrapDivEx);
         targetContent.closest('div.topbar').css({ 'position': 'fixed', 'width': '100%', 'margin-top': '-52px' });
     }

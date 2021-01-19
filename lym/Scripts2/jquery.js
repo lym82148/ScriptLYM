@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         jQuery
 // @namespace    http://tampermonkey.net/
-// @version      10
+// @version      11
 // @description  try to take over the world!
 // @author       You
 // @match        https://deploy.iherb.net/app*
@@ -18,6 +18,9 @@
 // @match        *://*/swagger/*
 // @match        *://*/swagger
 // @match        https://sonarcloud.io/project/configuration?analysisMode=BitbucketManual*
+// @match        https://calendar.google.com/calendar/*
+// @match        https://ugc-api.central.iherb.io/*
+// @match        https://ugc-api.internal.iherbtest.io/*
 // @grant        none
 // ==/UserScript==
 
@@ -37,7 +40,6 @@
 
 
 (function (global, factory) {
-
 	if (typeof module === "object" && typeof module.exports === "object") {
 		// For CommonJS and CommonJS-like environments where a proper window is present,
 		// execute the factory and get jQuery

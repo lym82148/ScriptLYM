@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Bitbucket
 // @namespace    http://tampermonkey.net/
-// @version      26
+// @version      27
 // @description  pull request approver、build link、deploy link
 // @author       Yiming Liu
 // @include      mailto:*
@@ -58,14 +58,28 @@ async function process(func, time) {
         }
         $('div.codehilite>pre').text().replace(headConfigs, '').split(/\n/).filter(a => a).forEach(a => {
             var arr = a.split(': ');
-            if (arr.length != 2) {
-                console.log(`error when split config '${a}' by ': '`);
-                return;
-            }
+            //             if (arr.length != 2) {
+            //                 console.log(`error when split config '${a}' by ': '`);
+            //                 return;
+            //             }
             if (arr[0].trim() in existConfigs) {
                 console.warn(`duplicated config '${arr[0]}: ${existConfigs[arr[0]]}' '${a}'`);
             } else {
-                existConfigs[arr[0].trim()] = arr[1].trim();
+                if (arr.length > 2) {
+                    let key = arr.shift();
+                    let value = arr.join(': ').trim();
+                    value = trimValue(value);
+                    existConfigs[key.trim()] = value;
+                }
+                else if (arr.length < 2) {
+                    console.log(`error when split config '${a}' by ': '`);
+                    return;
+                }
+                else {
+                    let value = arr[1].trim();
+                    value = trimValue(value);
+                    existConfigs[arr[0].trim()] = value;
+                }
             }
         })
 
@@ -146,6 +160,7 @@ async function process(func, time) {
                 var key = preChild.text().replace(/: .*$/, '').replace(/\u200B/g, '').trim();
                 keyList.push(key);
                 var value = preChild.text().replace(/^.*?: /, '').trim();
+                value = trimValue(value);
                 if (!key) { return; }
                 var newTransparent = '#00ff7b33';
                 var redundantTransparent = '#ff8c0033';
@@ -245,8 +260,23 @@ async function process(func, time) {
                 } else if (/ConnectionString/i.test(key) && /Data *Source|Server/i.test(value)) {
                     lineTag.addClass('aui-message aui-message-warning').css(cssObj).attr('title', 'ConnectionString should be in scret');
                 } else if (/^https?:\/\/.*iherb.*/.test(value.toLowerCase()) && !value.toLowerCase().includes(env)) {
-                    if (value.includes('//iherb.okta.com/oauth2')
-                        || value.includes('//iherb.zendesk.com/api')) {
+                    if ((key == 'CorsSettings__AllowOrigins')
+                        || value.includes('https://s3.images-iherb.com')
+                        || value.includes('//iherb.okta.com/oauth2')
+                        || envConfig == 'Production' &&
+                        (value.includes('//iherb.zendesk.com/api')
+                            || value.includes('//secauthext.iherb.net/core')
+                            || value.includes('//secauthext.iherb.net/core/resources')
+                            || value.includes('https://catalog.app.iherb.com/')
+                            || value.includes('https://orders-returns-csportal.central.iherb.io')
+                            || value.includes('https://fraud.iherb.net')
+                            || value.includes('https://order.iherb.net')
+                            || value.includes('//catalog.app.iherb.com')
+                            || value.includes('//www.iherb.com')
+                            || value.includes('https://csportalext.iherb.net')
+                            || value.includes('https://cs-portal.iherb.net')
+                            || value.includes('backoffice.iherb.net'))
+                    ) {
                     } else {
                         lineTag.addClass('aui-message aui-message-warning').css(cssObj).attr('title', `url does not contain ${env}`);
                     }
@@ -393,7 +423,7 @@ async function process(func, time) {
     // "ol.aui-nav-breadcrumbs" for page pull-requests/new
     // "div:has(div>a[type]):not(:has(div>div>a[type]))" for page pull-requests/
     // ":has(div[data-qa])" for page repositories
-    var bread = await lymTM.async($('ol.aui-nav-breadcrumbs,div:has(div>a[type]):not(:has(div>div>a[type]),:has(div[data-qa]))'));
+    var bread = await lymTM.async($('ol.aui-nav-breadcrumbs,div:has(div>a[type]):not(:has(div>div>a[type]),:has(div[data-qa]),:has(button))'));
     // 在关键元素 bread 加载完成后 计时开始
     time.reset();
     // 展开左边栏 才能获取serviceName
@@ -429,7 +459,7 @@ async function process(func, time) {
     if (!bread.is(':visible')) {
         bread = await lymTM.async($('ol.aui-nav-breadcrumbs,div:has(div>a[type]):not(:has(div>div>a[type]),:has(div[data-qa])):visible'));
     }
-    bread.append(wrapDiv);
+    await lymTM.doOnceBy(bread, () => bread.append(wrapDiv));
     $('div[offset][aria-hidden]>div>div:first').append(wrapDiv.clone().css('line-height', 3).children().css('margin', 5).end());
 
     // when page change bread is removed, run script again
@@ -489,6 +519,12 @@ async function process(func, time) {
     // 触发搜索
     await tabFun({ key: 'Tab' });
 
+}
+function trimValue(value) {
+    if ((/^'.*'$/).test(value)) {
+        return value.substr(1, value.length - 2);
+    }
+    return value;
 }
 async function findInputAndFocus() {
     var searchInput = await lymTM.async($('#search-repository-input'));
@@ -735,7 +771,7 @@ async function repositoryFilterThread(input) {
     };
     let header;
     if (location.href.includes('//bitbucket.org/dashboard')) {
-        var preCon = await lymTM.async($('h2:contains("Jira Software issues")'));
+        var preCon = await lymTM.async($('h2:contains("Jira issues")'));
         header = await lymTM.async($('div[data-testid=Content]'));
         header.children(`div[name=${divWrap.getAttribute('name')}]`).remove();
         header.prepend(divWrap);
@@ -828,7 +864,7 @@ var sprintLink = $(lymTM.createLink('Active Sprint', '')).attr('target', '_blank
 async function createMailLinkThread() {
     // as a job thread,force async a at first
     await lymTM.async();
-    var h2 = await lymTM.async($('h2:contains(Jira Software issues)'));
+    var h2 = await lymTM.async($('h2:contains(Jira issues)'));
     if (!h2.find(sprintLink).length) {
         h2.append(sprintLink).append(filterLink);
     }

@@ -1,12 +1,13 @@
 ﻿// ==UserScript==
 // @name         Swagger
 // @namespace    http://tampermonkey.net/
-// @version      21
+// @version      22
 // @description  swagger
 // @author       Yiming Liu
 // all swaggers
 // @match        *://*/swagger/*
 // @match        *://*/swagger
+// @match        *://*/*/swagger/*
 // get token from reward portal
 // @match        https://client-rewards-backoffice.internal.iherbtest.io/rewards/create*
 // @match        https://rewards-web.backoffice.iherbtest.net/rewards/create*
@@ -19,7 +20,10 @@
 // auto login reward portal
 // @match        https://security-identity-test.iherb.net/core/login*
 // @match        https://secauthext.iherb.net/core/login*
+// @match        https://secauthext.iherb.net/core/logout*
+// @match        https://security-identity-test.iherb.net/core/logout*
 // @match        https://iherb.okta.com/login/login.htm*
+// @match        https://iherb.okta.com/*
 // @require      file://c:\iHerb\tmConfig.js
 // ==/UserScript==
 
@@ -37,7 +41,6 @@ async function process(func, time) {
         checkDefaultBackend404Thread();
         return;
     }
-
     setTimeout(repositoryFilterThread, 1000);
     var authValue;
     var isProd = !location.host.includes('test') && !location.host.includes('localhost');
@@ -88,7 +91,7 @@ async function process(func, time) {
                 $('button.auth.btn-done').click();
             }
         }
-        else {
+        else if (env) {
             var tab = lymTM.open(env);
             // callback and close window
             lymTM.listenOnce(env, async (a, b, c) => {
@@ -332,11 +335,22 @@ async function process(func, time) {
             }
         }, 100);
         return;
-    } else {
+    }
+    else if (location.href.includes("https://secauthext.iherb.net/core/logout")
+        || location.href.includes("https://security-identity-test.iherb.net/core/logout")) {
+        await lymTM.maskDiv(null, () => {
+            if (location.host == 'secauthext.iherb.net') {
+                location.href = 'https://csportalext.iherb.net/';
+            }
+            else if (location.host == 'security-identity-test.iherb.net') {
+                location.href = 'https://csportal-beta-test.iherb.net/';
+            }
+        });
+    }
+    else {
         // cs portal page
-        if (location.host == 'rewards-web.backoffice.iherbtest.net' || location.host == 'security-identity-test.iherb.net' || location.host == 'cs-portal.backoffice.iherbtest.net'
-            || location.host == 'rewards-web.backoffice.iherb.net' || location.host == 'cs-portal.iherb.net'
-            || location.host == 'secauthext.iherb.net') {
+        if (location.host == 'rewards-web.backoffice.iherbtest.net' || location.host == 'cs-portal.backoffice.iherbtest.net'
+            || location.host == 'rewards-web.backoffice.iherb.net' || location.host == 'cs-portal.iherb.net') {
             await lymTM.async($('div>svg:not([data-qa-element]):first'));
             await lymTM.async(3000);
             var oktaStorage = JSON.parse(window.sessionStorage.getItem("okta-token-storage"));
@@ -359,6 +373,15 @@ async function process(func, time) {
             if (window[lymTM.localConfigs.idTMConfig]) {
                 lymTM.reactSet(oktaForm.find('input[name=password]')[0], window[lymTM.localConfigs.idTMConfig]);
                 await lymTM.maskDiv(() => oktaForm.find('input[name=password]').val(), () => oktaForm.submit(), jQueryCourage);
+            }
+        } else if (location.host == 'security-identity-test.iherb.net' || location.host == 'secauthext.iherb.net') {
+            value = $.cookie('AccessToken');
+            console.log(value);
+            if (value) {
+                lymTM.setValue(location.href, value);
+            } else {
+                let loginForm = await lymTM.async($('form:has(#password)'));
+                await lymTM.maskDiv(() => loginForm.find('#password').val(), () => loginForm.find('#rememberMe').prop('checked', true).end().submit());
             }
         }
 

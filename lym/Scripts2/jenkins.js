@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Jenkins
 // @namespace    http://tampermonkey.net/
-// @version      16
+// @version      17
 // @description  CI CD
 // @author       Yiming Liu
 // @match        https://jenkins-ci.iherb.net/*
@@ -98,6 +98,10 @@ async function process(wrap, time) {
             if (versionReg && versionReg[1]) {
                 version = versionReg[1];
             }
+            if (!env) {
+                version = version.replace(/\.\.\.$/, '');
+                env = version;
+            }
             if (env && version) {
                 if (env in deployList) {
                     return;
@@ -145,7 +149,12 @@ async function process(wrap, time) {
                 if (envList) {
                     var summary = '';
                     for (var envItem of envList) {
-                        summary += ` 【${envItem.env} ${lymTM.dateFormat(envItem.time, 'MM-dd hh:mm')}】`;
+                        if (/\d\.\d*\.\d/.test(envItem.env)) {
+                            summary += ` Unknown ${lymTM.dateFormat(envItem.time, 'MM-dd hh:mm')}`;
+                            option.css('color', 'grey');
+                        } else {
+                            summary += ` 【${envItem.env} ${lymTM.dateFormat(envItem.time, 'MM-dd hh:mm')}】`;
+                        }
                     }
                     option.html(option.html() + summary);
                 }

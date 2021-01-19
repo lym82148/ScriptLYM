@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Common
 // @namespace    http://tampermonkey.net/
-// @version      26
+// @version      27
 // @description  configs & util
 // @author       Yiming Liu
 // @include      *
@@ -97,6 +97,31 @@ unsafeWindow.lymTM = window.lymTM = {
         obj.innerHTML = text;
         return obj;
     },
+    getDropDownIcon: function () {
+        return $('<svg viewBox="0 0 16 16" height="16" width="16"><path d="M4 6h8l-4 5z"></path></svg>');
+    },
+    getCustomerIdList: function (clickFunc) {
+        var list = $('<div name="customer-id-list" style="display:none;-webkit-user-select: none;z-index:999;border: 1px solid #D9D9D9;background-color: #FFFFFF;position: absolute;width: 100%;box-shadow: 0 0 7px 0 rgba(0,0,0,0.15);"></div>');
+        for (var i in this.customerIds) {
+            let item = this.customerIds[i];
+            list.append($(`<div style="border-bottom: 1px solid #D9D9D9;font-size: 16px;line-height: 30px;cursor: pointer;padding-left: 5px;" data-value="${item.id}">( ${item.Desc} ) ${item.idDisplay}</div>`));
+        }
+        list.on('mousemove mouseenter', 'div', function (e) { $(e.currentTarget).css('background-color', '#d9d9d9'); });
+        list.on('mouseout', 'div', function (e) { $(e.currentTarget).css('background-color', ''); });
+        list.on('click', 'div', function (e) { clickFunc($(e.currentTarget).data('value')); $(e.currentTarget).parent().hide(); });
+        return list;
+    },
+    customerIds: [
+        { "id": "f2fd2c4e-1083-4f2d-9614-78d5a919ea6d", "Desc": "有很多 Order 的" },
+        { "id": "d8b05307-e161-42a9-811f-9f0993964a06", "Desc": "Yiming" },
+        { "id": "d3199c6c-3a7f-4be8-9575-dbbad78f7aea", "Desc": "Terry" },
+        { "id": "52b0c155-557e-4830-b4e6-9677d5f70417", "Desc": "1" },
+        { "id": "3a7ae651-76b5-41a9-ae0f-ceb5df30274f", "Desc": "2" },
+        { "id": "43a1c021-e331-4324-9bef-f268df9406e3", "Desc": "3" },
+        { "id": "c1396151-cb7a-4e1a-87a9-9eb4d7a2c59e", "Desc": "4" },
+        { "id": "abd64ac3-05a0-46df-9bd5-59b83e841a1b", "Desc": "Test & Prod" },
+        { "id": "140b5d1b-577a-4b01-9c5c-b762e5955a73", "Desc": "Prod darkzhaocai" },
+    ],
     teamMembers: [
         { "userName": "Terry (Xiaoyu) Luo" },
         { "userName": "Yiming Liu" },
@@ -152,6 +177,12 @@ unsafeWindow.lymTM = window.lymTM = {
     },
     serviceConfigs: {},
     init: async function () {
+        for (var i in this.customerIds) {
+            let item = this.customerIds[i];
+            if (item.id) {
+                item.idDisplay = item.id.replace(/\w{2}-.*-\w{6}/, ' · · · ');
+            }
+        }
         this.serviceConfigs = [
             {
                 "name": "legacy.checkout-web",
@@ -173,6 +204,10 @@ unsafeWindow.lymTM = window.lymTM = {
                 "envLinks": {
                     "DataDog": `${this.urls.DataDog}SHOP%24SFV`
                 },
+                "logLinks": {
+                    "Test": "https://es-test.iherb.net/_plugin/kibana/app/kibana#/discover?_g=(filters:!(),refreshInterval:(display:Off,pause:!f,value:0),time:(from:now-15m,mode:quick,to:now))&_a=(columns:!(_source),index:'shop-*',interval:auto,query:(language:lucene,query:''),sort:!('@timestamp',desc))",
+                    "Prod": "https://es-prod.iherb.net/_plugin/kibana/goto/7097730c26af35187f3980b1f4dca72c"
+                },
                 "metricsLinks": {
                     "Test": 'http://172.16.121.194/shopservicewcf/metrics-text',
                     "Preprod": 'http://preshop1ora.iherb.net/shopservicewcf/metrics-text'
@@ -181,7 +216,7 @@ unsafeWindow.lymTM = window.lymTM = {
             {
                 "name": "legacy.customerservice",
                 "fullslug": "iherbllc/legacy.customerservice",
-                "defaultBranch": "master",
+                "defaultBranch": "Release",
                 "CILinks": {
                     "Release": "https://tfs.iherb.net/tfs/iHerb%20Projects%20Collection/iHerbDev/Orders%20and%20Communications/_build/index?definitionId=763",
                 },
@@ -279,8 +314,8 @@ unsafeWindow.lymTM = window.lymTM = {
             {
                 "name": "NewCsPortal",
                 "envLinks": {
-                    "Test": "https://cs-portal.backoffice.iherbtest.net/rewards/hyperwallet",
-                    "Prod": "https://cs-portal.iherb.net/rewards/hyperwallet"
+                    "Test": "https://cs-portal.backoffice.iherbtest.net/customers",
+                    "Prod": "https://cs-portal.iherb.net/customers"
                 },
             },
             {
@@ -339,6 +374,48 @@ unsafeWindow.lymTM = window.lymTM = {
                 "name": "backoffice.cs.order.service",
             },
             {
+                "name": "cart",
+                "envLinks": {
+                    "Test": "https://cartmanagement.internal.iherbtest.io/swagger/",
+                    "Prod": "https://checkout.iherb.com/api/Carts/Private/CreditCardTypeDisplayName?cardType=COD&languageCode=en-us",
+                }
+            },
+            {
+                "name": "shipping",
+                "envLinks": {
+                    "Test": "https://tms.internal.iherbtest.io/tms/api/ShippingServiceManager_v1_1/GetShippingServiceRowsAll",
+                    "Prod": "https://tms.central.iherb.io/tms/api/ShippingServiceManager_v1_1/GetShippingServiceRowsAll",
+                }
+            },
+            {
+                "name": "currency",
+                "envLinks": {
+                    "Test": "https://currency.internal.iherbtest.io/swagger/",
+                    "Prod": "https://currency.central.iherb.io/swagger/",
+                }
+            },
+            {
+                "name": "fraud",
+                "envLinks": {
+                    "Test": "https://fraud-test.iherb.net/CsPortal/swagger/",
+                    "Prod": "https://fraud.iherb.net/CsPortal/swagger/",
+                }
+            },
+            {
+                "name": "product-purchasing",
+                "envLinks": {
+                    "Test": "https://product-purchasing-api.internal.iherbtest.io/swagger/",
+                    "Prod": "https://product-purchasing-api.central.iherb.io/swagger/",
+                }
+            },
+            {
+                "name": "stock-notification",
+                "envLinks": {
+                    "Test": "https://stock-notification.internal.iherbtest.io/swagger/",
+                    "Prod": "https://stock-notification.central.iherb.io/swagger/",
+                }
+            },
+            {
                 "name": "backoffice.cs.proxy.service",
                 "projectConfigFileDev": (b) => `https://bitbucket.org/iherbllc/backoffice.cs.proxy.service/raw/${b}/src/Backoffice.CS.Proxy.Service.API/appsettings.Development.json`
             },
@@ -393,7 +470,7 @@ unsafeWindow.lymTM = window.lymTM = {
                 },
                 "logLinks": {
                     "Test": "https://es-test.iherb.net/_plugin/kibana/app/kibana#/discover?_g=(filters:!(),refreshInterval:(display:Off,pause:!f,value:0),time:(from:now-15m,mode:quick,to:now))&_a=(columns:!(kubernetes.container_name,message,log),filters:!(('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'backoffice-cs-*',key:kubernetes.container_name,negate:!f,type:phrase,value:backoffice-infrastructure-mailservice),query:(match:(kubernetes.container_name:(query:backoffice-infrastructure-mailservice,type:phrase))))),index:'backoffice-reward-*',interval:auto,query:(match_all:()),sort:!('@timestamp',desc))",
-                    "Prod": "https://es-prod.iherb.net/_plugin/kibana/app/kibana#/discover?_g=(refreshInterval:(pause:!t,value:0),time:(from:now-15m,mode:quick,to:now))&_a=(columns:!(kubernetes.container_name,message,log),filters:!(('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'!'backoffice-cs!'',key:kubernetes.container_name,negate:!f,params:(query:cs-reward-core-service,type:phrase),type:phrase,value:cs-reward-core-service),query:(match:(kubernetes.container_name:(query:cs-reward-core-service,type:phrase))))),index:'!'backoffice-cs!'',interval:auto,query:(language:lucene,query:''),sort:!('@timestamp',desc))"
+                    "Prod": "https://es-prod.iherb.net/_plugin/kibana/app/kibana#/discover?_g=(refreshInterval:(pause:!t,value:0),time:(from:now-15m,mode:quick,to:now))&_a=(columns:!(kubernetes.container_name,message,log),filters:!(('$state':(store:appState),meta:(alias:!n,disabled:!f,index:'!'backoffice-reward-!'',key:kubernetes.container_name,negate:!f,params:(query:backoffice-infrastructure-mailservice,type:phrase),type:phrase,value:backoffice-infrastructure-mailservice),query:(match:(kubernetes.container_name:(query:backoffice-infrastructure-mailservice,type:phrase))))),index:'!'backoffice-reward!'',interval:auto,query:(language:lucene,query:''),sort:!('@timestamp',desc))"
                 },
                 "rancherLinks": {
                     "Test": "https://rancher-nonprod.iherb.net/p/c-dxjtg:p-krrt2/workload/deployment:backoffice-reward:backoffice-infrastructure-mailservice",
@@ -432,6 +509,27 @@ unsafeWindow.lymTM = window.lymTM = {
                     "Test": "https://rewards.internal.iherbtest.io/swagger/index.html",
                     "Preprod": "https://rewards.central.iherbpreprod.io/swagger/index.html",
                     "Prod": "https://rewards.central.iherb.io/swagger/index.html",
+                }
+            },
+            {
+                "name": "order",
+                "envLinks": {
+                    "Test": "https://order-test.iherb.net/CsPortal/swagger/",
+                    "Prod": "https://order.iherb.net/CsPortal/swagger/",
+                }
+            },
+            {
+                "name": "ugc",
+                "envLinks": {
+                    "Test": "https://ugc-api.internal.iherbtest.io/ugc/api/backoffice/swagger/index.html",
+                    "Prod": "https://ugc-api.central.iherb.io/ugc/api/backoffice/swagger/index.html",
+                }
+            },
+            {
+                "name": "orders-returns-csportal",
+                "envLinks": {
+                    "Test": "https://orders-returns-csportal.internal.iherbtest.io/swagger/index.html",
+                    "Prod": "https://orders-returns-csportal.central.iherb.io/swagger/index.html",
                 }
             }
         ];
@@ -497,7 +595,7 @@ unsafeWindow.lymTM = window.lymTM = {
         "https://rewards-web.backoffice.iherb.net/rewards": [
             "promos-backoffice-manager-reward-api.backoffice.iherb.net"
         ],
-        "https://cs-portal.backoffice.iherbtest.net/rewards/hyperwallet": [
+        "https://cs-portal.backoffice.iherbtest.net/customers": [
             "localhost:5000",
             "localhost:54319",
             "backoffice-cs-reward-core-service.internal.iherbtest.io",
@@ -514,7 +612,7 @@ unsafeWindow.lymTM = window.lymTM = {
             "backoffice-cs-gateway.internal.iherbtest.io",
             "cs-zendesk-syncjob.backoffice.iherbtest.net"
         ],
-        "https://cs-portal.iherb.net/rewards/hyperwallet": [
+        "https://cs-portal.iherb.net/customers": [
             "backoffice-cs-reward-core-service.central.iherb.io",
             "cs-reward-core-service.backoffice.iherb.net",
             "backoffice-cs-customer-service.central.iherb.io",
@@ -522,6 +620,18 @@ unsafeWindow.lymTM = window.lymTM = {
             "backoffice-cs-reward-service.central.iherb.io",
             "cs-reward-service.backoffice.iherb.net",
             "cs-reward-bonus-service.backoffice.iherb.net",
+        ],
+        "": [
+            "order-test.iherb.net",
+            "order.iherb.net",
+            "orders-returns-csportal.internal.iherbtest.io",
+            "orders-returns-csportal.central.iherb.io",
+            "rewards-csportal.internal.iherbtest.io",
+            "rewards-csportal.central.iherb.io",
+            "rewards.internal.iherbtest.io",
+            "rewards.central.iherb.io",
+            "rewards-cashout-csportal.internal.iherbtest.io",
+            "rewards-cashout-csportal.central.iherb.io",
         ]
     },
     searchConfigByHost(location) {
@@ -648,6 +758,11 @@ unsafeWindow.lymTM = window.lymTM = {
         return null;
     },
     getSwaggerEnv: function (swagger) {
+        for (var item of this.swaggers[""]) {
+            if (item == swagger) {
+                return null;
+            }
+        }
         if (swagger.startsWith('localhost') || swagger.endsWith('.iherbtest.net') || swagger.endsWith('.internal.iherbtest.io')) {
             return 'https://cs-portal.backoffice.iherbtest.net/customers';
         } else {
