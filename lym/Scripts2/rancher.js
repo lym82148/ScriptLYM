@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Rancher
 // @namespace    http://tampermonkey.net/
-// @version      8
+// @version      9
 // @description  link jenkins
 // @author       Yiming Liu
 // @include      https://rancher.iherb.io/*
@@ -21,6 +21,7 @@
 
 async function process(func, time) {
     setTimeout(repositoryFilterThread, 1000);
+    setTimeout(autoLoginThread, 0)
     var hash = location.hash.substr(1);
     if (hash) {
         var checkbox = await lymTM.async(() => $(`input[nodeid="${hash}"]:checkbox`));
@@ -41,6 +42,16 @@ async function process(func, time) {
     console.log(url);
 
 }
+async function autoLoginThread() {
+    var submitBtn = await lymTM.async(() => $('form button.bg-primary'));
+    $('form label:contains(Remember)').find('input:checkbox').prop('checked', true);
+    await lymTM.maskDiv(null, async () => {
+        //         $('form input[name=password]').val(window[lymTM.localConfigs.idTMConfig]);
+        lymTM.reactSet($('form input[name=password]'), window[lymTM.localConfigs.idTMConfig]);
+        await lymTM.async(4000);
+        submitBtn.click();
+    });
+}
 async function workLoadLinkThread() {
     if (location.href.includes('/workload/')) {
         return;
@@ -50,7 +61,7 @@ async function workLoadLinkThread() {
     var statusLabel = $('h1');
     if (!lymTM.alreadyDone(statusLabel)) {
         var id = h1Text.split(':').pop().trim();
-        var namespace = $('label:contains(Namespace)').next('p').text();
+        var namespace = $('label:contains(Namespace)').next('p').text().trim();
         var nodeId = `deployment:${namespace}:${id}`;
         console.log('nodeId:', nodeId);
         var link = lymTM.createLink(id);
@@ -60,8 +71,10 @@ async function workLoadLinkThread() {
         statusLabel.append(link);
         link.onclick = async function () {
             var ev = document.createEvent('HTMLEvents');
-            ev.initEvent('click', false, true);
-            $('ul.nav-main a:contains(Workloads)').click();
+            ev.initEvent('mouseenter', false, true);
+            $('a[role=button]:contains(Resources)').closest('div')[0].dispatchEvent(ev);
+            var menu = await lymTM.async(() => $('.ember-basic-dropdown-content-wormhole-origin li:contains(Workloads)>a'));
+            menu.click();
             $(`tr.main-row:has(input[nodeid="${nodeId}"])`).find('td[data-title="Name: "]>a:not([name])>i').click();
         };
         lymTM.done(statusLabel);
@@ -87,7 +100,7 @@ async function gotoConfig(nodeId) {
     var ev = document.createEvent('HTMLEvents');
     ev.initEvent('mouseenter', false, true);
     $('a[role=button]:contains(Resources)').closest('div')[0].dispatchEvent(ev);
-    var menu = await lymTM.async(() => $('#ember-basic-dropdown-wormhole li:contains(Config Maps)>a'));
+    var menu = await lymTM.async(() => $('.ember-basic-dropdown-content-wormhole-origin li:contains(Config)>a'));
     menu.click();
     $(`input[nodeid="${nodeId}"]`).closest('tr').children('td[data-title="Name: "]').find('a').click();
 }

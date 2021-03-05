@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Bitbucket
 // @namespace    http://tampermonkey.net/
-// @version      27
+// @version      28
 // @description  pull request approver、build link、deploy link
 // @author       Yiming Liu
 // @include      mailto:*
@@ -42,7 +42,7 @@ async function process(func, time) {
     //         var jenkinsNameFromConfigPage = location.href.match(/.*\/(.*)\/override\/.*/)[1];
     //         var serviceNameFromConfigPage = lymTM.getServiceNameByJenkinsName(jenkinsNameFromConfigPage);
     //         var relativeDiv = lymTM.generateRelativeLinks(serviceNameFromConfigPage,$,location.href);
-    //         var breadFromConfigPage = await lymTM.async($('ol.aui-nav-breadcrumbs,div:has(div>a[type]):not(:has(div>div>a[type]),:has(div[data-qa]))'));
+    //         var breadFromConfigPage = await lymTM.async(()=>$('ol.aui-nav-breadcrumbs,div:has(div>a[type]):not(:has(div>div>a[type]),:has(div[data-qa]))'));
     //         breadFromConfigPage.append(relativeDiv);
     //     }
     if (location.href.includes('config') && location.search.includes('mode=edit')) {
@@ -221,8 +221,7 @@ async function process(func, time) {
             var commitBtn = $('button.save-button:contains(Commit)');
             if (jenkinsNameFromConfigPage && commitBtn.length && !commitBtn.data('add-click-tm')) {
                 commitBtn.click(async () => {
-                    console.log(3);
-                    var textarea = await lymTM.async($('#id_message:visible'));
+                    var textarea = await lymTM.async(() => $('#id_message:visible'));
                     textarea.val(`${envName} ${jenkinsNameFromConfigPage} `);
                 });
                 commitBtn.data('add-click-tm', 'add');
@@ -271,9 +270,12 @@ async function process(func, time) {
                             || value.includes('https://orders-returns-csportal.central.iherb.io')
                             || value.includes('https://fraud.iherb.net')
                             || value.includes('https://order.iherb.net')
+                            || value.includes('https://ordermodification.iherb.net')
+                            || value.includes('https://warehousegateway.iherb.net')
+                            || value.includes('https://backoffice-search.iherb.net')
                             || value.includes('//catalog.app.iherb.com')
                             || value.includes('//www.iherb.com')
-                            || value.includes('https://csportalext.iherb.net')
+                            || value.includes('https://csportal.iherb.net')
                             || value.includes('https://cs-portal.iherb.net')
                             || value.includes('backoffice.iherb.net'))
                     ) {
@@ -395,7 +397,7 @@ async function process(func, time) {
         selectBranch.change(selectBranchAction);
         selectBranch.change();
 
-        var textarea = await lymTM.async($('div.CodeMirror textarea'));
+        var textarea = await lymTM.async(() => $('div.CodeMirror textarea'));
         // 支持中文输入
         textarea[0].onkeyup = async () => { await lymTM.async(100); RenderDiff() };
         // 支持删除
@@ -423,7 +425,7 @@ async function process(func, time) {
     // "ol.aui-nav-breadcrumbs" for page pull-requests/new
     // "div:has(div>a[type]):not(:has(div>div>a[type]))" for page pull-requests/
     // ":has(div[data-qa])" for page repositories
-    var bread = await lymTM.async($('ol.aui-nav-breadcrumbs,div:has(div>a[type]):not(:has(div>div>a[type]),:has(div[data-qa]),:has(button))'));
+    var bread = await lymTM.async(() => $('ol.aui-nav-breadcrumbs,div:has(div>a[type]):not(:has(div>div>a[type]),:has(div[data-qa]),:has(button))'));
     // 在关键元素 bread 加载完成后 计时开始
     time.reset();
     // 展开左边栏 才能获取serviceName
@@ -457,7 +459,7 @@ async function process(func, time) {
     // Build Links Deploy Links
     var wrapDiv = lymTM.generateRelativeLinks(serviceName, $, location.href);
     if (!bread.is(':visible')) {
-        bread = await lymTM.async($('ol.aui-nav-breadcrumbs,div:has(div>a[type]):not(:has(div>div>a[type]),:has(div[data-qa])):visible'));
+        bread = await lymTM.async(() => $('ol.aui-nav-breadcrumbs,div:has(div>a[type]):not(:has(div>div>a[type]),:has(div[data-qa])):visible'));
     }
     await lymTM.doOnceBy(bread, () => bread.append(wrapDiv));
     $('div[offset][aria-hidden]>div>div:first').append(wrapDiv.clone().css('line-height', 3).children().css('margin', 5).end());
@@ -480,7 +482,7 @@ async function process(func, time) {
     // 选默认分支
     var chooseBranch = async function () {
         $('#id_dest_group div.branch-field>a.select2-choice').mousedown();
-        await lymTM.async();
+        await lymTM.async(500);// remove this may cause choose branch error
         $('#select2-drop ul.select2-result-sub>li').filter((a, b) => b.textContent == targetBranch).mouseup();
         await lymTM.async();
     }
@@ -527,18 +529,20 @@ function trimValue(value) {
     return value;
 }
 async function findInputAndFocus() {
-    var searchInput = await lymTM.async($('#search-repository-input'));
+    var searchInput = await lymTM.async(() => $('#search-repository-input'));
     searchInput.focus();
 }
 
 async function search(list, isWarmUp) {
-    var input = await lymTM.async($('#react-select-BitbucketPullRequestReviewers-input'));
+    var input = await lymTM.async(() => $('#react-select-BitbucketPullRequestReviewers-input'));
     input.focus();
     for (var i in list) {
         console.log('search for username:' + list[i].userName);
         lymTM.reactSet(input, list[i].userName);
         if (!isWarmUp) {
-            $(`.reviewers-react-container .fabric-user-picker__option>span>div>span>span:not([role]):contains("${list[i].userName}")`).click();
+            // wait for 1000ms at most
+            let btn = await lymTM.async(() => $(`.reviewers-react-container .fabric-user-picker__option>span>div>span>span:not([role]):contains("${list[i].userName}")`), 1000);
+            btn.click();
         }
     }
     input.blur();
@@ -647,7 +651,7 @@ async function pullrequestNotifyThread() {
             return;
         }
         var serviceName = await lymTM.async(() => $('div.css-1xaaz5m').html());
-        var keyNode = await lymTM.async($('[data-qa=pr-branches-and-state-styles]:first>div:even'));
+        var keyNode = await lymTM.async(() => $('[data-qa=pr-branches-and-state-styles]:first>div:even>div>div'));
         var key = serviceName + keyNode.text();
         if (lymTM.getValue(key)) {
             var seconds = 20;
@@ -678,7 +682,7 @@ async function pullrequestNotifyThread() {
 }
 async function updateRepositoryLinkThread() {
     if (location.href.includes('bitbucket.org/dashboard')) {
-        var links = await lymTM.async($('a[href$="/dashboard/repositories"]'));
+        var links = await lymTM.async(() => $('a[href$="/dashboard/repositories"]'));
         for (var i = 0; i < links.length; i++) {
             let link = links.eq(i);
             if (lymTM.alreadyDone(link)) { continue; }
@@ -725,7 +729,7 @@ async function findRepositoryTableThread() {
             });
         });
 
-        repositoryTable = await lymTM.async($('table:first'));
+        repositoryTable = await lymTM.async(() => $('table:first'));
         await lymTM.doOnceBy(repositoryTable, function () {
             $(repositoryTable).find('tbody>tr:first').css('background-color', color);
             //             lymTM.nodeRemoveCallback(repositoryTable, focusOnFirstRow);
@@ -734,7 +738,7 @@ async function findRepositoryTableThread() {
 }
 async function rapidBoardStoryTransmitThread() {
     if (location.href.includes('/secure/RapidBoard')) {
-        let workLogInput = await lymTM.async($('#issue-workflow-transition #log-work-time-logged:visible'));
+        let workLogInput = await lymTM.async(() => $('#issue-workflow-transition #log-work-time-logged:visible'));
         let estimate = +$('div.ghx-selected aui-badge.ghx-estimate').text();
         if (estimate > 0) {
             await lymTM.doOnceBy(workLogInput, function () {
@@ -771,18 +775,18 @@ async function repositoryFilterThread(input) {
     };
     let header;
     if (location.href.includes('//bitbucket.org/dashboard')) {
-        var preCon = await lymTM.async($('h2:contains("Jira issues")'));
-        header = await lymTM.async($('div[data-testid=Content]'));
+        var preCon = await lymTM.async(() => $('h2:contains("Jira issues")'));
+        header = await lymTM.async(() => $('div[data-testid=Content]'));
         header.children(`div[name=${divWrap.getAttribute('name')}]`).remove();
         header.prepend(divWrap);
     }
     else if (location.href.includes('/pull-requests/')) {
-        header = await lymTM.async($('main>header:first'));
+        header = await lymTM.async(() => $('main>header:first'));
         header.children(`div[name=${divWrap.getAttribute('name')}]`).remove();
         header.prepend(divWrap);
     }
     else if (location.href.includes('//bitbucket.org/')) {
-        header = await lymTM.async($('div:has(div>header:not([id])):last'));
+        header = await lymTM.async(() => $('div:has(div>header:not([id])):last'));
         header.children(`div[name=${divWrap.getAttribute('name')}]`).remove();
         header.prepend(divWrap);
     }
@@ -841,10 +845,10 @@ async function refreshRepositoryListThread(refresh) {
 async function createBranchThread() {
     // as a job thread,force async a at first
     await lymTM.async();
-    var node = await lymTM.async($('#branch-name-prefix'));
+    var node = await lymTM.async(() => $('#branch-name-prefix'));
     lymTM.nodeRemoveCallback(node, createBranchThread);
     var createBranchForm = $('#create-branch-form');
-    var userName = $('#bb-bootstrap').data('current-user').displayName.split(' ')[0];
+    var userName = $('#bb-bootstrap').data('current-user').displayName.split(' ')[0].toLowerCase();
     var newBranchNameInput = $('input[name=branchName]');
     if (!newBranchNameInput.val().startsWith(`${userName}/`)) {
         lymTM.reactSet(newBranchNameInput, `${userName}/${newBranchNameInput.val().replace(/\//g, '-')}`);
@@ -864,11 +868,11 @@ var sprintLink = $(lymTM.createLink('Active Sprint', '')).attr('target', '_blank
 async function createMailLinkThread() {
     // as a job thread,force async a at first
     await lymTM.async();
-    var h2 = await lymTM.async($('h2:contains(Jira issues)'));
+    var h2 = await lymTM.async(() => $('h2:contains(Jira issues)'));
     if (!h2.find(sprintLink).length) {
         h2.append(sprintLink).append(filterLink);
     }
-    var rows = await lymTM.async($('tr[data-qa=jira-issue-row]'));
+    var rows = await lymTM.async(() => $('tr[data-qa=jira-issue-row]'));
     rows.on('click', '[name=hide]', function () { var node = $(this).closest('tr').hide(300); setTimeout(() => node.remove(), 300) });
     rows.each((b, a) => {
         var $a = $(a).find('div>span>span[role=img]').closest('div');
@@ -884,7 +888,7 @@ async function createMailLinkThread() {
         mailLink.click(async function () {
             var rows = $('tr[data-qa=jira-issue-row]');
             rows.closest('div').next('p').find('button').click();
-            rows = await lymTM.async($('tr[data-qa=jira-issue-row]'));
+            rows = await lymTM.async(() => $('tr[data-qa=jira-issue-row]'));
             var arr = rows.map((a, b) => transferRowToModel(b)).sort(a => a.serviceName + a.storyId);
             console.log(arr);
             var res = makeWeeklyReport(arr);
@@ -903,7 +907,7 @@ async function createMailLinkThreadEx() {
     // filter mail link
     if (location.href.includes('iherbglobal.atlassian.net/issues/?filter=')) {
         lymTM.nodeInsertCallback($('div.navigator-content'), createMailLinkThreadEx);
-        var rows = await lymTM.async($('tr.issuerow'));
+        var rows = await lymTM.async(() => $('tr.issuerow'));
         rows.on('click', '[name=hide]', function () { var node = $(this).closest('tr').hide(300); setTimeout(() => node.remove(), 300); });
         rows.each((a, b) => {
             var row = $(b).find('td.summary>p:first');
@@ -935,7 +939,7 @@ async function copyLinkThread() {
     // filter mail link
     if (location.href.includes('iherbglobal.atlassian.net/issues/?filter=')) {
         lymTM.nodeInsertCallback($('div.navigator-content'), copyLinkThread);
-        var rows = await lymTM.async($('tr.issuerow'));
+        var rows = await lymTM.async(() => $('tr.issuerow'));
         rows.on('click', '[name=hide]', function () { var node = $(this).closest('tr').hide(300); setTimeout(() => node.remove(), 300); });
         rows.each((a, b) => {
             var row = $(b).find('td.summary>p:first');

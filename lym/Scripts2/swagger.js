@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Swagger
 // @namespace    http://tampermonkey.net/
-// @version      22
+// @version      23
 // @description  swagger
 // @author       Yiming Liu
 // all swaggers
@@ -340,7 +340,7 @@ async function process(func, time) {
         || location.href.includes("https://security-identity-test.iherb.net/core/logout")) {
         await lymTM.maskDiv(null, () => {
             if (location.host == 'secauthext.iherb.net') {
-                location.href = 'https://csportalext.iherb.net/';
+                location.href = 'https://csportal.iherb.net/';
             }
             else if (location.host == 'security-identity-test.iherb.net') {
                 location.href = 'https://csportal-beta-test.iherb.net/';
@@ -352,14 +352,17 @@ async function process(func, time) {
         if (location.host == 'rewards-web.backoffice.iherbtest.net' || location.host == 'cs-portal.backoffice.iherbtest.net'
             || location.host == 'rewards-web.backoffice.iherb.net' || location.host == 'cs-portal.iherb.net') {
             await lymTM.async($('div>svg:not([data-qa-element]):first'));
-            await lymTM.async(3000);
-            var oktaStorage = JSON.parse(window.sessionStorage.getItem("okta-token-storage"));
-            var value;
-            if (oktaStorage) {
-                value = oktaStorage.accessToken.value;
-            } else {
-                value = $.cookie('AccessToken');
-            }
+            await lymTM.async(3000);// wait for auto refresh of expire token
+            var value = await lymTM.async(() => {
+                var res;
+                var oktaStorage = JSON.parse(window.sessionStorage.getItem("okta-token-storage"));
+                if (oktaStorage) {
+                    res = oktaStorage.accessToken.value;
+                } else {
+                    res = $.cookie('AccessToken');
+                }
+                return res;
+            });
             console.log(value);
             if (value) {
                 lymTM.setValue(location.href, value);

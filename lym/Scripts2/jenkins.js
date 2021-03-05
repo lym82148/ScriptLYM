@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Jenkins
 // @namespace    http://tampermonkey.net/
-// @version      17
+// @version      18
 // @description  CI CD
 // @author       Yiming Liu
 // @match        https://jenkins-ci.iherb.net/*
@@ -35,10 +35,13 @@ async function process(wrap, time) {
     }
     // if login
     if (location.pathname.startsWith("/login")) {
-        // todo
         var submitBtn = await lymTM.async($('form input:submit'));
         $('#remember_me').prop('checked', true);
-        await lymTM.maskDiv(() => $('input[name=j_password]').val(), () => submitBtn.click());
+        await lymTM.maskDiv(null, () => {
+            $('input[name=j_password]').val(window[lymTM.localConfigs.idTMConfig]);
+            //lymTM.reactSet($('input[name=j_password]'),window[lymTM.localConfigs.idTMConfig])
+            submitBtn.click();
+        });
         return;
     }
     // log page

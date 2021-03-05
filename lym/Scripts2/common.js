@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Common
 // @namespace    http://tampermonkey.net/
-// @version      27
+// @version      28
 // @description  configs & util
 // @author       Yiming Liu
 // @include      *
@@ -40,6 +40,7 @@ unsafeWindow.lymTM = window.lymTM = {
             await this.sleep(obj);
         }
         else if (this.isJqueryObj(obj)) {// 参数是jQuery对象
+            if (obj.selector == null) { console.log("obj.selector is null"); }
             while (!jQuery(obj.selector).length) {
                 if (untilTime < new Date()) {
                     break;
@@ -113,6 +114,7 @@ unsafeWindow.lymTM = window.lymTM = {
     },
     customerIds: [
         { "id": "f2fd2c4e-1083-4f2d-9614-78d5a919ea6d", "Desc": "有很多 Order 的" },
+        { "id": "10963A20-A370-4492-AB00-3A67C4550E0D", "Desc": "有很多 Reward 的" },
         { "id": "d8b05307-e161-42a9-811f-9f0993964a06", "Desc": "Yiming" },
         { "id": "d3199c6c-3a7f-4be8-9575-dbbad78f7aea", "Desc": "Terry" },
         { "id": "52b0c155-557e-4830-b4e6-9677d5f70417", "Desc": "1" },
@@ -231,7 +233,7 @@ unsafeWindow.lymTM = window.lymTM = {
                 },
                 "envLinks": {
                     "Test": "https://csportal-beta-test.iherb.net/",
-                    "Prod": "https://csportalext.iherb.net/",
+                    "Prod": "https://csportal.iherb.net/",
                 },
             },
             // example
@@ -372,6 +374,17 @@ unsafeWindow.lymTM = window.lymTM = {
             },
             {
                 "name": "backoffice.cs.order.service",
+                "defaultBranch": "release/3.4"
+            },
+            {
+                "name": "backoffice.cs.fraud.service",
+            },
+            {
+                "name": "warehouse",
+                "envLinks": {
+                    "Test": "https://warehousegateway-test.iherb.net/apigateway/swagger",
+                    "Prod": "https://warehousegateway.iherb.net/apigateway/swagger",
+                }
             },
             {
                 "name": "cart",
@@ -454,6 +467,11 @@ unsafeWindow.lymTM = window.lymTM = {
                 },
             },
             {
+                "name": "backoffice.cs.user",
+                "jenkinsName": "cs-user-service",
+
+            },
+            {
                 "name": "backoffice.infrastructure.mailservice",
                 "jenkinsName": "backoffice-infrastructure-mailservice",
                 "configLinks": {
@@ -519,6 +537,13 @@ unsafeWindow.lymTM = window.lymTM = {
                 }
             },
             {
+                "name": "orderModification",
+                "envLinks": {
+                    "Test": "https://ordermodification-test.iherb.net/CsPortal/swagger/ui/index",
+                    "Prod": "https://ordermodification.iherb.net/CsPortal/swagger/ui/index",
+                }
+            },
+            {
                 "name": "ugc",
                 "envLinks": {
                     "Test": "https://ugc-api.internal.iherbtest.io/ugc/api/backoffice/swagger/index.html",
@@ -526,10 +551,24 @@ unsafeWindow.lymTM = window.lymTM = {
                 }
             },
             {
+                "name": "tax",
+                "envLinks": {
+                    "Test": "https://tax-order.internal.iherbtest.io/swagger/index.html",
+                    "Prod": "https://tax-order.central.iherb.io/swagger/index.html",
+                }
+            },
+            {
                 "name": "orders-returns-csportal",
                 "envLinks": {
                     "Test": "https://orders-returns-csportal.internal.iherbtest.io/swagger/index.html",
                     "Prod": "https://orders-returns-csportal.central.iherb.io/swagger/index.html",
+                }
+            },
+            {
+                "name": "orders-invoice-csportal",
+                "envLinks": {
+                    "Test": "https://orders-invoice-csportal.internal.iherbtest.io/swagger/index.html",
+                    "Prod": "https://orders-invoice-csportal.central.iherb.io/swagger/index.html",
                 }
             }
         ];
@@ -624,14 +663,29 @@ unsafeWindow.lymTM = window.lymTM = {
         "": [
             "order-test.iherb.net",
             "order.iherb.net",
+            "ordermodification-test.iherb.net",
+            "ordermodification.iherb.net",
             "orders-returns-csportal.internal.iherbtest.io",
             "orders-returns-csportal.central.iherb.io",
+            "orders-invoice-csportal.internal.iherbtest.io",
+            "orders-invoice-csportal.central.iherb.io",
             "rewards-csportal.internal.iherbtest.io",
             "rewards-csportal.central.iherb.io",
             "rewards.internal.iherbtest.io",
             "rewards.central.iherb.io",
             "rewards-cashout-csportal.internal.iherbtest.io",
             "rewards-cashout-csportal.central.iherb.io",
+            "warehousegateway-test.iherb.net",
+            "warehousegateway.iherb.net",
+            "tax-order.internal.iherbtest.io",
+            "tax-order.central.iherb.io",
+            "currency.internal.iherbtest.io",
+            "currency.central.iherb.io",
+            "cartmanagement.internal.iherbtest.io",// no swagger for cart prod
+            "backoffice-search-test.iherb.net",
+            "backoffice-search.iherb.net",
+            "fraud-test.iherb.net",
+            "fraud.iherb.net",
         ]
     },
     searchConfigByHost(location) {

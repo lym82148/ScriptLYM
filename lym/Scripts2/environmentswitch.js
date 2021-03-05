@@ -1,10 +1,11 @@
 ﻿// ==UserScript==
 // @name         EnvironmentSwitch
 // @namespace    http://tampermonkey.net/
-// @version      6
+// @version      7
 // @description  test prod switch
 // @author       Yiming Liu
 // @include      https://*iherb*/*
+// @require      file://c:\iHerb\tmConfig.js
 // @grant        none
 // ==/UserScript==
 
@@ -15,6 +16,7 @@
     await process(wrap, time);
     // log execution time
     time.end();
+
 })();
 
 async function process(func, time) {
