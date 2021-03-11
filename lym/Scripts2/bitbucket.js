@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Bitbucket
 // @namespace    http://tampermonkey.net/
-// @version      28
+// @version      29
 // @description  pull request approver、build link、deploy link
 // @author       Yiming Liu
 // @include      mailto:*
@@ -253,6 +253,9 @@ async function process(func, time) {
                 }
                 else if (key == 'ASPNETCORE_ENVIRONMENT' && value != envConfig) {
                     lineTag.addClass('aui-message aui-message-warning').css(cssObj).attr('title', `error value ${value}, should be ${envConfig} `);
+                }
+                else if (value > Math.pow(2, 31) - 1) {
+                    lineTag.addClass('aui-message aui-message-warning').css(cssObj).attr('title', `number ${value} is too large for int32, should be '${value}' `);
                 }
                 else if (value == '*') {
                     lineTag.addClass('aui-message aui-message-warning').css(cssObj).attr('title', 'error value *, should be "*" ');
@@ -509,7 +512,7 @@ async function process(func, time) {
     // 预热搜索列表
     await search(approveUsers, true);
     // 等待搜索结果加载准备
-    await lymTM.async(2000);
+    await lymTM.async(3000);
 
     var tabFun = async function (e) {
         if (e.key == 'Tab') {
@@ -962,7 +965,7 @@ async function copyLinkThread() {
             for (let i in arr) {
                 let item = arr[i];
                 if (item.statusText == 'Not Started') { continue; }
-                res += `<tr><td><a href="${item.href}">${item.storyId}</a></td><td>${item.title}</td><td>${item.statusText}</td></tr>`;
+                res += `<tr><td><a href="${item.href}">${item.storyId}</a></td><td>${item.title}</td><td>(${item.statusText})</td></tr>`;
             }
             res += '</table>';
             console.log(res);

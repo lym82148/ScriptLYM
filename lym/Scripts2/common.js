@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Common
 // @namespace    http://tampermonkey.net/
-// @version      28
+// @version      29
 // @description  configs & util
 // @author       Yiming Liu
 // @include      *
@@ -470,6 +470,10 @@ unsafeWindow.lymTM = window.lymTM = {
                 "name": "backoffice.cs.user",
                 "jenkinsName": "cs-user-service",
 
+            },
+            {
+                "name": "backoffice.cs.user/src/master/src/CS.User.Web/",
+                "jenkinsName": "cs-user-web",
             },
             {
                 "name": "backoffice.infrastructure.mailservice",
@@ -1556,7 +1560,11 @@ unsafeWindow.lymTM = window.lymTM = {
                 if (currentKey in res) {
                     console.warn(`duplicated config '${currentKey}': '${res[currentKey]}' '${currentKey}: ${json[key]}'`);
                 } else {
-                    res[currentKey] = json[key];
+                    if (json[key] > Math.pow(2, 31) - 1) {
+                        res[currentKey] = `'${json[key]}'`;
+                    } else {
+                        res[currentKey] = json[key];
+                    }
                 }
             }
         }
