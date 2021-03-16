@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Common
 // @namespace    http://tampermonkey.net/
-// @version      30
+// @version      31
 // @description  configs & util
 // @author       Yiming Liu
 // @include      *
@@ -28,6 +28,7 @@ unsafeWindow.lymTM = window.lymTM = {
             }, time);
         });
     },
+
     transferJqueryObj: function (obj) {
         return this.isJqueryObj(obj) ? obj[0] : obj;
     },
