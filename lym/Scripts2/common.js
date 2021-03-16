@@ -1426,9 +1426,10 @@ unsafeWindow.lymTM = window.lymTM = {
             if (e.key == 'Shift' || e.ctrlKey && e.key != 'Enter') {
                 return;
             }
-            if (e.altKey) {
+            if (e.altKey || e.metaKey) {
                 return;
             }
+            console.log(e);
             var arrow;
             if (e.key.length > 1) {
                 if (e.key == 'Backspace') {
