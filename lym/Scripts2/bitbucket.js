@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Bitbucket
 // @namespace    http://tampermonkey.net/
-// @version      29
+// @version      30
 // @description  pull request approver、build link、deploy link
 // @author       Yiming Liu
 // @include      mailto:*
@@ -479,6 +479,10 @@ async function process(func, time) {
 
     // 不是创建分支页面
     if (!$('#id_reviewers_group').length) {
+        return;
+    }
+    // 不在配置中的repo
+    if (!lymTM.isInConfig(serviceName)) {
         return;
     }
 

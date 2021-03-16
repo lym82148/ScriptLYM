@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         Common
 // @namespace    http://tampermonkey.net/
-// @version      29
+// @version      30
 // @description  configs & util
 // @author       Yiming Liu
 // @include      *
@@ -133,7 +133,7 @@ unsafeWindow.lymTM = window.lymTM = {
         //         { "userName": "Chris (Min) Zhang" },
     ],
     approvers: {
-        automation: [{ "userName": "Jane (Wenjing) Liu" }]
+        automation: [{ "userName": "Xiaotong Xu" }, { "userName": "Alex (Zhao) Du" }]
     },
     localConfigs: { "swaggerTMConfig": "swaggerTMConfig", "idTMConfig": "idTMConfig" },
     urls: {
@@ -263,22 +263,6 @@ unsafeWindow.lymTM = window.lymTM = {
                 "name": "backoffice.csportal-automation",
                 "fullslug": "iherbllc/backoffice.cs.customer.service",
                 "defaultBranch": "develop",
-                "CILinks": {
-                    //                     "Jenkins": `${this.urls.CIJenkinsCSSearch}cs-customer-service`
-                },
-                "CDLinks": {
-                    //                     "Jenkins":  `${this.urls.CDJenkinsCS}/cs-customer-service/${this.urls.CDJenkinsBuildNow}`
-                },
-                "configLinks": {
-                    //                     "Config": `${this.urls.CSConfig}/cs-customer-service/`
-                },
-                "envLinks": {
-                    //                     "Test": this.urls.BackOfficeTestSwagger('cs-customer-service'),
-                    //                     "Prod": this.urls.BackOfficeProdSwagger('cs-customer-service'),
-                },
-                "definitionIds": {
-                    //                     "cs-customer-service": `${this.urls.CDJenkinsCS}/cs-customer-service/${this.urls.CDJenkinsBuildNow}`
-                },
                 "approvers": "automation",
             },
             { "name": "backoffice.rewards-web-automation", "approvers": "automation" },
@@ -578,6 +562,7 @@ unsafeWindow.lymTM = window.lymTM = {
         ];
         for (var item of this.serviceConfigs) {
             if (item.name.startsWith('backoffice.') || item.name == 'users.privacy.syncjob') {
+                let isAutomation = item.name.endsWith('automation');
                 item.nameEx = item.name.replace('backoffice.', '');
                 item.projectName = item.nameEx.replace(/\.\w/g, (word) => word.toUpperCase()).replace(/^cs./, 'CS.');
                 item.jenkinsName = item.jenkinsName || item.nameEx.replace(/\./g, '-');
@@ -590,7 +575,9 @@ unsafeWindow.lymTM = window.lymTM = {
                 item.logLinks = item.logLinks || {};
                 item.rancherLinks = item.rancherLinks || {};
                 item.definitionIds = item.definitionIds || {};
-                item.CDLinks.Jenkins = item.CDLinks.Jenkins || `${this.urls.CDJenkinsCS}/${item.jenkinsName}/${this.urls.CDJenkinsBuildNow}`;
+                if (!isAutomation) {
+                    item.CDLinks.Jenkins = item.CDLinks.Jenkins || `${this.urls.CDJenkinsCS}/${item.jenkinsName}/${this.urls.CDJenkinsBuildNow}`;
+                }
                 if (item.name.startsWith('backoffice.cs.') || item.name == 'users.privacy.syncjob') {
                     item.CILinks.Jenkins = item.CILinks.Jenkins || `${this.urls.CIJenkinsCSSearch}${item.jenkinsName}`;
                     item.configLinks.Test = item.configLinks.Test || this.urls.CSConfigValueEdit(item.jenkinsName);
@@ -606,8 +593,10 @@ unsafeWindow.lymTM = window.lymTM = {
                     item.rancherLinks.Test = item.rancherLinks.Test || this.urls.RancherPromosTest + item.jenkinsName;
                     item.rancherLinks.Prod = item.rancherLinks.Prod || this.urls.RancherPromosProd + item.jenkinsName;
                 }
-                item.envLinks.Test = item.envLinks.Test || this.urls.BackOfficeTestSwagger(item.jenkinsName.replace(/^backoffice-/, ''));
-                item.envLinks.Prod = item.envLinks.Prod || this.urls.BackOfficeProdSwagger(item.jenkinsName.replace(/^backoffice-/, ''));
+                if (!isAutomation) {
+                    item.envLinks.Test = item.envLinks.Test || this.urls.BackOfficeTestSwagger(item.jenkinsName.replace(/^backoffice-/, ''));
+                    item.envLinks.Prod = item.envLinks.Prod || this.urls.BackOfficeProdSwagger(item.jenkinsName.replace(/^backoffice-/, ''));
+                }
                 if (item.hangfireLinks) {
                     item.hangfireLinks.Test = item.envLinks.Test.match(/.*\/\/.*?\//)[0] + 'hangfire/jobs/processing';
                     item.hangfireLinks.Prod = item.envLinks.Prod.match(/.*\/\/.*?\//)[0] + 'hangfire/jobs/processing';
@@ -617,8 +606,10 @@ unsafeWindow.lymTM = window.lymTM = {
                 item.projectConfigFileDev = item.projectConfigFileDev || this.urls.BackOfficeConfigFileDev(item.projectName);
                 item.repoLinks = item.repoLinks || {};
                 item.repoLinks.Bitbucket = item.repoLinks.Bitbucket || this.urls.BitbucketRepo + item.name;
-                item.logLinks.Test = item.logLinks.Test || this.urls.KibanaTest(item.jenkinsName);
-                item.logLinks.Prod = item.logLinks.Prod || this.urls.KibanaProd(item.jenkinsName);
+                if (!isAutomation) {
+                    item.logLinks.Test = item.logLinks.Test || this.urls.KibanaTest(item.jenkinsName);
+                    item.logLinks.Prod = item.logLinks.Prod || this.urls.KibanaProd(item.jenkinsName);
+                }
 
             }
         }
@@ -763,6 +754,10 @@ unsafeWindow.lymTM = window.lymTM = {
                 return `${value}#refresh`;
             }
         }
+    },
+    isInConfig: function (name) {
+        var res = this.serviceConfigs.filter((a) => a.name == name);
+        return res.length;
     },
     getDefaultBranch: function (name) {
         var res = this.serviceConfigs.filter((a) => a.name == name);
@@ -1429,6 +1424,9 @@ unsafeWindow.lymTM = window.lymTM = {
                 return;
             }
             if (e.key == 'Shift' || e.ctrlKey && e.key != 'Enter') {
+                return;
+            }
+            if (e.altKey) {
                 return;
             }
             var arrow;
